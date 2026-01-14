@@ -85,6 +85,10 @@
   :config
   (undo-fu-session-global-mode))
 
+(setq-default undo-limit 67108864)         ; 64MB
+(setq-default undo-strong-limit 100663296) ; 96MB
+(setq-default undo-outer-limit 1006632960) ; 960MB
+
 ;; auto-save
 (add-to-list 'load-path "~/github/auto-save/") ; add auto-save to your load-path
 (require 'auto-save)
