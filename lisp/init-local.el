@@ -122,14 +122,16 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 
 ;; Load OS-specific configurations
 (cond
- ((eq system-type 'windows-nt)
-  (require 'init-local-windows nil t)) ;; nil t = don't error if missing
- ((eq system-type 'darwin)
+ (IS-WINDOWS
+  (require 'init-local-windows nil t))
+ (IS-MAC
   (require 'init-local-macos nil t)
-  (require 'init-local-ai nil t)
-  (require 'init-local-majutsu nil t))
- ((eq system-type 'gnu/linux)
+  (require 'init-local-ai nil t))
+ (IS-LINUX
   (require 'init-local-linux nil t)))
+
+;; majutsu for jj
+(require 'init-local-majutsu nil t)
 
 ;; Load org config
 (require 'init-local-org)
