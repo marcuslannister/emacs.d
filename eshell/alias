@@ -1,4 +1,5 @@
-alias em /Applications/Emacs.app/Contents/MacOS/bin/emacsclient -n $1
+alias em $EMACSC -n $1
+alias wb $WRITEBACKUP $*
 
 alias e eza
 alias el eza -l
@@ -23,5 +24,3 @@ alias jn jj new
 alias jsh jj show
 alias jlng jj log --no-graph
 alias jre jj restore
-
-alias wb writebackup.sh $*

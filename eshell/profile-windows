@@ -1,0 +1,2 @@
+export EMACSC=emacsclient.exe
+export WRITEBACKUP="writebackup.cmd"
