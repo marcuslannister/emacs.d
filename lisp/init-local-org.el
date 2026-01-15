@@ -190,6 +190,8 @@
                 (tags-todo "+PRIORITY=\"C\""
                            ((org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "PROJECT" "DELEGATED")))
                             (org-agenda-overriding-header "Low-priority unfinished tasks:")))
+                (tags "+INBOX"
+                           ((org-agenda-overriding-header "Inbox entries:")))
                 (agenda ""))
                ((org-agenda-compact-blocks nil)))))  ; Set compact-blocks to nil only for this view
     (unless (assoc "p" org-agenda-custom-commands)
