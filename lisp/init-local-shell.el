@@ -221,5 +221,8 @@ Stolen from aweshell."
   ;; :hook (eshell-mode-hook . esh-autosuggest-mode)
   :ensure t)
 
+(defun eshell/gs ()
+  (magit-status default-directory))
+
 (provide 'init-local-shell)
 ;;; init-local-shell.el ends here
