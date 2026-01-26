@@ -29,5 +29,15 @@
     (add-hook 'evil-insert-state-entry-hook #'sis-set-other)
     (add-hook 'evil-insert-state-exit-hook #'sis-set-english)))
 
+(use-package appine
+  :ensure t
+  :vc (:url "https://github.com/chaoswork/appine")
+  :defer t
+  :custom
+  (appine-use-for-org-links t)
+  :bind (("C-x a a" . appine)
+         ("C-x a u" . appine-open-url)
+         ("C-x a o" . appine-open-file)))
+
 (provide 'init-local-macos)
 ;;; init-local-macos.el ends here
