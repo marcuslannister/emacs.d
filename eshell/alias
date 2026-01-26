@@ -1,4 +1,4 @@
-alias em $EMACSC -n $1
+alias em $EMACSC -n $*
 alias wb $WRITEBACKUP $*
 
 alias e eza
@@ -24,3 +24,5 @@ alias jn jj new
 alias jsh jj show
 alias jlng jj log --no-graph
 alias jre jj restore
+
+alias nrd nix run github:serokell/deploy-rs -- -s
