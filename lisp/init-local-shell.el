@@ -34,7 +34,10 @@
   ;;           #'eat-eshell-visual-command-mode)
 
   ;; For `eat-eshell-mode'.
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
+  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
+
+  (use-package ghostel
+    :ensure t))
 
 (use-package eshell
   :ensure nil

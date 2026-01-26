@@ -177,6 +177,7 @@ ARGS are additional arguments."
   ;; shell
   (kbd "<leader> es") '("start a eshell" . eshell)
   (kbd "<leader> ec") '("Open eshell current directory" . eshell-current-directory)
+  (kbd "<leader> gt") '("start a ghostel terminal buffer" . ghostel)
 
   ;; blinko
   (kbd "<leader> blr") '("blinko post region" . blinko-post-region)
