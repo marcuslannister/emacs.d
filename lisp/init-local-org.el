@@ -24,7 +24,10 @@
         org-fontify-todo-headline t
         org-fontify-whole-heading-line t
         org-fontify-quote-and-verse-blocks t
-        org-pretty-entities t))
+        org-pretty-entities t
+        ;; Require braces for scripts so plain identifiers like Test_1
+        ;; do not render as subscripts in headings.
+        org-use-sub-superscripts '{}))
 
 
 
