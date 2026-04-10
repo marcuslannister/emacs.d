@@ -2,6 +2,8 @@
 ;;; Commentary:
 ;;; Code:
 
+(require 'cl-lib)
+
 (defun ml/eshell--script-for-os (base)
   "Return the eshell script path for BASE, preferring OS-specific files."
   (let* ((dir (expand-file-name "eshell" user-emacs-directory))
@@ -166,9 +168,9 @@ Stolen from aweshell."
 
 (defun eshell/pure-git-branch ()
   "Returns the current git branch."
-  (let ((branch (car (loop for match in (split-string (shell-command-to-string "git branch") "\n")
-                           when (string-match "^\*" match)
-                           collect match))))
+  (let ((branch (car (cl-loop for match in (split-string (shell-command-to-string "git branch") "\n")
+                              when (string-match "^\*" match)
+                              collect match))))
     (if (not (eq branch nil))
         (concat " " (substring branch 2))
       "")))

@@ -11,7 +11,7 @@
 
 (defun xref-in-definition-p ()
   "判断当前点是否在函数定义的名称位置。"
-  (when-let ((sym (symbol-at-point)))
+  (when-let* ((sym (symbol-at-point)))
     (save-excursion
       (beginning-of-thing 'symbol)
       (and ;; 向前搜索最近的左括号
