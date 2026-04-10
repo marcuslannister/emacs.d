@@ -26,3 +26,10 @@ alias jlng jj log --no-graph
 alias jre jj restore
 
 alias nrd nix run github:serokell/deploy-rs -- -s
+
+alias gs git status
+alias gd git diff
+alias gp git push
+alias gpt git push --tag
+alias gpu git pull
+alias gpur git pull --rebase
