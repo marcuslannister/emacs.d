@@ -170,14 +170,18 @@ ARGS are additional arguments."
   ;; (kbd "<leader> jd") '("Show diff" . majutsu-diff)
 
   ;; gptel
-  (kbd "<leader> gpt") '("start a chat" . gptel)
-  (kbd "<leader> gps") '("submit prompt to llm" . gptel-send)
-  (kbd "<leader> gpm") '("change prompt" . gptel-menu)
+  ;; (kbd "<leader> gpt") '("start a chat" . gptel)
+  ;; (kbd "<leader> gps") '("submit prompt to llm" . gptel-send)
+  ;; (kbd "<leader> gpm") '("change prompt" . gptel-menu)
+
+  ;; gt
+  (kbd "<leader> gt") '("translate" . gt-translate)
+  (kbd "<leader> gp") '("polish sentence" . ml-gt-polish-using-llm)
 
   ;; shell
   (kbd "<leader> es") '("start a eshell" . eshell)
   (kbd "<leader> ec") '("Open eshell current directory" . eshell-current-directory)
-  (kbd "<leader> gt") '("start a ghostel terminal buffer" . ghostel)
+  (kbd "<leader> gh") '("start a ghostel terminal buffer" . ghostel)
 
   ;; blinko
   (kbd "<leader> blr") '("blinko post region" . blinko-post-region)
