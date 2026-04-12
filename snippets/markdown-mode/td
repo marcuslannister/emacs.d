@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Markdown todo
+# key: td
+# --
+- [ ] $0
