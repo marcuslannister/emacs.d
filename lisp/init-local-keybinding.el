@@ -200,6 +200,7 @@ ARGS are additional arguments."
 
   ;; denote journal
   (kbd "<leader> jn") '("Creat a entry" . my/denote-journal-new-or-existing-entry)
+  (kbd "<leader> jt") '("Create entry with todos" . my/denote-journal-new-entry-with-open-todos)
   (kbd "<leader> jo") '("Open current journal" . denote-journal-new-or-existing-entry))
 
 ;; Configure hjkl for Org Agenda
