@@ -135,6 +135,7 @@ ARGS are additional arguments."
 
   ;; delete
   (kbd "<leader> dd") '("Kill line" . kill-line)
+  (kbd "<leader> dw") '("delete trailing whitespace" . delete-trailing-whitespace)
 
   ;; tab
   (kbd "<leader> tn") '("Create new tab" . tab-new)
