@@ -16,6 +16,7 @@ Run `./test-startup.sh` before every commit; it exercises the same hooks as CI a
 
 ## Commit & Pull Request Guidelines
 Adopt Conventional Commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`) as seen in recent history. Keep commits focused: one module or behaviour change per commit, accompanied by rationale in the message body. Pull requests should include a concise summary, mention the commands you ran (`./test-startup.sh`, manual sessions), and link any tracked issues. Screenshots or short demos are welcome when UI behaviour changes. Do not bundle personal config tweaks; keep the repo clean and reproducible.
+Use `jj` for version-control workflows in this repo; prefer `jj status`, `jj diff`, `jj log`, `jj commit`, and related `jj` commands instead of Git porcelain commands when inspecting or recording changes.
 
 ## Configuration & Safety Notes
 Never commit machine-specific artifacts (`transient/`, `undo-fu-session/`, cache files). If you add new optional tooling, gate it with `maybe-require-package` and guard macOS-specific code with `*is-a-mac*`. When touching startup performance, measure with `M-x profiler-start` or the existing benchmarking hooks before merging. Respect the "never break userspace" rule: changes must preserve a clean startup for existing users without forcing resets of their local `custom.el`.
