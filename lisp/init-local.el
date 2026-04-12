@@ -169,6 +169,9 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 (use-package yasnippet
   :ensure t
   :config
+  (let ((repo-snippets-dir (expand-file-name "snippets" user-emacs-directory)))
+    (when (file-directory-p repo-snippets-dir)
+      (add-to-list 'yas-snippet-dirs repo-snippets-dir)))
   (yas-global-mode 1))
 
 (use-package yasnippet-snippets
