@@ -1,7 +1,7 @@
 ;; windows-config.el - windows specific settings  -*- lexical-binding: t; -*-
 
 ;; Windows paths with forward slashes
-(setq default-directory "c:/Users/xxx/")
+(setq default-directory "~/")
 
 ;; Default browser on Windows
 (setq browse-url-browser-function 'browse-url-default-windows-browser)
