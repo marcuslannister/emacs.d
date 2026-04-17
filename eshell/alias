@@ -29,8 +29,8 @@ alias nrd nix run github:serokell/deploy-rs -- -s
 
 alias gs git status
 alias gd git diff
-alias gp git push
+alias gps git push
 alias gpt git push --tag
-alias gpu git pull
-alias gpur git pull --rebase
-alias gl git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+alias gpl git pull
+alias gplr git pull --rebase
+alias gl git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit -5
