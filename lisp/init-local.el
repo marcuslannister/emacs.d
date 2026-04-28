@@ -49,13 +49,18 @@
   (add-to-list 'load-path dir))
 (require 'async-installer)
 
-
+;; ~/.emacs.d/init.el
+(setq async-installer-reload-files
+      (list (expand-file-name "lisp/package-list.el" user-emacs-directory)))
 
+(async-installer-reload)
+(async-installer-auto-reload-mode 1)
+
+
 ;; Load themes config
 (require 'init-local-themes)
 
 
-
 (use-package evil
   :ensure t
   :demand t
