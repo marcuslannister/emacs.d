@@ -3,27 +3,25 @@
 ;;; Code:
 
 (async-installer-git-add "https://github.com/zawatton/anvil.el.git"
-                         :tag "v0.4.1"
+                         :tag "v1.0.0"
                          :main "anvil.el")
 
 (let ((anvil-dir (expand-file-name "external-packages/anvil.el" user-emacs-directory)))
   (when (file-directory-p anvil-dir)
     (add-to-list 'load-path anvil-dir)))
 
-;; Start Anvil when it has already been installed by async-installer.
-(when (require 'anvil nil t)
-  (require 'anvil-server-commands nil t)
+(require 'anvil)
+;; anvil-server-commands holds anvil-server-start / -stop etc.  It is
+;; autoload-cookied, but manual-install (plain add-to-list + require) does
+;; not generate loaddefs, so we require it explicitly.
+(require 'anvil-server-commands)
+(anvil-enable)
+(anvil-server-start)
 
-  ;; Choose which modules to load (defaults shown)
-  (setq anvil-modules '(worker eval org file host git proc fs emacs text clipboard data net))
+(setq anvil-modules '(worker eval org file host git proc fs emacs text clipboard data net))
 
-  ;; Enable optional modules
-  (setq anvil-optional-modules '(xlsx pdf ide http cron browser))
-
-  (anvil-enable)
-  (when (and (fboundp 'anvil-server-start)
-             (not (bound-and-true-p anvil-server--running)))
-    (anvil-server-start)))
+;; Enable optional modules
+(setq anvil-optional-modules '(xlsx pdf ide http cron browser))
 
 
 (provide 'init-local-ai)
