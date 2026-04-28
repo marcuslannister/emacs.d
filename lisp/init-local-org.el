@@ -121,56 +121,6 @@
     (call-interactively 'org-clock-in)))
 
 
-
-(add-to-list 'load-path "~/github/org-now/")
-(require 'org-now)
-(setq org-now-location '("~/org/now.org" "Now"))
-
-(setq org-now-window-side 'bottom)
-;; fixme: when setting the window to the bottom, use this patch
-;; it should be upstreamed to the original org-now
-(with-eval-after-load 'org-now
-  (defun org-now-buffer ()
-    (org-now--ensure-configured)
-    (or (get-buffer "*org-now*")
-        (let ((origin (current-buffer)))
-          (unwind-protect
-              (org-with-point-at (org-now--marker)
-                (let ((buf (clone-indirect-buffer "*org-now*" nil)))
-                  (with-current-buffer buf
-                    (when (> (length org-now-location) 1)
-                      (org-narrow-to-subtree))
-                    (setq header-line-format (propertize " org-now" 'face 'org-now-header))
-                    (toggle-truncate-lines 1)
-                    (rename-buffer "*org-now*")
-                    (run-hooks 'org-now-hook)
-                    (when org-now-default-cycle-level
-                      (org-global-cycle org-now-default-cycle-level)))
-                  buf))
-            (when (buffer-live-p origin)
-              (set-buffer origin))))))
-
-  (defun org-now ()
-    (interactive)
-    (let* ((buffer (org-now-buffer))
-           (window (get-buffer-window buffer)))
-      (if (eq (selected-window) window)
-          (quit-window nil window)
-        (select-window
-         (or window
-             (display-buffer-in-side-window
-              buffer
-              `((side . ,org-now-window-side)
-                (slot . 0)
-                (window-parameters .
-                                   ((no-delete-other-windows . t)
-                                    (no-other-window . ,org-now-no-other-window)))
-                ;; To keep using bottom layout, explicitly specify the height
-                (window-height . 0.2)))))))))
-
-
-
-
 ;; Show only top-level headlines
 (setq org-startup-folded 'content)
 
@@ -194,7 +144,7 @@
                            ((org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "PROJECT" "DELEGATED")))
                             (org-agenda-overriding-header "Low-priority unfinished tasks:")))
                 (tags "+INBOX"
-                           ((org-agenda-overriding-header "Inbox entries:")))
+                      ((org-agenda-overriding-header "Inbox entries:")))
                 (agenda ""))
                ((org-agenda-compact-blocks nil)))))  ; Set compact-blocks to nil only for this view
     (unless (assoc "p" org-agenda-custom-commands)
