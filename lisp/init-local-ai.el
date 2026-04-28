@@ -2,10 +2,6 @@
 ;;; Commentary:
 ;;; Code:
 
-(async-installer-git-add "https://github.com/zawatton/anvil.el.git"
-                         :tag "v1.0.0"
-                         :main "anvil.el")
-
 (let ((anvil-dir (expand-file-name "external-packages/anvil.el" user-emacs-directory)))
   (when (file-directory-p anvil-dir)
     (add-to-list 'load-path anvil-dir)))
