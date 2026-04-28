@@ -137,8 +137,7 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
  (IS-WINDOWS
   (require 'init-local-windows nil t))
  (IS-MAC
-  (require 'init-local-macos nil t)
-  (require 'init-local-ai nil t))
+  (require 'init-local-macos nil t))
  (IS-LINUX
   (require 'init-local-linux nil t)))
 
@@ -361,6 +360,7 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
     (gt-insert-render :type 'replace))))
 
 
+(require 'init-local-ai nil t)
 
 (require 'init-local-shell)
 
@@ -369,7 +369,6 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 (require 'init-local-program)
 
 
-
 (defun ml-update-all-packages ()
   "Update all installed packages."
   (interactive)
