@@ -3,4 +3,4 @@
 ;;; Code:
 (async-installer-git-add "https://github.com/zawatton/anvil.el.git"
                          :tag "v1.1.1"
-                         :master "anvil.el")
+                         :main "anvil.el")
