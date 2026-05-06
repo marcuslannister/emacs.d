@@ -147,6 +147,8 @@ ARGS are additional arguments."
   ;; git
   (kbd "<leader> gs") '("Show status" . magit-status)
   (kbd "<leader> gb") '("Switch git status buffer" . emacs-solo/switch-git-status-buffer)
+  (kbd "<leader> gi") '("Show magit" . magit)
+  (kbd "<leader> gd") '("Show git diff working tree" . magit-diff-working-tree)
 
   ;; search
   (kbd "<leader> sgr") '("Search with rg" . rgrep)
