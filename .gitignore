@@ -65,6 +65,6 @@ projects.eld
 !/eshell/profile-mac
 !/eshell/profile-windows
 anvil-state.db
-
+anvil-init.el
 *.log
 external-packages/
