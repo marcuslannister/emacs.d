@@ -10,6 +10,20 @@
 
 (setq package-enable-at-startup nil)
 
+;; Prefer newer source files over stale .elc — must be set before any other
+;; load happens so it applies to early-init.el's own re-loads on next start.
+(setq load-prefer-newer t)
+
+;; Initialize package.el early so init.el can `use-package' compile-angel
+;; before init-elpa.el runs.  init-elpa.el later re-applies these settings;
+;; package-initialize is idempotent.
+(require 'package)
+(setq package-user-dir
+      (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
+                        user-emacs-directory))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
 ;; So we can detect this having been loaded
 (provide 'early-init)
 
