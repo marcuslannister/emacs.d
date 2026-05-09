@@ -87,6 +87,8 @@
 (use-package evil-collection
   :after evil
   :ensure t
+  :init
+  (setq evil-collection-repl-submit-state 'insert)
   :config
   (evil-collection-init))
 
