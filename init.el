@@ -244,12 +244,15 @@
 
 
 
-;; Allow access from emacsclient
-(add-hook 'after-init-hook
-          (lambda ()
-            (require 'server)
-            (unless (server-running-p)
-              (server-start))))
+;; Allow access from emacsclient — start early so failures elsewhere
+;; (e.g. in init-local-ai) cannot prevent the server from running.
+;; Force-delete any stale server file from a previous session before
+;; starting; on Windows, `server-start' otherwise sometimes silently
+;; no-ops when the old socket/file references a dead PID.
+(require 'server)
+(when (server-running-p)
+  (server-force-delete))
+(server-start)
 
 ;; Variables configured via the interactive 'customize' interface
 (when (file-exists-p custom-file)
