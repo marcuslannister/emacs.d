@@ -66,5 +66,6 @@ projects.eld
 !/eshell/profile-windows
 anvil-state.db
 anvil-init.el
+anvil-worker-init.el
 *.log
 external-packages/
