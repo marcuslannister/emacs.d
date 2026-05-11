@@ -67,7 +67,8 @@ locate PACKAGE."
 
 (setq package-enable-at-startup nil)
 (setq package-native-compile t)
-(package-initialize)
+(unless (bound-and-true-p package--initialized)
+  (package-initialize))
 
 
 ;; package.el updates the saved version of package-selected-packages correctly only
