@@ -128,6 +128,91 @@
 
 (setq org-agenda-block-separator (make-string 100 ?─))
 
+;; 18.3.5 Agenda view tweaks from https://doc.norang.ca/org-mode.html,
+;; adapted for the current Org agenda variable names and time-grid shape.
+(with-eval-after-load 'org-agenda
+  (setq org-agenda-show-future-repeats t
+        org-agenda-show-all-dates t
+        org-agenda-start-on-weekday 1
+        org-agenda-time-grid '((daily today remove-match)
+                               (900 1100 1300 1500 1700)
+                               "......"
+                               "----------------")
+        org-agenda-tags-column -102
+        org-agenda-cmp-user-defined #'bh/agenda-sort))
+
+(defun bh/agenda-sort (a b)
+  "Sort agenda strings A and B using the Norang daily agenda order."
+  (or (bh/agenda-sort-test #'bh/is-not-scheduled-or-deadline a b)
+      (bh/agenda-sort-test #'bh/is-due-deadline a b)
+      (bh/agenda-sort-test-num #'bh/is-late-deadline #'> a b)
+      (bh/agenda-sort-test #'bh/is-scheduled-today a b)
+      (bh/agenda-sort-test-num #'bh/is-scheduled-late #'> a b)
+      (bh/agenda-sort-test-num #'bh/is-pending-deadline #'< a b)))
+
+(defun bh/agenda-sort-test (fn a b)
+  "Return an agenda sort result for A and B using predicate FN."
+  (let ((match-a (funcall fn a))
+        (match-b (funcall fn b)))
+    (cond
+     ((and match-a match-b) nil)
+     (match-a -1)
+     (match-b 1))))
+
+(defun bh/agenda-sort-test-num (fn compfn a b)
+  "Return an agenda sort result for A and B using numeric FN and COMPFN."
+  (let ((num-a (funcall fn a))
+        (num-b (funcall fn b)))
+    (cond
+     ((and num-a num-b)
+      (cond
+       ((= num-a num-b) nil)
+       ((funcall compfn num-a num-b) -1)
+       (t 1)))
+     (num-a -1)
+     (num-b 1))))
+
+(defun bh/is-not-scheduled-or-deadline (date-str)
+  "Return non-nil if DATE-STR is neither scheduled nor a deadline."
+  (and (not (bh/is-deadline date-str))
+       (not (bh/is-scheduled date-str))))
+
+(defun bh/is-due-deadline (date-str)
+  "Return non-nil if DATE-STR is a deadline due today."
+  (string-match-p "Deadline:" date-str))
+
+(defun bh/is-late-deadline (date-str)
+  "Return overdue deadline days from DATE-STR, or nil."
+  (bh/agenda-match-number "\\([0-9]+\\) d\\. ago:" date-str))
+
+(defun bh/is-pending-deadline (date-str)
+  "Return pending deadline days from DATE-STR, or nil."
+  (bh/agenda-match-number "In \\([0-9]+\\)d\\.:" date-str))
+
+(defun bh/is-deadline (date-str)
+  "Return non-nil if DATE-STR describes any deadline state."
+  (or (bh/is-due-deadline date-str)
+      (bh/is-late-deadline date-str)
+      (bh/is-pending-deadline date-str)))
+
+(defun bh/is-scheduled (date-str)
+  "Return non-nil if DATE-STR describes any scheduled state."
+  (or (bh/is-scheduled-today date-str)
+      (bh/is-scheduled-late date-str)))
+
+(defun bh/is-scheduled-today (date-str)
+  "Return non-nil if DATE-STR is scheduled today."
+  (string-match-p "Scheduled:" date-str))
+
+(defun bh/is-scheduled-late (date-str)
+  "Return late scheduled days from DATE-STR, or nil."
+  (bh/agenda-match-number "Sched\\.\\s-*\\([0-9]+\\)x:" date-str))
+
+(defun bh/agenda-match-number (regexp date-str)
+  "Return the first numeric match for REGEXP in DATE-STR, or nil."
+  (when (string-match regexp date-str)
+    (string-to-number (match-string 1 date-str))))
+
 (with-eval-after-load 'org
   (let ((cmd '("p" "List priority and schedule tasks"
                ((tags-todo "+PRIORITY=\"A\""
