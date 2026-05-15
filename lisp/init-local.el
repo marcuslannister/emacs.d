@@ -288,13 +288,13 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 ;; Load org config
 (require 'init-local-org)
 
+(defun my/setup-vim-tab-bar ()
+  (vim-tab-bar-mode 1)
+  (setq tab-bar-tab-hints t))
+
 (use-package vim-tab-bar
   :ensure t
   :commands vim-tab-bar-mode
-  :init
-  (defun my/setup-vim-tab-bar ()
-    (vim-tab-bar-mode 1)
-    (setq tab-bar-tab-hints t))
   :hook (after-init . my/setup-vim-tab-bar))
 
 ;; restart emacs command
