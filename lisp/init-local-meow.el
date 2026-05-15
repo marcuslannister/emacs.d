@@ -113,14 +113,6 @@
    '("\\" . quoted-insert)
    '("<escape>" . ignore)))
 
-(when window-system
-  (setq meow-replace-state-name-list
-        '((normal . "🅝")
-          (beacon . "🅑")
-          (insert . "🅘")
-          (motion . "🅜")
-          (keypad . "🅚")))
-  )
 (setq
  meow-esc-delay 0.001
  meow-select-on-change t
@@ -131,7 +123,6 @@
  meow-expand-hint-remove-delay 2.0)
 (meow-setup)
 (meow-setup-indicator)
-(meow-setup-line-number)
 (unless (bound-and-true-p meow-global-mode)
   (meow-global-mode 1))
 (meow-esc-mode 1)
