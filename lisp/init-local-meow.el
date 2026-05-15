@@ -4,6 +4,7 @@
 
 (require 'meow)
 (defun meow-setup ()
+  "Configure meow leader, motion, and normal-state keybindings."
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
   (meow-motion-overwrite-define-key
    '("j" . meow-next)
@@ -111,6 +112,8 @@
    '("%" . meow-query-replace-regexp)
    '("'" . repeat)
    '("\\" . quoted-insert)
+   '("<" . beginning-of-buffer)
+   '(">" . end-of-buffer)
    '("<escape>" . ignore)))
 
 (setq
@@ -129,4 +132,4 @@
 
 
 (provide 'init-local-meow)
-;;; init-local-ai.el ends here
+;;; init-local-meow.el ends here
