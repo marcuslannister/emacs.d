@@ -404,7 +404,9 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 ;; just for looks
 (use-package vertico-posframe
   :ensure t
-  :hook (after-init . vertico-posframe-mode)
+  :after vertico
+  :init (vertico-mode 1)
+  :config (vertico-posframe-mode 1)
   :custom
   (vertico-posframe-parameters
    '((left-fringe . 8)
