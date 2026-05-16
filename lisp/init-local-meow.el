@@ -3,6 +3,12 @@
 ;;; Code:
 
 (require 'meow)
+
+(defun my/save-all-buffers ()
+  "Save every modified file-visiting buffer without prompting."
+  (interactive)
+  (save-some-buffers t))
+
 (defun meow-setup ()
   "Configure meow leader, motion, and normal-state keybindings."
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -38,11 +44,20 @@
    '("c" . comment-dwim)
    '("k" . kill-this-buffer)
    '("p" . project-find-file)
-   '("b" . switch-to-buffer)
    '("f" . find-file)
    '("i" . imenu)
    '("F" . toggle-frame-maximized)
    '("r" . recentf-open)
+   ;; buffer
+   '("b n" . next-buffer)
+   '("b p" . previous-buffer)
+   '("b s" . basic-save-buffer)
+   '("b a" . my/save-all-buffers)
+   '("b k" . kill-current-buffer)
+   '("b o" . read-only-mode)
+   '("b m" . view-echo-area-messages)
+   '("b e" . eval-buffer)
+   '("b r" . revert-buffer)
    ;; denote journal
    '("j n" . my/denote-journal-new-or-existing-entry)
    '("j t" . my/denote-journal-new-entry-with-open-todos)
@@ -145,6 +160,16 @@
     "SPC ."   "Find file"
     "SPC ,"   "Switch buffer"
     "SPC ;"   "Insert timestamp"
+    "SPC b"   "buffer"
+    "SPC b n" "Next buffer"
+    "SPC b p" "Prev buffer"
+    "SPC b s" "Save buffer"
+    "SPC b a" "Save all buffers"
+    "SPC b k" "Kill current buffer"
+    "SPC b o" "Read only mode"
+    "SPC b m" "View message buffer"
+    "SPC b e" "Eval buffer"
+    "SPC b r" "Revert buffer"
     "SPC j"   "denote journal"
     "SPC j n" "Create an entry"
     "SPC j t" "Entry with todos"
