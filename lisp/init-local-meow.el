@@ -119,6 +119,7 @@
 (setq
  meow-esc-delay 0.001
  meow-select-on-change t
+ meow-use-clipboard t
  meow-cursor-type-normal 'box
  meow-cursor-type-insert '(bar . 4)
  meow-keypad-describe-delay 0.5
