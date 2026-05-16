@@ -31,14 +31,12 @@
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet)
    ;; high frequency
-   '("e" . "C-x C-e")
    '("<SPC>" . "C-x C-s")
    '(":" . execute-extended-command)
    '("." . find-file)
    '("," . switch-to-buffer)
    '(";" . insert-timestamp)
    '("k" . kill-this-buffer)
-   '("p" . project-find-file)
    '("f" . find-file)
    '("i" . imenu)
    '("F" . toggle-frame-maximized)
@@ -63,6 +61,13 @@
    '("c g" . org-clock-goto)
    '("c l t" . bh/clock-in-last-task)
    '("c s" . kk/org-clock-in-switch-task)
+   ;; e: eval / eshell / ediff
+   '("e e" . "C-x C-e")
+   '("e s" . eshell)
+   '("e c" . eshell-current-directory)
+   '("e d" . ediff)
+   '("e b" . ediff-buffers)
+   '("e w" . ml-init-ediff-current-with-other-window)
    ;; d: edit / denote / dired
    '("d d" . kill-line)
    '("d w" . delete-trailing-whitespace)
@@ -72,11 +77,18 @@
    '("d c" . ai/cd-to-current-buffer)
    '("d i" . dired)
    '("d p" . pwd)
-   ;; git
+   ;; git / gt-translate / ghostel
    '("g s" . magit-status)
    '("g b" . emacs-solo/switch-git-status-buffer)
    '("g i" . magit)
    '("g d" . magit-diff-working-tree)
+   '("g t" . gt-translate)
+   '("g p" . ml-gt-polish-using-llm)
+   '("g h" . ghostel)
+   ;; highlight
+   '("h l" . pulsar-highlight-permanently-dwim)
+   ;; project
+   '("p p" . project-find-file)
    ;; denote journal
    '("j n" . my/denote-journal-new-or-existing-entry)
    '("j t" . my/denote-journal-new-entry-with-open-todos)
@@ -246,6 +258,13 @@
     "SPC c l"   "last task"
     "SPC c l t" "Clock in last task"
     "SPC c s"   "Switch task"
+    "SPC e"   "eval / eshell / ediff"
+    "SPC e e" "Eval last sexp"
+    "SPC e s" "Start eshell"
+    "SPC e c" "Eshell current directory"
+    "SPC e d" "Ediff"
+    "SPC e b" "Ediff buffers"
+    "SPC e w" "Ediff current vs other window"
     "SPC d"   "edit / denote / dired"
     "SPC d d" "Kill line"
     "SPC d w" "Delete trailing whitespace"
@@ -255,11 +274,18 @@
     "SPC d c" "Cd to current buffer dir"
     "SPC d i" "Dired"
     "SPC d p" "Show current directory"
-    "SPC g"   "git"
+    "SPC g"   "git / translate / ghostel"
     "SPC g s" "Magit status"
     "SPC g b" "Switch git status buffer"
     "SPC g i" "Magit"
     "SPC g d" "Git diff working tree"
+    "SPC g t" "Translate"
+    "SPC g p" "Polish sentence"
+    "SPC g h" "Ghostel terminal"
+    "SPC h"   "highlight"
+    "SPC h l" "Permanently highlight line"
+    "SPC p"   "project"
+    "SPC p p" "Project find file"
     "SPC j"   "denote journal"
     "SPC j n" "Create an entry"
     "SPC j t" "Entry with todos"
