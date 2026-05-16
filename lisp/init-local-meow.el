@@ -65,6 +65,9 @@
    ;; session
    '("q q" . save-buffers-kill-terminal)
    '("q r" . restart-emacs)
+   ;; window
+   '("w o" . delete-other-windows)
+   '("w q" . delete-window)
    )
   (meow-normal-define-key
    '("0" . meow-expand-0)
@@ -176,7 +179,10 @@
     "SPC j o" "Open current journal"
     "SPC q"   "session"
     "SPC q q" "Quit Emacs"
-    "SPC q r" "Restart Emacs"))
+    "SPC q r" "Restart Emacs"
+    "SPC w"   "window"
+    "SPC w o" "Only current window"
+    "SPC w q" "Close current window"))
 
 
 (provide 'init-local-meow)
