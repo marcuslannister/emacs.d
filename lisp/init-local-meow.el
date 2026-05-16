@@ -117,6 +117,7 @@
    '("t n" . tab-new)
    '("t c" . tab-close)
    ;; window
+   '("w w" . other-window)
    '("w o" . delete-other-windows)
    '("w q" . delete-window)
    '("w v" . split-window-right)
@@ -208,6 +209,8 @@
  meow-cursor-type-insert '(bar . 4)
  meow-keypad-describe-delay 0.5
  meow-keypad-leader-dispatch "C-c"
+ ;; Free `g' so SPC g ... reaches our git leader instead of becoming C-M-.
+ meow-keypad-ctrl-meta-prefix nil
  meow-expand-hint-remove-delay 2.0)
 (meow-setup)
 (meow-setup-indicator)
@@ -302,6 +305,7 @@
     "SPC t n" "New tab"
     "SPC t c" "Close tab"
     "SPC w"   "window"
+    "SPC w w" "Other window"
     "SPC w o" "Only current window"
     "SPC w q" "Close current window"
     "SPC w v" "Split window right"
