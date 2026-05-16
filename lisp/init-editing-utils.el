@@ -196,7 +196,8 @@
 (global-set-key [M-S-up] 'move-dup-move-lines-up)
 (global-set-key [M-S-down] 'move-dup-move-lines-down)
 
-(global-set-key (kbd "C-c d") 'move-dup-duplicate-down)
+;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and needs `d' as a prefix.
+;; (global-set-key (kbd "C-c d") 'move-dup-duplicate-down)
 (global-set-key (kbd "C-c u") 'move-dup-duplicate-up)
 
 
