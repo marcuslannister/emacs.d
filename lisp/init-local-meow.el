@@ -63,10 +63,20 @@
    '("c g" . org-clock-goto)
    '("c l t" . bh/clock-in-last-task)
    '("c s" . kk/org-clock-in-switch-task)
-   ;; delete
+   ;; d: edit / denote / dired
    '("d d" . kill-line)
    '("d w" . delete-trailing-whitespace)
    '("d D" . move-dup-duplicate-down)
+   '("d n" . denote)
+   '("d r" . denote-rename-file)
+   '("d c" . ai/cd-to-current-buffer)
+   '("d i" . dired)
+   '("d p" . pwd)
+   ;; git
+   '("g s" . magit-status)
+   '("g b" . emacs-solo/switch-git-status-buffer)
+   '("g i" . magit)
+   '("g d" . magit-diff-working-tree)
    ;; denote journal
    '("j n" . my/denote-journal-new-or-existing-entry)
    '("j t" . my/denote-journal-new-entry-with-open-todos)
@@ -96,11 +106,25 @@
    ;; session
    '("q q" . save-buffers-kill-terminal)
    '("q r" . restart-emacs)
+   ;; search
+   '("s g r" . rgrep)
+   '("s c g" . consult-ripgrep)
+   '("s c f" . consult-fd)
+   '("s c h" . consult-org-heading)
+   '("s g h n" . rg-search-everything)
+   '("s c d" . consult-dir)
+   ;; tab
+   '("t n" . tab-new)
+   '("t c" . tab-close)
    ;; window
    '("w o" . delete-other-windows)
    '("w q" . delete-window)
    '("w v" . split-window-right)
    '("w h" . split-window-below)
+   ;; zoxide
+   '("z f" . zoxide-find-file)
+   '("z t" . zoxide-travel)
+   '("z d" . zoxide-cd)
    )
   (meow-normal-define-key
    '("0" . meow-expand-0)
@@ -173,6 +197,7 @@
    '("\\" . quoted-insert)
    '("<" . beginning-of-buffer)
    '(">" . end-of-buffer)
+   '("/" . meow-visit)
    '("<escape>" . ignore)))
 
 (setq
@@ -218,10 +243,20 @@
     "SPC c l"   "last task"
     "SPC c l t" "Clock in last task"
     "SPC c s"   "Switch task"
-    "SPC d"   "delete"
+    "SPC d"   "edit / denote / dired"
     "SPC d d" "Kill line"
     "SPC d w" "Delete trailing whitespace"
     "SPC d D" "Duplicate line down"
+    "SPC d n" "Create a denote"
+    "SPC d r" "Rename denote file"
+    "SPC d c" "Cd to current buffer dir"
+    "SPC d i" "Dired"
+    "SPC d p" "Show current directory"
+    "SPC g"   "git"
+    "SPC g s" "Magit status"
+    "SPC g b" "Switch git status buffer"
+    "SPC g i" "Magit"
+    "SPC g d" "Git diff working tree"
     "SPC j"   "denote journal"
     "SPC j n" "Create an entry"
     "SPC j t" "Entry with todos"
@@ -253,11 +288,28 @@
     "SPC q"   "session"
     "SPC q q" "Quit Emacs"
     "SPC q r" "Restart Emacs"
+    "SPC s"       "search"
+    "SPC s g"     "rg"
+    "SPC s g r"   "Search with rg"
+    "SPC s g h"   "rg hidden"
+    "SPC s g h n" "Search with rg everything"
+    "SPC s c"     "consult"
+    "SPC s c g"   "Consult ripgrep"
+    "SPC s c f"   "Consult fd"
+    "SPC s c h"   "Consult org heading"
+    "SPC s c d"   "Consult dir"
+    "SPC t"   "tab"
+    "SPC t n" "New tab"
+    "SPC t c" "Close tab"
     "SPC w"   "window"
     "SPC w o" "Only current window"
     "SPC w q" "Close current window"
     "SPC w v" "Split window right"
-    "SPC w h" "Split window below"))
+    "SPC w h" "Split window below"
+    "SPC z"   "zoxide"
+    "SPC z f" "Find file under zoxide path"
+    "SPC z t" "Travel to zoxide path"
+    "SPC z d" "Cd to zoxide path"))
 
 
 (provide 'init-local-meow)
