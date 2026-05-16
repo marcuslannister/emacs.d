@@ -63,6 +63,10 @@
    '("c g" . org-clock-goto)
    '("c l t" . bh/clock-in-last-task)
    '("c s" . kk/org-clock-in-switch-task)
+   ;; delete
+   '("d d" . kill-line)
+   '("d w" . delete-trailing-whitespace)
+   '("d D" . move-dup-duplicate-down)
    ;; denote journal
    '("j n" . my/denote-journal-new-or-existing-entry)
    '("j t" . my/denote-journal-new-entry-with-open-todos)
@@ -214,6 +218,10 @@
     "SPC c l"   "last task"
     "SPC c l t" "Clock in last task"
     "SPC c s"   "Switch task"
+    "SPC d"   "delete"
+    "SPC d d" "Kill line"
+    "SPC d w" "Delete trailing whitespace"
+    "SPC d D" "Duplicate line down"
     "SPC j"   "denote journal"
     "SPC j n" "Create an entry"
     "SPC j t" "Entry with todos"
