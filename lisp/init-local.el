@@ -440,8 +440,8 @@ The completion candidates include the Git status of each file."
 
 
 
-;; Load keybinding
-(require 'init-local-keybinding)
+;; ;; Load keybinding
+;; (require 'init-local-keybinding)
 
 (provide 'init-local)
 ;;; init-local.el ends here

@@ -30,10 +30,6 @@
    '("0" . meow-digit-argument)
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet)
-   ;; windows
-   '("o" . delete-other-windows)
-   '("=" . split-window-right)
-   '("-" . split-window-below)
    ;; high frequency
    '("e" . "C-x C-e")
    '("<SPC>" . "C-x C-s")
@@ -41,7 +37,6 @@
    '("." . find-file)
    '("," . switch-to-buffer)
    '(";" . insert-timestamp)
-   '("c" . comment-dwim)
    '("k" . kill-this-buffer)
    '("p" . project-find-file)
    '("f" . find-file)
@@ -58,16 +53,50 @@
    '("b m" . view-echo-area-messages)
    '("b e" . eval-buffer)
    '("b r" . revert-buffer)
+   ;; comment / clock
+   '("c c" . comment-dwim)
+   '("c t" . org-clock-update-time-maybe)
+   '("c i" . org-clock-in)
+   '("c o" . org-clock-out)
+   '("c p i" . bh/punch-in)
+   '("c p o" . bh/punch-out)
+   '("c g" . org-clock-goto)
+   '("c l t" . bh/clock-in-last-task)
+   '("c s" . kk/org-clock-in-switch-task)
    ;; denote journal
    '("j n" . my/denote-journal-new-or-existing-entry)
    '("j t" . my/denote-journal-new-entry-with-open-todos)
    '("j o" . denote-journal-new-or-existing-entry)
+   ;; blinko (note)
+   '("n b" . blinko-post-buffer)
+   '("n r" . blinko-post-region)
+   '("n p" . blinko-post-content)
+   ;; org
+   '("o a" . org-agenda)
+   '("o l" . org-todo-list)
+   '("o m" . org-tags-view)
+   '("o v" . org-search-view)
+   '("o t" . org-todo)
+   '("o c" . org-capture)
+   '("o d" . org-deadline)
+   '("o s" . org-schedule)
+   '("o r" . org-refile)
+   '("o p" . org-priority)
+   '("o g" . org-goto)
+   '("o o" . org-open-at-point)
+   '("o i l" . org-insert-link)
+   '("o i h" . org-insert-heading)
+   '("o i s" . org-insert-subheading)
+   '("o n l" . org-now-link)
+   '("o n t" . org-now)
    ;; session
    '("q q" . save-buffers-kill-terminal)
    '("q r" . restart-emacs)
    ;; window
    '("w o" . delete-other-windows)
    '("w q" . delete-window)
+   '("w v" . split-window-right)
+   '("w h" . split-window-below)
    )
   (meow-normal-define-key
    '("0" . meow-expand-0)
@@ -173,16 +202,54 @@
     "SPC b m" "View message buffer"
     "SPC b e" "Eval buffer"
     "SPC b r" "Revert buffer"
+    "SPC c"     "comment / clock"
+    "SPC c c"   "Comment dwim"
+    "SPC c t"   "Update time"
+    "SPC c i"   "Start clock"
+    "SPC c o"   "Stop clock"
+    "SPC c p"   "punch"
+    "SPC c p i" "Punch in clock"
+    "SPC c p o" "Punch out clock"
+    "SPC c g"   "Go to clock"
+    "SPC c l"   "last task"
+    "SPC c l t" "Clock in last task"
+    "SPC c s"   "Switch task"
     "SPC j"   "denote journal"
     "SPC j n" "Create an entry"
     "SPC j t" "Entry with todos"
     "SPC j o" "Open current journal"
+    "SPC n"   "blinko"
+    "SPC n b" "Post buffer"
+    "SPC n r" "Post region"
+    "SPC n p" "Post content"
+    "SPC o"     "org"
+    "SPC o a"   "Agenda"
+    "SPC o l"   "Todo list"
+    "SPC o m"   "Tags search"
+    "SPC o v"   "View search"
+    "SPC o t"   "Todo change"
+    "SPC o c"   "Capture"
+    "SPC o d"   "Insert deadline"
+    "SPC o s"   "Insert schedule"
+    "SPC o r"   "Refile"
+    "SPC o p"   "Change priority"
+    "SPC o g"   "Lookup location"
+    "SPC o o"   "Open at point"
+    "SPC o i"   "insert"
+    "SPC o i l" "Insert link"
+    "SPC o i h" "Insert heading"
+    "SPC o i s" "Insert subheading"
+    "SPC o n"   "now"
+    "SPC o n l" "Add link to org-now"
+    "SPC o n t" "Toggle org-now side window"
     "SPC q"   "session"
     "SPC q q" "Quit Emacs"
     "SPC q r" "Restart Emacs"
     "SPC w"   "window"
     "SPC w o" "Only current window"
-    "SPC w q" "Close current window"))
+    "SPC w q" "Close current window"
+    "SPC w v" "Split window right"
+    "SPC w h" "Split window below"))
 
 
 (provide 'init-local-meow)

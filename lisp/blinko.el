@@ -238,7 +238,8 @@ Returns a unibyte string suitable for HTTP transmission."
   "Keymap for Blinko commands.")
 
 (define-prefix-command 'blinko-prefix)
-(global-set-key (kbd "C-c b") blinko-keymap)
+;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and reclaims `b'.
+;; (global-set-key (kbd "C-c b") blinko-keymap)
 
 ;;; Provide
 
