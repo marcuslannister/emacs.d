@@ -31,7 +31,11 @@
    ;; high frequency
    '("e" . "C-x C-e")
    '("<SPC>" . "C-x C-s")
-   '(";" . comment-dwim)
+   '(":" . execute-extended-command)
+   '("." . find-file)
+   '("," . switch-to-buffer)
+   '(";" . insert-timestamp)
+   '("c" . comment-dwim)
    '("k" . kill-this-buffer)
    '("p" . project-find-file)
    '("b" . switch-to-buffer)
@@ -43,6 +47,9 @@
    '("j n" . my/denote-journal-new-or-existing-entry)
    '("j t" . my/denote-journal-new-entry-with-open-todos)
    '("j o" . denote-journal-new-or-existing-entry)
+   ;; session
+   '("q q" . save-buffers-kill-terminal)
+   '("q r" . restart-emacs)
    )
   (meow-normal-define-key
    '("0" . meow-expand-0)
@@ -134,10 +141,17 @@
 
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements
+    "SPC :"   "M-x"
+    "SPC ."   "Find file"
+    "SPC ,"   "Switch buffer"
+    "SPC ;"   "Insert timestamp"
     "SPC j"   "denote journal"
     "SPC j n" "Create an entry"
     "SPC j t" "Entry with todos"
-    "SPC j o" "Open current journal"))
+    "SPC j o" "Open current journal"
+    "SPC q"   "session"
+    "SPC q q" "Quit Emacs"
+    "SPC q r" "Restart Emacs"))
 
 
 (provide 'init-local-meow)
