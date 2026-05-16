@@ -37,7 +37,8 @@
 (define-key sanityinc/org-global-prefix-map (kbd "l") 'org-clock-in-last)
 (define-key sanityinc/org-global-prefix-map (kbd "i") 'org-clock-in)
 (define-key sanityinc/org-global-prefix-map (kbd "o") 'org-clock-out)
-(define-key global-map (kbd "C-c o") sanityinc/org-global-prefix-map)
+;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and reclaims `o'.
+;; (define-key global-map (kbd "C-c o") sanityinc/org-global-prefix-map)
 
 
 ;; Various preferences
@@ -108,7 +109,8 @@ typical word processor."
 
 ;;; Capturing
 
-(global-set-key (kbd "C-c c") 'org-capture)
+;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and needs `c' as a prefix.
+;; (global-set-key (kbd "C-c c") 'org-capture)
 
 (setq org-capture-templates
       `(("t" "todo" entry (file "")  ; "" => `org-default-notes-file'
