@@ -98,7 +98,8 @@
   :commands (undo-fu-only-undo
              undo-fu-only-redo
              undo-fu-only-redo-all
-             undo-fu-disable-checkpoint))
+             undo-fu-disable-checkpoint)
+  :bind ("C-r" . undo-fu-only-redo))
 
 (use-package undo-fu-session
   :ensure t
