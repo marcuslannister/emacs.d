@@ -11,9 +11,6 @@
    '("k" . meow-prev)
    '("<escape>" . ignore))
   (meow-leader-define-key
-   ;; SPC j/k will run the original command in MOTION state.
-   '("j" . "H-j")
-   '("k" . "H-k")
    ;; Use SPC (0-9) for digit arguments.
    '("1" . meow-digit-argument)
    '("2" . meow-digit-argument)
@@ -42,6 +39,10 @@
    '("i" . imenu)
    '("F" . toggle-frame-maximized)
    '("r" . recentf-open)
+   ;; denote journal
+   '("j n" . my/denote-journal-new-or-existing-entry)
+   '("j t" . my/denote-journal-new-entry-with-open-todos)
+   '("j o" . denote-journal-new-or-existing-entry)
    )
   (meow-normal-define-key
    '("0" . meow-expand-0)
@@ -130,6 +131,13 @@
 (unless (bound-and-true-p meow-global-mode)
   (meow-global-mode 1))
 (meow-esc-mode 1)
+
+(with-eval-after-load 'which-key
+  (which-key-add-key-based-replacements
+    "SPC j"   "denote journal"
+    "SPC j n" "Create an entry"
+    "SPC j t" "Entry with todos"
+    "SPC j o" "Open current journal"))
 
 
 (provide 'init-local-meow)
