@@ -45,6 +45,12 @@
           (bg-line-number-inactive unspecified)
           (bg-line-number-active unspecified)))
 
+  ;; In TUI truecolor, Emacs serializes #000000 as ANSI color 0.  The kitty
+  ;; Modus palette maps color0 to bg-main, so use near-black to force RGB SGR.
+  (unless (display-graphic-p)
+    (setq modus-operandi-tinted-palette-overrides
+          '((fg-main "#010101"))))
+
   ;; Load the theme of your choice.
   (load-theme 'modus-operandi-tinted :no-confirm)
 
