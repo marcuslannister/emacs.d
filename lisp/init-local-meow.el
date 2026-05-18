@@ -40,7 +40,7 @@
    '("f" . find-file)
    '("i" . imenu)
    '("F" . toggle-frame-maximized)
-   '("r" . recentf-open)
+   '("r" . consult-recent-file)
    ;; buffer
    '("b n" . next-buffer)
    '("b p" . previous-buffer)
@@ -221,6 +221,9 @@
  meow-cursor-type-insert '(bar . 4)
  meow-keypad-describe-delay 0.5
  meow-keypad-leader-dispatch nil
+ ;; Free c/h/x so SPC c, SPC h, SPC x reach our leader bindings instead of
+ ;; being translated into C-c/C-h/C-x dispatches.
+ meow-keypad-start-keys nil
  ;; Free `g' so SPC g ... reaches our git leader instead of becoming C-M-.
  meow-keypad-ctrl-meta-prefix nil
  meow-expand-hint-remove-delay 2.0)
