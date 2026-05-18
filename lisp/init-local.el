@@ -370,6 +370,20 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
     :render
     (gt-insert-render :type 'replace))))
 
+;; cliboard setting for mouse
+(setq select-active-regions nil)
+(setq mouse-drag-copy-region t)
+(global-set-key [mouse-2] 'mouse-yank-at-click)
+
+;; Bind M-1 through M-9 globally to switch tabs
+;; Assumes built-in tab-bar-mode or tab-line-mode
+(dotimes (i 9)
+  (let ((key (format "M-%d" (1+ i))) ; Create key string like "M-1", "M-2", etc.
+        (tab-number (1+ i)))         ; Tab index (1-based)
+    (global-set-key (kbd key)
+                    ;; Define a command to select the corresponding tab
+                    `(lambda () (interactive) (tab-bar-select-tab ,tab-number)))))
+
 
 (defun emacs-solo/switch-git-status-buffer ()
   "Parse git status from an expanded path and switch to a file.
