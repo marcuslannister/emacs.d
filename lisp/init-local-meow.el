@@ -15,6 +15,7 @@
   (meow-motion-overwrite-define-key
    '("j" . meow-next)
    '("k" . meow-prev)
+   '("i" . meow-normal-mode)
    '("<escape>" . ignore))
   (meow-leader-define-key
    ;; Use SPC (0-9) for digit arguments.
