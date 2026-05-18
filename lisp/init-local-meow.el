@@ -220,7 +220,7 @@
  meow-cursor-type-normal 'box
  meow-cursor-type-insert '(bar . 4)
  meow-keypad-describe-delay 0.5
- meow-keypad-leader-dispatch "C-c"
+ meow-keypad-leader-dispatch nil
  ;; Free `g' so SPC g ... reaches our git leader instead of becoming C-M-.
  meow-keypad-ctrl-meta-prefix nil
  meow-expand-hint-remove-delay 2.0)
