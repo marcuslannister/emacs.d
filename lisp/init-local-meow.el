@@ -69,7 +69,7 @@
    '("e b" . ediff-buffers)
    '("e w" . ml-init-ediff-current-with-other-window)
    ;; d: edit / denote / dired
-   '("d d" . kill-line)
+   '("d d" . kill-whole-line)
    '("d w" . delete-trailing-whitespace)
    '("d D" . move-dup-duplicate-down)
    '("d n" . denote)
@@ -269,7 +269,7 @@
     "SPC e b" "Ediff buffers"
     "SPC e w" "Ediff current vs other window"
     "SPC d"   "edit / denote / dired"
-    "SPC d d" "Kill line"
+    "SPC d d" "Kill whole line"
     "SPC d w" "Delete trailing whitespace"
     "SPC d D" "Duplicate line down"
     "SPC d n" "Create a denote"
