@@ -26,6 +26,7 @@ site-lisp/package/
 /var
 /.sqli_history
 /frame-restore-parameters
+/frame-state.el
 /.achievements
 /.bookmarks.el
 /history
