@@ -9,6 +9,20 @@
   (interactive)
   (save-some-buffers t))
 
+(defun my/meow-yank-linewise (orig-fn &rest args)
+  "Paste above current line when the most recent kill is a whole line.
+A kill is treated as linewise when it ends with a newline (e.g. from
+`d y' selecting a full line via `meow-line')."
+  (if (and kill-ring
+           (let ((top (current-kill 0 t)))
+             (and top (string-suffix-p "\n" top))))
+      (progn
+        (beginning-of-line)
+        (apply orig-fn args))
+    (apply orig-fn args)))
+
+(advice-add 'meow-yank :around #'my/meow-yank-linewise)
+
 (defun meow-setup ()
   "Configure meow leader, motion, and normal-state keybindings."
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -163,7 +177,7 @@
    '("B" . meow-back-symbol)
    '("c" . meow-change)
    '("d" . meow-line)
-   '("D" . meow-backward-delete)
+   '("D" . kill-line)
    '("e" . meow-next-word)
    '("E" . meow-next-symbol)
    '("f" . meow-find)
