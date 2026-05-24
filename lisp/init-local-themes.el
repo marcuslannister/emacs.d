@@ -175,11 +175,7 @@
             highlight-parentheses-background-colors nil)))
 
   ;; Include this if you also want to make the parentheses bold:
-  (set-face-attribute 'highlight-parentheses-highlight nil :inherit 'bold)
-
-  ;; Our changes must be evaluated before enabling the relevant mode, so
-  ;; this comes last.
-  (global-highlight-parentheses-mode 1))
+  (set-face-attribute 'highlight-parentheses-highlight nil :inherit 'bold))
 
 (add-hook 'modus-themes-after-load-theme-hook #'my-modus-themes-highlight-parentheses)
 
