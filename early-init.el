@@ -14,6 +14,12 @@
 ;; load happens so it applies to early-init.el's own re-loads on next start.
 (setq load-prefer-newer t)
 
+(defun sanityinc/tui-session-p ()
+  "Return non-nil for an interactive terminal-only startup."
+  (and (not noninteractive)
+       (not (display-graphic-p))
+       (not (daemonp))))
+
 ;; Initialize package.el early so init.el can `use-package' compile-angel
 ;; before init-elpa.el runs.  init-elpa.el later re-applies these settings and
 ;; only initializes package.el if this file did not already do so.
