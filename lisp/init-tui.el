@@ -2,15 +2,15 @@
 ;;; Commentary:
 ;;; Code:
 
-(require 'ediff)
-
 (setq-default
- ediff-split-window-function 'split-window-horizontally
- ediff-window-setup-function 'ediff-setup-windows-plain
  indent-tabs-mode nil
  create-lockfiles nil
  auto-save-default nil
  make-backup-files nil)
+
+(with-eval-after-load 'ediff
+  (setq ediff-split-window-function 'split-window-horizontally
+        ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (defun insert-timestamp ()
   "Insert current timestamp in format YYYYMMDDTHHMM."
