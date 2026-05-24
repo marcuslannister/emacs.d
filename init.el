@@ -163,7 +163,7 @@
 (require 'init-whitespace)
 
 (require 'init-vc)
-(require 'init-darcs)
+;; (require 'init-darcs)
 (require 'init-git)
 (require 'init-github)
 
@@ -171,7 +171,7 @@
 
 (require 'init-compile)
 (require 'init-crontab)
-(require 'init-textile)
+;; (require 'init-textile)
 (require 'init-markdown)
 (require 'init-csv)
 ;; (require 'init-erlang)
@@ -209,9 +209,9 @@
 
 (require 'init-paredit)
 (require 'init-lisp)
-(require 'init-sly)
-(require 'init-clojure)
-(require 'init-clojure-cider)
+;; (require 'init-sly)
+;; (require 'init-clojure)
+;; (require 'init-clojure-cider)
 
 (when *spell-check-support-enabled*
   (require 'init-spelling))
@@ -223,7 +223,7 @@
 
 ;; (require 'init-ledger)
 (require 'init-lua)
-(require 'init-uiua)
+;; (require 'init-uiua)
 ;; (require 'init-zig)
 (require 'init-terminals)
 
