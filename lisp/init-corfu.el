@@ -26,8 +26,9 @@
   (with-eval-after-load 'corfu
     (corfu-popupinfo-mode))
 
-  ;; Make Corfu also work in terminals, without disturbing usual behaviour in GUI
-  (when (maybe-require-package 'corfu-terminal)
+  ;; corfu-terminal is only needed pre-`tty-child-frames'; Emacs 31 has it natively.
+  (when (and (not (featurep 'tty-child-frames))
+             (maybe-require-package 'corfu-terminal))
     (with-eval-after-load 'corfu
       (corfu-terminal-mode)))
 

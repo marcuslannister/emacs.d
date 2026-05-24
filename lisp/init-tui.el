@@ -25,6 +25,18 @@
     (ediff-buffers (window-buffer)
                    (window-buffer (next-window (selected-window) 0)))))
 
+(require 'init-locales)
+(require 'init-editing-utils)
+(require 'init-whitespace)
+(require 'init-isearch)
+(require 'init-grep)
+(require 'init-minibuffer)
+(require 'init-corfu)
+(when (and (require 'treesit nil t)
+           (fboundp 'treesit-available-p)
+           (treesit-available-p))
+  (require 'init-treesitter))
+
 (require 'init-local-themes)
 (require-package 'meow)
 (require 'init-local-meow)
