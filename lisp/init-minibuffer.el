@@ -44,7 +44,9 @@
     (global-set-key [remap goto-line] 'consult-goto-line)
 
     (when (maybe-require-package 'embark-consult)
-      (require 'embark-consult))))
+      (with-eval-after-load 'consult
+        (with-eval-after-load 'embark
+          (require 'embark-consult))))))
 
 (when (maybe-require-package 'marginalia)
   (add-hook 'after-init-hook 'marginalia-mode))
