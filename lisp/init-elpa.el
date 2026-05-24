@@ -106,7 +106,9 @@ advice for `require-package', to which ARGS are passed."
 
 
 
-(when (fboundp 'package--save-selected-packages)
+(when (and (fboundp 'package--save-selected-packages)
+           (not (and (fboundp 'sanityinc/tui-session-p)
+                     (sanityinc/tui-session-p))))
   (require-package 'seq)
   (add-hook 'after-init-hook
             (lambda ()
