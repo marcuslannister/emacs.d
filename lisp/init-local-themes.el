@@ -70,41 +70,45 @@
 
 
 
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1))
+(when window-system
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1))
 
-(setq doom-modeline-height 18
-      doom-modeline-buffer-file-name-style 'auto
-      doom-modeline-buffer-modification-icon t
-      doom-modeline-bar-width 4
-      doom-modeline-hud t
-      doom-modeline-hud-min-height 1)
-
-
-
-(use-package spacious-padding
-  :ensure t
-  :init
-  (spacious-padding-mode 1))
-
-(setq spacious-padding-subtle-mode-line t)
+  (setq doom-modeline-height 18
+        doom-modeline-buffer-file-name-style 'auto
+        doom-modeline-buffer-modification-icon t
+        doom-modeline-bar-width 4
+        doom-modeline-hud t
+        doom-modeline-hud-min-height 1))
 
 
 
-(use-package nerd-icons
-  :ensure t)
+(when window-system
+  (use-package spacious-padding
+    :ensure t
+    :init
+    (spacious-padding-mode 1))
 
-(use-package nerd-icons-completion
-  :ensure t
-  :after marginalia
-  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
-  :init
-  (nerd-icons-completion-mode))
+  (setq spacious-padding-subtle-mode-line t))
 
-(use-package nerd-icons-dired
-  :ensure t
-  :hook (dired-mode . nerd-icons-dired-mode))
+
+
+(when window-system
+  (use-package nerd-icons
+    :ensure t
+    :defer t)
+
+  (use-package nerd-icons-completion
+    :ensure t
+    :after marginalia
+    :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
+    :init
+    (nerd-icons-completion-mode))
+
+  (use-package nerd-icons-dired
+    :ensure t
+    :hook (dired-mode . nerd-icons-dired-mode)))
 
 ;; (use-package nerd-icons-devicon :ensure t)
 
