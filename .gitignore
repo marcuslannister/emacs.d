@@ -66,6 +66,7 @@ projects.eld
 !/eshell/profile-mac
 !/eshell/profile-windows
 anvil-state.db
+anvil-memory-index.db
 anvil-init.el
 anvil-worker-init.el
 *.log
