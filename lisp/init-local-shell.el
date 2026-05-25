@@ -39,7 +39,11 @@
   (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
 
   (use-package ghostel
-    :ensure t))
+    :ensure t
+    :bind (:map ghostel-semi-char-mode-map
+           ("M-v" . ghostel-copy-mode)
+           :map ghostel-mode-map
+           ("M-v" . ghostel-copy-mode))))
 
 (use-package eshell
   :ensure nil
