@@ -36,19 +36,20 @@
   ;;           #'eat-eshell-visual-command-mode)
 
   ;; For `eat-eshell-mode'.
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
+  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
 
-  (use-package ghostel
-    :ensure t
-    :hook (ghostel-mode . ml/ghostel-disable-meow)
-    :bind (:map ghostel-semi-char-mode-map
-           ("M-v" . ghostel-copy-mode)
-           :map ghostel-mode-map
-           ("M-v" . ghostel-copy-mode))
-    :init
-    (defun ml/ghostel-disable-meow ()
-      "Disable meow in ghostel buffers so ESC and other keys reach the terminal."
-      (meow-mode -1))))
+
+(use-package ghostel
+  :ensure t
+  :hook (ghostel-mode . ml/ghostel-disable-meow)
+  :bind (:map ghostel-semi-char-mode-map
+              ("M-v" . ghostel-copy-mode)
+              :map ghostel-mode-map
+              ("M-v" . ghostel-copy-mode))
+  :init
+  (defun ml/ghostel-disable-meow ()
+    "Disable meow in ghostel buffers so ESC and other keys reach the terminal."
+    (meow-mode -1)))
 
 (use-package eshell
   :ensure nil
