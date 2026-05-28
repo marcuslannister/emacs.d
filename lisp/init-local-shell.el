@@ -49,7 +49,13 @@
   :init
   (defun ml/ghostel-disable-meow ()
     "Disable meow in ghostel buffers so ESC and other keys reach the terminal."
-    (meow-mode -1)))
+    (meow-mode -1))
+  :config
+  (when-let* ((lib (locate-library "ghostel"))
+              (script (expand-file-name "etc/shell/ghostel.zsh"
+                                        (file-name-directory lib))))
+    (when (file-readable-p script)
+      (setenv "GHOSTEL_SH_INTEGRATION" script))))
 
 (use-package eshell
   :ensure nil
