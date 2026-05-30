@@ -257,5 +257,32 @@ Stolen from aweshell."
 (defun eshell/gs ()
   (magit-status default-directory))
 
+(defun eshell/update-claude-plugins ()
+  "Refresh marketplaces and update every installed Claude Code plugin.
+Cross-platform: runs anywhere eshell runs.  Afterward run
+`/reload-plugins' or restart Claude Code to apply the updates."
+  (let ((claude (executable-find "claude")))
+    (unless claude
+      (error "Cannot find `claude' on PATH"))
+    (cl-flet ((run (&rest args)
+                (with-temp-buffer
+                  ;; call-process destination t captures stdout+stderr.
+                  (let ((status (apply #'call-process claude nil t nil args)))
+                    (unless (eq status 0)
+                      (error "claude %s failed (exit %s):\n%s"
+                             (string-join args " ") status
+                             (string-trim (buffer-string))))
+                    (buffer-string)))))
+      (eshell-print "Refreshing marketplaces...\n")
+      (eshell-print (run "plugin" "marketplace" "update"))
+      (dolist (id (mapcar (lambda (p) (alist-get 'id p))
+                          (json-parse-string
+                           (run "plugin" "list" "--json")
+                           :array-type 'list :object-type 'alist)))
+        (eshell-print (format "\nUpdating %s...\n" id))
+        (eshell-print (run "plugin" "update" id)))
+      (eshell-print "\nDone. Run /reload-plugins (or restart) to apply.\n")))
+  nil)
+
 (provide 'init-local-shell)
 ;;; init-local-shell.el ends here
