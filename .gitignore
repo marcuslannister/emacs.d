@@ -71,3 +71,4 @@ anvil-init.el
 anvil-worker-init.el
 *.log
 external-packages/
+.ccglass/
