@@ -41,16 +41,28 @@
 
 (use-package ghostel
   :ensure t
-  :hook (ghostel-mode . ml/ghostel-disable-meow)
+  :hook (ghostel-mode . ml/ghostel-sync-meow)
   :bind (:map ghostel-semi-char-mode-map
               ("M-v" . ghostel-copy-mode)
               :map ghostel-mode-map
               ("M-v" . ghostel-copy-mode))
   :init
-  (defun ml/ghostel-disable-meow ()
-    "Disable meow in ghostel buffers so ESC and other keys reach the terminal."
-    (meow-mode -1))
+  (defun ml/ghostel-sync-meow (&rest _)
+    "Disable meow in terminal-input modes, enable it in read-only modes.
+In semi-char/char modes meow swallows ESC and the leader key, so the
+terminal misses keys.  In emacs/copy modes the buffer is read-only, so
+meow's space leader is exactly what we want."
+    (when (derived-mode-p 'ghostel-mode)
+      (if (memq ghostel--input-mode '(emacs copy))
+          (meow-mode 1)
+        (meow-mode -1))))
   :config
+  (dolist (fn '(ghostel-semi-char-mode
+                ghostel-char-mode
+                ghostel-emacs-mode
+                ghostel-copy-mode
+                ghostel-readonly-exit))
+    (advice-add fn :after #'ml/ghostel-sync-meow))
   (when-let* ((lib (locate-library "ghostel"))
               (script (expand-file-name "etc/shell/ghostel.zsh"
                                         (file-name-directory lib))))
