@@ -39,35 +39,91 @@
   (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
 
 
-(use-package ghostel
-  :ensure t
-  :hook (ghostel-mode . ml/ghostel-sync-meow)
-  :bind (:map ghostel-semi-char-mode-map
-              ("M-v" . ghostel-copy-mode)
-              :map ghostel-mode-map
-              ("M-v" . ghostel-copy-mode))
-  :init
-  (defun ml/ghostel-sync-meow (&rest _)
-    "Disable meow in terminal-input modes, enable it in read-only modes.
+;; meow conflicts with ghostel's terminal-input modes; this helper is shared by
+;; both the Windows (kiennq fork) and Mac/Linux (MELPA) ghostel setups below.
+(defun ml/ghostel-sync-meow (&rest _)
+  "Disable meow in terminal-input modes, enable it in read-only modes.
 In semi-char/char modes meow swallows ESC and the leader key, so the
 terminal misses keys.  In emacs/copy modes the buffer is read-only, so
 meow's space leader is exactly what we want."
-    (when (derived-mode-p 'ghostel-mode)
-      (if (memq ghostel--input-mode '(emacs copy))
-          (meow-mode 1)
-        (meow-mode -1))))
-  :config
-  (dolist (fn '(ghostel-semi-char-mode
-                ghostel-char-mode
-                ghostel-emacs-mode
-                ghostel-copy-mode
-                ghostel-readonly-exit))
-    (advice-add fn :after #'ml/ghostel-sync-meow))
-  (when-let* ((lib (locate-library "ghostel"))
-              (script (expand-file-name "etc/shell/ghostel.zsh"
-                                        (file-name-directory lib))))
-    (when (file-readable-p script)
-      (setenv "GHOSTEL_SH_INTEGRATION" script))))
+  (when (derived-mode-p 'ghostel-mode)
+    (if (memq ghostel--input-mode '(emacs copy))
+        (meow-mode 1)
+      (meow-mode -1))))
+
+(if IS-WINDOWS
+    ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
+    ;; than the MELPA package -- only the fork ships a working Windows native
+    ;; runtime (dyn-loader-module + conpty-module).  Cloned + pinned via
+    ;; async-installer:
+    ;;   (async-installer-git-add "https://github.com/kiennq/ghostel.git"
+    ;;     :tag "v0.31.0.79.a7b0c9" :subdir "lisp" :main "ghostel.el")
+    ;;   M-x async-installer-git-install-all-interactive  ; clones to external-packages/
+    (use-package ghostel
+      :ensure nil
+      :load-path "external-packages/ghostel/lisp"
+      :hook (ghostel-mode . ml/ghostel-sync-meow)
+      :bind (:map ghostel-semi-char-mode-map
+                  ("M-v" . ghostel-copy-mode)
+                  :map ghostel-mode-map
+                  ("M-v" . ghostel-copy-mode))
+      :init
+      ;; ghostel--module-platform-tag returns nil on Windows, so the built-in
+      ;; download path builds a nil URL and can't fetch the published binary.
+      ;; Pin the module dir to a stable path outside the elpa tree and keep a
+      ;; working DLL there.  After a version bump that raises the required
+      ;; version, re-extract the matching ghostel-module-x86_64-windows.tar.xz
+      ;; into ~/.emacs.d/ghostel-module/.
+      (setq ghostel-module-directory
+            (expand-file-name "ghostel-module/" user-emacs-directory))
+      ;; Default ghostel-shell is $SHELL/cmdproxy (cmd.exe).  Prefer PowerShell
+      ;; 7: it is a native Windows program, so it reports native C:\ paths (no
+      ;; MSYS /c/... translation) -- which is what Claude Code and the native
+      ;; git/rg it spawns expect.  No OSC-133 shell integration (pwsh is not
+      ;; bash/zsh/fish), an acceptable trade for path correctness.
+      (when (file-exists-p "C:/Program Files/PowerShell/7/pwsh.exe")
+        (setq ghostel-shell
+              '("C:/Program Files/PowerShell/7/pwsh.exe" "-NoLogo")))
+      ;; Escape hatch: launch a Git Bash terminal on demand for unix-y
+      ;; interactive work.  ghostel--detect-shell recognizes "bash", so shell
+      ;; integration (OSC-133 prompt markers, directory tracking) applies.
+      ;; Resolves bash.exe from $PATH -- make sure Git Bash's usr/bin (the real
+      ;; bash.exe, NOT git-bash.exe, a mintty GUI launcher) is on $PATH.
+      ;; -l login, -i interactive.
+      (defun ml/ghostel-bash ()
+        "Open a Ghostel terminal running Git Bash (bash.exe from `$PATH')."
+        (interactive)
+        (if-let* ((bash (executable-find "bash")))
+            (let ((ghostel-shell (list bash "-l" "-i")))
+              (ghostel))
+          (user-error "bash not found on $PATH -- add Git Bash's usr/bin to $PATH")))
+      :config
+      (dolist (fn '(ghostel-semi-char-mode
+                    ghostel-char-mode
+                    ghostel-emacs-mode
+                    ghostel-copy-mode
+                    ghostel-readonly-exit))
+        (advice-add fn :after #'ml/ghostel-sync-meow)))
+  ;; Mac/Linux: MELPA ghostel (dakra).  Unchanged.
+  (use-package ghostel
+    :ensure t
+    :hook (ghostel-mode . ml/ghostel-sync-meow)
+    :bind (:map ghostel-semi-char-mode-map
+                ("M-v" . ghostel-copy-mode)
+                :map ghostel-mode-map
+                ("M-v" . ghostel-copy-mode))
+    :config
+    (dolist (fn '(ghostel-semi-char-mode
+                  ghostel-char-mode
+                  ghostel-emacs-mode
+                  ghostel-copy-mode
+                  ghostel-readonly-exit))
+      (advice-add fn :after #'ml/ghostel-sync-meow))
+    (when-let* ((lib (locate-library "ghostel"))
+                (script (expand-file-name "etc/shell/ghostel.zsh"
+                                          (file-name-directory lib))))
+      (when (file-readable-p script)
+        (setenv "GHOSTEL_SH_INTEGRATION" script)))))
 
 (use-package eshell
   :ensure nil
@@ -264,15 +320,27 @@ Cross-platform: runs anywhere eshell runs.  Afterward run
   (let ((claude (executable-find "claude")))
     (unless claude
       (error "Cannot find `claude' on PATH"))
-    (cl-flet ((run (&rest args)
-                (with-temp-buffer
-                  ;; call-process destination t captures stdout+stderr.
-                  (let ((status (apply #'call-process claude nil t nil args)))
-                    (unless (eq status 0)
-                      (error "claude %s failed (exit %s):\n%s"
-                             (string-join args " ") status
-                             (string-trim (buffer-string))))
-                    (buffer-string)))))
+    ;; claude.cmd -> Node spawns git; Node's post-CVE-2024-27980 check rejects
+    ;; git if it isn't clearly on PATH.  Make the git dir explicit for the child.
+    (let* ((git (executable-find "git"))
+           (git-dir (and git (file-name-directory git)))
+           (process-environment
+            (if git-dir
+                (cons (concat "PATH=" (convert-standard-filename git-dir)
+                              path-separator (getenv "PATH"))
+                      process-environment)
+              process-environment)))
+      (cl-flet ((run (&rest args)
+                  ;; Run from HOME so any cwd-based safety checks don't trip.
+                  (let ((default-directory (expand-file-name "~/")))
+                    (with-temp-buffer
+                      ;; call-process destination t captures stdout+stderr.
+                      (let ((status (apply #'call-process claude nil t nil args)))
+                        (unless (eq status 0)
+                          (error "claude %s failed (exit %s):\n%s"
+                                 (string-join args " ") status
+                                 (string-trim (buffer-string))))
+                        (buffer-string))))))
       (eshell-print "Refreshing marketplaces...\n")
       (eshell-print (run "plugin" "marketplace" "update"))
       (dolist (id (mapcar (lambda (p) (alist-get 'id p))
@@ -281,7 +349,7 @@ Cross-platform: runs anywhere eshell runs.  Afterward run
                            :array-type 'list :object-type 'alist)))
         (eshell-print (format "\nUpdating %s...\n" id))
         (eshell-print (run "plugin" "update" id)))
-      (eshell-print "\nDone. Run /reload-plugins (or restart) to apply.\n")))
+      (eshell-print "\nDone. Run /reload-plugins (or restart) to apply.\n"))))
   nil)
 
 (provide 'init-local-shell)
