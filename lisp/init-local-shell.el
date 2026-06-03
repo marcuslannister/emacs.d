@@ -174,6 +174,30 @@ read-only, so meow's space leader is what we want.  In copy mode use
 ;; var here so the claude subprocess and its tool shells inherit a real path.
 (setenv "_git_cmd" (or (executable-find "git") "/usr/bin/git"))
 
+;; Claude Code's TUI hides the terminal cursor (CSI ?25l) and paints its own
+;; dark block, which on a light theme reads as black.  In claude-code-ide
+;; ghostel buffers, ignore that hide request so Emacs keeps drawing its own
+;; (red) box cursor; and suppress the global blink while a ghostel window is
+;; selected so the steady box covers Claude's block instead of flickering
+;; red/black against it.  Blink is restored when focus leaves ghostel (the
+;; user prefers it on elsewhere); Emacs has no per-buffer blink, hence the
+;; focus-driven toggle.  Run on both selection changes AND buffer changes:
+;; `window-selection-change-functions' misses a buffer being replaced in the
+;; already-selected window (same-window `switch-to-buffer'/`display-buffer'),
+;; which `window-buffer-change-functions' catches.
+(defun ml/ghostel-claude-cursor-sync (&rest _)
+  "Steady box cursor in claude ghostel buffers; sync cursor blink to focus."
+  (with-current-buffer (window-buffer (selected-window))
+    (when (and (derived-mode-p 'ghostel-mode)
+               (string-prefix-p "*claude-code" (buffer-name)))
+      (setq-local ghostel-ignore-cursor-change t)
+      (setq cursor-type 'box))
+    (if (derived-mode-p 'ghostel-mode)
+        (when blink-cursor-mode (blink-cursor-mode -1))
+      (unless blink-cursor-mode (blink-cursor-mode 1)))))
+(add-hook 'window-selection-change-functions #'ml/ghostel-claude-cursor-sync)
+(add-hook 'window-buffer-change-functions #'ml/ghostel-claude-cursor-sync)
+
 (use-package eshell
   :ensure nil
   :defer t
