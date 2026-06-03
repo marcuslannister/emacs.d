@@ -39,17 +39,59 @@
   (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
 
 
+;; Vim-style navigation + selection for ghostel copy mode (tmux copy-mode-vi
+;; feel).  meow is disabled in copy mode (see `ml/ghostel-sync-meow') so these
+;; keys are free.  A minor-mode map outranks ghostel's read-only/fast-exit local
+;; map, so h/j/k/l move point instead of tripping fast-exit.  Reuses ghostel's
+;; own commands: `ghostel-readonly-copy' both copies the region and exits
+;; (fast-exit defaults on), and plain movement after SPC grows the region.
+(declare-function ghostel-readonly-end-of-line "ghostel")
+(declare-function ghostel-readonly-end-of-buffer "ghostel")
+(declare-function ghostel-readonly-copy "ghostel")
+(declare-function ghostel-readonly-exit "ghostel")
+
+;; Built with `make-sparse-keymap'/`define-key' (not `defvar-keymap', Emacs
+;; 29.1+) so this file still loads on the 27.1 floor declared in `init.el'.
+(defvar ml/ghostel-copy-vi-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "h")        #'backward-char)
+    (define-key map (kbd "j")        #'next-line)
+    (define-key map (kbd "k")        #'previous-line)
+    (define-key map (kbd "l")        #'forward-char)
+    (define-key map (kbd "w")        #'forward-word)
+    (define-key map (kbd "b")        #'backward-word)
+    (define-key map (kbd "0")        #'beginning-of-line)
+    (define-key map (kbd "$")        #'ghostel-readonly-end-of-line)
+    (define-key map (kbd "g")        #'beginning-of-buffer)
+    (define-key map (kbd "G")        #'ghostel-readonly-end-of-buffer)
+    (define-key map (kbd "SPC")      #'set-mark-command)
+    (define-key map (kbd "RET")      #'ghostel-readonly-copy)
+    (define-key map (kbd "<return>") #'ghostel-readonly-copy)
+    (define-key map (kbd "q")        #'ghostel-readonly-exit)
+    (define-key map (kbd "C-g")      #'ghostel-readonly-exit)
+    map)
+  "Keymap for `ml/ghostel-copy-vi-mode'.")
+
+(define-minor-mode ml/ghostel-copy-vi-mode
+  "Tmux-style vi navigation and selection for ghostel copy mode.
+Move with h/j/k/l (w/b words, 0/$ line, g/G buffer), press SPC to
+start selecting, keep moving to extend, RET to copy and exit, q or
+C-g to cancel."
+  :keymap ml/ghostel-copy-vi-mode-map)
+
 ;; meow conflicts with ghostel's terminal-input modes; this helper is shared by
 ;; both the Windows (kiennq fork) and Mac/Linux (MELPA) ghostel setups below.
 (defun ml/ghostel-sync-meow (&rest _)
-  "Disable meow in terminal-input modes, enable it in read-only modes.
+  "Sync editing modes to ghostel's input mode.
 In semi-char/char modes meow swallows ESC and the leader key, so the
-terminal misses keys.  In emacs/copy modes the buffer is read-only, so
-meow's space leader is exactly what we want."
+terminal misses keys -- disable it.  In emacs mode the buffer is
+read-only, so meow's space leader is what we want.  In copy mode use
+`ml/ghostel-copy-vi-mode' (tmux-style hjkl select) instead of meow."
   (when (derived-mode-p 'ghostel-mode)
-    (if (memq ghostel--input-mode '(emacs copy))
-        (meow-mode 1)
-      (meow-mode -1))))
+    (pcase ghostel--input-mode
+      ('emacs (ml/ghostel-copy-vi-mode -1) (meow-mode 1))
+      ('copy  (meow-mode -1) (ml/ghostel-copy-vi-mode 1))
+      (_      (ml/ghostel-copy-vi-mode -1) (meow-mode -1)))))
 
 (if IS-WINDOWS
     ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
