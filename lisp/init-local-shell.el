@@ -167,6 +167,13 @@ read-only, so meow's space leader is what we want.  In copy mode use
       (when (file-readable-p script)
         (setenv "GHOSTEL_SH_INTEGRATION" script)))))
 
+;; claude-code-ide spawns `claude' from Emacs, whose env never ran scm_breeze.
+;; Claude Code's Bash tool then sources a shell snapshot that replays
+;; scm_breeze's `git' wrapper (which execs "$_git_cmd") without the var, so
+;; every git call dies with "permission denied" on an empty command.  Seed the
+;; var here so the claude subprocess and its tool shells inherit a real path.
+(setenv "_git_cmd" (or (executable-find "git") "/usr/bin/git"))
+
 (use-package eshell
   :ensure nil
   :defer t
