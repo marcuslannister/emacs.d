@@ -66,8 +66,10 @@ A kill is treated as linewise when it ends with a newline (e.g. from
    '("b m" . view-echo-area-messages)
    '("b e" . eval-buffer)
    '("b r" . revert-buffer)
-   ;; comment / clock
-   '("c c" . comment-dwim)
+   ;; claude / comment / clock
+   '("c c" . claude-code-ide)
+   '("c m" . claude-code-ide-menu)
+   '("c /" . comment-dwim)
    '("c t" . org-clock-update-time-maybe)
    '("c i" . org-clock-in)
    '("c o" . org-clock-out)
@@ -265,8 +267,10 @@ A kill is treated as linewise when it ends with a newline (e.g. from
     "SPC b m" "View message buffer"
     "SPC b e" "Eval buffer"
     "SPC b r" "Revert buffer"
-    "SPC c"     "comment / clock"
-    "SPC c c"   "Comment dwim"
+    "SPC c"     "claude / comment / clock"
+    "SPC c c"   "Claude Code IDE"
+    "SPC c m"   "Claude Code menu"
+    "SPC c /"   "Comment dwim"
     "SPC c t"   "Update time"
     "SPC c i"   "Start clock"
     "SPC c o"   "Stop clock"
