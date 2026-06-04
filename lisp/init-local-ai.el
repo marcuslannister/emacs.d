@@ -25,6 +25,8 @@
   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
   :custom
   (claude-code-ide-terminal-backend 'ghostel)
+  (claude-code-ide-cli-extra-flags "--dangerously-skip-permissions")
+  (claude-code-ide-use-ide-diff nil) ; no auto-ediff; diffs show in terminal. Toggle via menu (i), takes effect next session
   :config
   (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
 
