@@ -20,7 +20,11 @@
 (with-eval-after-load 'dired
   (setq dired-recursive-deletes 'top)
   (define-key dired-mode-map [mouse-2] 'dired-find-file)
-  (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode))
+  (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode)
+  (define-key dired-mode-map (kbd "'") 'dired-up-directory)
+  (define-key dired-mode-map (kbd "/") 'dired-isearch-filenames)
+  (define-key dired-mode-map (kbd "n") 'isearch-repeat-forward)
+  (define-key dired-mode-map (kbd "p") 'isearch-repeat-backward))
 
 (when (maybe-require-package 'diff-hl)
   (with-eval-after-load 'dired
