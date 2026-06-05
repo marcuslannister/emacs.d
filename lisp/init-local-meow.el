@@ -100,7 +100,8 @@ A kill is treated as linewise when it ends with a newline (e.g. from
    '("g i" . magit)
    '("g d" . magit-diff-working-tree)
    '("g t" . gt-translate)
-   '("g p" . ml-gt-polish-using-llm)
+   '("g p" . my/git-push)
+   '("g P" . ml-gt-polish-using-llm)
    '("g h" . ghostel)
    ;; highlight
    '("h l" . pulsar-highlight-permanently-dwim)
@@ -303,7 +304,8 @@ A kill is treated as linewise when it ends with a newline (e.g. from
     "SPC g i" "Magit"
     "SPC g d" "Git diff working tree"
     "SPC g t" "Translate"
-    "SPC g p" "Polish sentence"
+    "SPC g p" "Git push"
+    "SPC g P" "Polish sentence"
     "SPC g h" "Ghostel terminal"
     "SPC h"   "highlight"
     "SPC h l" "Permanently highlight line"
