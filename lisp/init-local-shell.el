@@ -113,6 +113,18 @@ read-only, so meow's space leader is what we want.  In copy mode use
     (use-package ghostel
       :ensure nil
       :load-path "external-packages/ghostel/lisp"
+      :commands (ghostel
+                 ghostel-project
+                 ghostel-other
+                 ghostel-next
+                 ghostel-previous
+                 ghostel-project-next
+                 ghostel-project-previous
+                 ghostel-list-buffers
+                 ghostel-project-list-buffers
+                 ghostel-exec
+                 ghostel-download-module
+                 ghostel-reload-module)
       :hook (ghostel-mode . ml/ghostel-sync-meow)
       :bind (:map ghostel-semi-char-mode-map
                   ("M-v" . ghostel-copy-mode)
@@ -123,14 +135,12 @@ read-only, so meow's space leader is what we want.  In copy mode use
                   ("M-e" . ghostel-emacs-mode)
                   ("M-t" . ml/ghostel-split-new))
       :init
-      ;; ghostel--module-platform-tag returns nil on Windows, so the built-in
-      ;; download path builds a nil URL and can't fetch the published binary.
-      ;; Pin the module dir to a stable path outside the elpa tree and keep a
-      ;; working DLL there.  After a version bump that raises the required
-      ;; version, re-extract the matching ghostel-module-x86_64-windows.tar.xz
-      ;; into ~/.emacs.d/ghostel-module/.
+      ;; Use the kiennq fork's Windows runtime, not upstream dakra's latest
+      ;; module.  Keep it outside the elpa tree so package refreshes do not
+      ;; replace the working DLL bundle.
       (setq ghostel-module-directory
             (expand-file-name "ghostel-module/" user-emacs-directory))
+      (setq ghostel-github-release-url "https://github.com/kiennq/ghostel/releases")
       ;; Default ghostel-shell is $SHELL/cmdproxy (cmd.exe).  Prefer PowerShell
       ;; 7: it is a native Windows program, so it reports native C:\ paths (no
       ;; MSYS /c/... translation) -- which is what Claude Code and the native
@@ -153,6 +163,46 @@ read-only, so meow's space leader is what we want.  In copy mode use
               (ghostel))
           (user-error "bash not found on $PATH -- add Git Bash's usr/bin to $PATH")))
       :config
+      (defconst ml/ghostel-windows-release-version "0.31.0.79.a7b0c9"
+        "Kiennq release tag that matches the pinned Windows Ghostel runtime.")
+
+      (defun ml/ghostel-module-download-url (orig &optional version)
+        "Use the pinned kiennq Windows release for Ghostel module downloads."
+        (if (and IS-WINDOWS
+                 (string= version ghostel--minimum-module-version))
+            (when-let* ((asset-name (ghostel--module-asset-name)))
+              (format "%s/download/v%s/%s"
+                      ghostel-github-release-url
+                      ml/ghostel-windows-release-version
+                      asset-name))
+          (funcall orig version)))
+
+      (advice-add 'ghostel--module-download-url
+                  :around #'ml/ghostel-module-download-url)
+
+      (defun ml/ghostel-exec-windows-conpty (orig buffer program &optional args)
+        "Use Ghostel's Windows ConPTY backend for `ghostel-exec'."
+        (if (not IS-WINDOWS)
+            (funcall orig buffer program args)
+          (ghostel--load-module t)
+          (when (and (buffer-local-value 'ghostel--process buffer)
+                     (process-live-p (buffer-local-value 'ghostel--process buffer)))
+            (user-error "Buffer %s already has a running ghostel process"
+                        (buffer-name buffer)))
+          (let* ((window (get-buffer-window buffer t))
+                 (height (if window
+                             (max 1 (with-selected-window window
+                                      (floor (window-screen-lines))))
+                           24))
+                 (width (if window
+                            (max 1 (window-max-chars-per-line window))
+                          80)))
+            (with-current-buffer buffer
+              (let ((ghostel-shell (cons program args))
+                    (ghostel-shell-integration nil))
+                (ghostel--init-buffer buffer height width)
+                (ghostel--start-process))))))
+      (advice-add 'ghostel-exec :around #'ml/ghostel-exec-windows-conpty)
       (dolist (fn '(ghostel-semi-char-mode
                     ghostel-char-mode
                     ghostel-emacs-mode
