@@ -151,7 +151,7 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
   (require 'init-local-linux nil t)))
 
 ;; majutsu for jj
-(require 'init-local-majutsu nil t)
+;; (require 'init-local-majutsu nil t)
 ;; Load org config
 (require 'init-local-org)
 
