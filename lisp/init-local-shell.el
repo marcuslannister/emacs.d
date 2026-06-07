@@ -180,9 +180,23 @@ read-only, so meow's space leader is what we want.  In copy mode use
       (advice-add 'ghostel--module-download-url
                   :around #'ml/ghostel-module-download-url)
 
+      (defun ml/ghostel-windows-unescape-mcp-config-args (args)
+        "Undo shell-only quote escaping in `claude-code-ide' MCP config args."
+        (let ((rest args)
+              normalized)
+          (while rest
+            (let ((arg (pop rest)))
+              (push arg normalized)
+              (when (and (string= arg "--mcp-config") rest)
+                (push (replace-regexp-in-string "\\\\\"" "\"" (pop rest) t t)
+                      normalized))))
+          (nreverse normalized)))
+
       (defun ml/ghostel-exec-windows-conpty (orig buffer program &optional args)
-        "Use Ghostel's Windows ConPTY backend for `ghostel-exec'."
-        (if (not IS-WINDOWS)
+        "Use Ghostel's Windows ConPTY backend for local `ghostel-exec'."
+        (if (or (not IS-WINDOWS)
+                (not (buffer-live-p buffer))
+                (file-remote-p (buffer-local-value 'default-directory buffer)))
             (funcall orig buffer program args)
           (ghostel--load-module t)
           (when (and (buffer-local-value 'ghostel--process buffer)
@@ -196,7 +210,9 @@ read-only, so meow's space leader is what we want.  In copy mode use
                            24))
                  (width (if window
                             (max 1 (window-max-chars-per-line window))
-                          80)))
+                          80))
+                 (program (or (executable-find program) program))
+                 (args (ml/ghostel-windows-unescape-mcp-config-args args)))
             (with-current-buffer buffer
               (let ((ghostel-shell (cons program args))
                     (ghostel-shell-integration nil))
