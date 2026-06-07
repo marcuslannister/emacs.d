@@ -49,6 +49,15 @@
 (declare-function ghostel-readonly-end-of-buffer "ghostel")
 (declare-function ghostel-readonly-copy "ghostel")
 (declare-function ghostel-readonly-exit "ghostel")
+(declare-function ghostel "ghostel")
+
+(defun ml/ghostel-split-new ()
+  "Split right and open a fresh, auto-numbered Ghostel terminal there."
+  (interactive)
+  (select-window (split-window-right))
+  ;; Non-numeric prefix -> `ghostel' takes the fresh path and
+  ;; `generate-new-buffer' auto-numbers (*ghostel*, *ghostel*<2>, ...).
+  (ghostel '(4)))
 
 ;; Built with `make-sparse-keymap'/`define-key' (not `defvar-keymap', Emacs
 ;; 29.1+) so this file still loads on the 27.1 floor declared in `init.el'.
@@ -108,9 +117,11 @@ read-only, so meow's space leader is what we want.  In copy mode use
       :bind (:map ghostel-semi-char-mode-map
                   ("M-v" . ghostel-copy-mode)
                   ("M-e" . ghostel-emacs-mode)
+                  ("M-t" . ml/ghostel-split-new)
                   :map ghostel-mode-map
                   ("M-v" . ghostel-copy-mode)
-                  ("M-e" . ghostel-emacs-mode))
+                  ("M-e" . ghostel-emacs-mode)
+                  ("M-t" . ml/ghostel-split-new))
       :init
       ;; ghostel--module-platform-tag returns nil on Windows, so the built-in
       ;; download path builds a nil URL and can't fetch the published binary.
@@ -155,9 +166,11 @@ read-only, so meow's space leader is what we want.  In copy mode use
     :bind (:map ghostel-semi-char-mode-map
                 ("M-v" . ghostel-copy-mode)
                 ("M-e" . ghostel-emacs-mode)
+                ("M-t" . ml/ghostel-split-new)
                 :map ghostel-mode-map
                 ("M-v" . ghostel-copy-mode)
-                ("M-e" . ghostel-emacs-mode))
+                ("M-e" . ghostel-emacs-mode)
+                ("M-t" . ml/ghostel-split-new))
     :config
     (dolist (fn '(ghostel-semi-char-mode
                   ghostel-char-mode
