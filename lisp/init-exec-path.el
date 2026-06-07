@@ -14,5 +14,18 @@
             (daemonp)))
   (exec-path-from-shell-initialize))
 
+(when (eq system-type 'windows-nt)
+  ;; Emacs daemons can keep an older environment than interactive PowerShell.
+  (let* ((local-bin (expand-file-name "~/.local/bin"))
+         (local-bin-dir (file-name-as-directory local-bin))
+         (path-entry (subst-char-in-string ?/ ?\\ local-bin))
+         (path-entries (parse-colon-path (getenv "PATH"))))
+    (when (file-directory-p local-bin)
+      (add-to-list 'exec-path local-bin)
+      (unless (or (member local-bin path-entries)
+                  (member local-bin-dir path-entries)
+                  (member path-entry path-entries))
+        (setenv "PATH" (concat path-entry path-separator (getenv "PATH")))))))
+
 (provide 'init-exec-path)
 ;;; init-exec-path.el ends here
