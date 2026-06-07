@@ -107,8 +107,10 @@ read-only, so meow's space leader is what we want.  In copy mode use
       :hook (ghostel-mode . ml/ghostel-sync-meow)
       :bind (:map ghostel-semi-char-mode-map
                   ("M-v" . ghostel-copy-mode)
+                  ("M-e" . ghostel-emacs-mode)
                   :map ghostel-mode-map
-                  ("M-v" . ghostel-copy-mode))
+                  ("M-v" . ghostel-copy-mode)
+                  ("M-e" . ghostel-emacs-mode))
       :init
       ;; ghostel--module-platform-tag returns nil on Windows, so the built-in
       ;; download path builds a nil URL and can't fetch the published binary.
@@ -152,8 +154,10 @@ read-only, so meow's space leader is what we want.  In copy mode use
     :hook (ghostel-mode . ml/ghostel-sync-meow)
     :bind (:map ghostel-semi-char-mode-map
                 ("M-v" . ghostel-copy-mode)
+                ("M-e" . ghostel-emacs-mode)
                 :map ghostel-mode-map
-                ("M-v" . ghostel-copy-mode))
+                ("M-v" . ghostel-copy-mode)
+                ("M-e" . ghostel-emacs-mode))
     :config
     (dolist (fn '(ghostel-semi-char-mode
                   ghostel-char-mode
