@@ -41,7 +41,7 @@
   (if (and winner-mode
            (equal (selected-window) (next-window)))
       (winner-undo)
-    (delete-other-windows)))
+    (sanityinc/delete-other-windows)))
 
 (global-set-key (kbd "C-x 1") 'sanityinc/toggle-delete-other-windows)
 
