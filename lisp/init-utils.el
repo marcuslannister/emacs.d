@@ -31,6 +31,40 @@ BUFFER and ALIST are as for `display-buffer-full-frame'."
 
 (sanityinc/fullframe-mode 'package-menu-mode)
 
+
+;; Side-window-tolerant variants of the window-deletion commands.  These
+;; live here (loaded on both GUI and TUI startup paths) so the meow
+;; bindings in `init-local-meow' resolve in terminal sessions too.
+
+(defun sanityinc/select-main-window ()
+  "Ensure the selected window is a main (non-side) window.
+If point is in a side window, switch to the most recent main
+window.  Return non-nil when the selected window is a main window."
+  (when (window-parameter (selected-window) 'window-side)
+    (when-let ((main (seq-find (lambda (w)
+                                 (not (window-parameter w 'window-side)))
+                               (window-list nil 'no-minibuf))))
+      (select-window main)))
+  (not (window-parameter (selected-window) 'window-side)))
+
+(defun sanityinc/delete-other-windows ()
+  "Like `delete-other-windows', but tolerant of side windows.
+When invoked from inside a side window (e.g. the claude-code
+pane), act from a main window instead of erroring; side windows
+that opt out via `no-delete-other-windows' are left intact."
+  (interactive)
+  (when (sanityinc/select-main-window)
+    (delete-other-windows)))
+
+(defun sanityinc/delete-window ()
+  "Like `delete-window', but a no-op on the last main window.
+Avoids the \"Attempt to delete main window of frame\" error when a
+side window is the only other window on the frame."
+  (interactive)
+  (condition-case nil
+      (delete-window)
+    (error (message "Cannot delete the last main window"))))
+
 
 ;; Handier way to add modes to auto-mode-alist
 (defun add-auto-mode (mode &rest patterns)

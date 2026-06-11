@@ -150,8 +150,8 @@ A kill is treated as linewise when it ends with a newline (e.g. from
    '("t c" . tab-close)
    ;; window
    '("w w" . other-window)
-   '("w o" . delete-other-windows)
-   '("w q" . delete-window)
+   '("w o" . sanityinc/delete-other-windows)
+   '("w q" . sanityinc/delete-window)
    '("w v" . split-window-right)
    '("w h" . split-window-below)
    ;; zoxide
