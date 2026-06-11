@@ -39,14 +39,19 @@
 (defun my/save-frame-state ()
   "Persist current frame geometry to `my/frame-state-file'."
   (when (display-graphic-p)
-    (let ((frame (selected-frame)))
-      (with-temp-file my/frame-state-file
-        (prin1 (list (cons 'left       (frame-parameter frame 'left))
-                     (cons 'top        (frame-parameter frame 'top))
-                     (cons 'width      (frame-parameter frame 'width))
-                     (cons 'height     (frame-parameter frame 'height))
-                     (cons 'fullscreen (frame-parameter frame 'fullscreen)))
-               (current-buffer))))))
+    (let* ((frame (selected-frame))
+           (left (frame-parameter frame 'left))
+           (top  (frame-parameter frame 'top)))
+      ;; Skip save when frame is minimized (Windows reports -32000)
+      (unless (and (integerp left) (integerp top)
+                   (or (< left -31000) (< top -31000)))
+        (with-temp-file my/frame-state-file
+          (prin1 (list (cons 'left       left)
+                       (cons 'top        top)
+                       (cons 'width      (frame-parameter frame 'width))
+                       (cons 'height     (frame-parameter frame 'height))
+                       (cons 'fullscreen (frame-parameter frame 'fullscreen)))
+                 (current-buffer)))))))
 
 (defun my/load-frame-state ()
   "Apply saved geometry to `initial-frame-alist'."
