@@ -99,6 +99,7 @@ A kill is treated as linewise when it ends with a newline (e.g. from
    '("g b" . emacs-solo/switch-git-status-buffer)
    '("g i" . magit)
    '("g d" . magit-diff-working-tree)
+   '("g f" . magit-pull-from-upstream)
    '("g t" . gt-translate)
    '("g p" . my/git-push)
    '("g l" . magit-log-current)
@@ -305,6 +306,7 @@ A kill is treated as linewise when it ends with a newline (e.g. from
     "SPC g b" "Switch git status buffer"
     "SPC g i" "Magit"
     "SPC g d" "Git diff working tree"
+    "SPC g f" "Git pull from upstream"
     "SPC g t" "Translate"
     "SPC g p" "Git push"
     "SPC g l" "Git log"
