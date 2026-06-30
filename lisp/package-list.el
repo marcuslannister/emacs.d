@@ -1,6 +1,14 @@
 ;;; Package ---  async-installer packagve settings  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+;; Bumping anvil (Mac/Linux): edit the `:tag' below, then
+;;   1. M-x async-installer-git-update-all-interactive  -- reads the new tag,
+;;      runs git pull + checkout, rewrites the .gitcommit cache, native-compiles
+;;   2. M-x anvil-server-install  -- refresh ~/.emacs.d/anvil-stdio.sh (the
+;;      per-machine MCP stdio bridge) after the "[async-git] Updated" message
+;;   3. restart Emacs and reconnect the MCP client
+;; Do not `git checkout' external-packages/anvil.el by hand: it desyncs the
+;; async-installer .gitcommit cache and skips the native-compile.
 (async-installer-git-add "https://github.com/zawatton/anvil.el.git"
                          :tag "v1.3.0"
                          :main "anvil.el")
