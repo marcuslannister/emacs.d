@@ -31,42 +31,13 @@
 (package-initialize)
 
 ;; Restore previous frame size/position (must run before the first frame is
-;; created so `initial-frame-alist' takes effect).
-(defvar my/frame-state-file
-  (expand-file-name "frame-state.el" user-emacs-directory)
-  "File where the last frame geometry is persisted.")
-
-(defun my/save-frame-state ()
-  "Persist current frame geometry to `my/frame-state-file'."
-  (when (display-graphic-p)
-    (let* ((frame (selected-frame))
-           (left (frame-parameter frame 'left))
-           (top  (frame-parameter frame 'top)))
-      ;; Skip save when frame is minimized (Windows reports -32000)
-      (unless (and (integerp left) (integerp top)
-                   (or (< left -31000) (< top -31000)))
-        (with-temp-file my/frame-state-file
-          (prin1 (list (cons 'left       left)
-                       (cons 'top        top)
-                       (cons 'width      (frame-parameter frame 'width))
-                       (cons 'height     (frame-parameter frame 'height))
-                       (cons 'fullscreen (frame-parameter frame 'fullscreen)))
-                 (current-buffer)))))))
-
-(defun my/load-frame-state ()
-  "Apply saved geometry to `initial-frame-alist'."
-  (when (file-exists-p my/frame-state-file)
-    (condition-case nil
-        (let ((state (with-temp-buffer
-                       (insert-file-contents my/frame-state-file)
-                       (read (current-buffer)))))
-          (dolist (param state)
-            (when (cdr param)
-              (setf (alist-get (car param) initial-frame-alist) (cdr param)))))
-      (error nil))))
-
-(my/load-frame-state)
-(add-hook 'kill-emacs-hook #'my/save-frame-state)
+;; created so `initial-frame-alist' takes effect).  The persisted geometry is
+;; untrusted disposable cache; `lib/frame-state.el' validates it on load.
+;; Loaded by absolute path because `lib/' is not yet on `load-path' here.
+(load (expand-file-name "lib/frame-state" user-emacs-directory) t t)
+(when (fboundp 'my/load-frame-state)
+  (my/load-frame-state)
+  (add-hook 'kill-emacs-hook #'my/save-frame-state))
 
 ;; So we can detect this having been loaded
 (provide 'early-init)
