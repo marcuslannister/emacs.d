@@ -17,7 +17,7 @@
 (setq anvil-modules '(worker eval org file host git proc fs emacs text clipboard data net))
 
 ;; Enable optional modules
-(setq anvil-optional-modules '(xlsx pdf ide http cron browser))
+(setq anvil-optional-modules '(xlsx pdf http cron browser))
 
 
 (use-package claude-code-ide
