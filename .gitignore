@@ -70,6 +70,7 @@ anvil-memory-index.db
 anvil-init.el
 anvil-worker-init.el
 /anvil-stdio.cmd
+/anvil-stdio.sh
 /emacs_backtrace.txt
 /server/
 *.log
