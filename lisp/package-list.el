@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Code:
 (async-installer-git-add "https://github.com/zawatton/anvil.el.git"
-                         :tag "v1.1.1"
+                         :tag "v1.3.0"
                          :main "anvil.el")
 
 ;; Windows-only in practice: init-local-shell.el loads this fork via
