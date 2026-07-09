@@ -440,11 +440,12 @@ The completion candidates include the Git status of each file."
 
 
 (defun ml-update-all-packages ()
-  "Update all installed packages."
+  "Update all installed packages, including async-installer Git packages."
   (interactive)
   (package-refresh-contents)
   (package-upgrade-all)
-  (package-vc-upgrade-all))
+  (package-vc-upgrade-all)
+  (async-installer-git-update-all-interactive))
 
 (defun ml-init-ediff-current-with-other-window ()
   "Ediff current window buffer with the next window buffer."
