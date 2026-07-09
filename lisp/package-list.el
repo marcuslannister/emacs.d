@@ -22,3 +22,9 @@
                          :tag "v0.31.0.79.a7b0c9"
                          :subdir "lisp"
                          :main "ghostel.el")
+
+;; org-supertag: multi-file package (tracks the `main' branch).  async-installer
+;; only clones + loads `org-supertag.el'; its ELPA deps (ht, gptel, websocket,
+;; simple-httpd) must be installed separately, and a module must `require' it.
+(async-installer-git-add "https://github.com/yibie/org-supertag.git"
+                         :main "org-supertag.el")
