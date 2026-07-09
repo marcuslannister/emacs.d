@@ -339,5 +339,16 @@
 ;;                [2021-12-24 Fri 14:00]
 ;; Citation:      [cite:@Knuth:1984]
 
+;; org-supertag is a multi-file package cloned under external-packages/ by
+;; async-installer (see package-list.el).  async-installer only adds it to
+;; `load-path' during an interactive install/update, not on every startup, so
+;; put its directory on `load-path' here before requiring it.  Guarded so a
+;; fresh checkout without the package installed still starts cleanly.
+(let ((dir (expand-file-name "external-packages/org-supertag" user-emacs-directory)))
+  (when (file-directory-p dir)
+    (add-to-list 'load-path dir)
+    (when (require 'org-supertag nil t)
+      (setq org-supertag-sync-directories '("~/org/")))))
+
 (provide 'init-local-org)
 ;;; init-local-org.el ends here
