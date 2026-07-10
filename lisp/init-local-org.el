@@ -339,6 +339,7 @@
 ;;                [2021-12-24 Fri 14:00]
 ;; Citation:      [cite:@Knuth:1984]
 
+
 ;; org-supertag is a multi-file package cloned under external-packages/ by
 ;; async-installer (see package-list.el).  async-installer only adds it to
 ;; `load-path' during an interactive install/update, not on every startup, so
@@ -349,6 +350,17 @@
     (add-to-list 'load-path dir)
     (when (require 'org-supertag nil t)
       (setq org-supertag-sync-directories '("~/org/")))))
+
+;; 每 60 秒自动同步
+(setq org-supertag-sync-directories '("~/org/"))
+(setq supertag-auto-sync-interval 60)
+
+;; 每 10 次 tick 才做一次全量校验（节省 CPU）
+(setq supertag-sync-maintenance-every-n-ticks 10)
+
+;; 快照保护：如果目录不可用（如网络盘断开），
+;; 不会误判为"文件被删除"而破坏数据库
+(setq supertag-sync-snapshot-guard t)
 
 (provide 'init-local-org)
 ;;; init-local-org.el ends here
