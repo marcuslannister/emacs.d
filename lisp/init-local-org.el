@@ -362,5 +362,18 @@
 ;; 不会误判为"文件被删除"而破坏数据库
 (setq supertag-sync-snapshot-guard t)
 
+(with-eval-after-load 'org-supertag
+  (supertag-enable-org-capture-integration))
+
+(add-to-list
+ 'org-capture-templates
+ '("i" "Inbox task" entry
+   (file "~/org/inbox.org")
+   "* %^{Title} #task\n"
+   :supertag t
+   :supertag-template
+   ((:tag "task" :field "status"   :value "todo")
+    (:tag "task" :field "priority" :value "c"))))
+
 (provide 'init-local-org)
 ;;; init-local-org.el ends here
