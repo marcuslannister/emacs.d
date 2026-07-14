@@ -353,6 +353,9 @@
 
 ;; 每 60 秒自动同步
 (setq org-supertag-sync-directories '("~/org/"))
+;; Syncthing 的历史版本目录不参与索引，否则旧文件里的重复 :ID:
+;; 会把数据库里的节点路径改写到 .stversions 下的过期副本
+(setq supertag-sync-exclude-directories '("~/org/.stversions/"))
 (setq supertag-auto-sync-interval 60)
 
 ;; 每 10 次 tick 才做一次全量校验（节省 CPU）
@@ -361,6 +364,9 @@
 ;; 快照保护：如果目录不可用（如网络盘断开），
 ;; 不会误判为"文件被删除"而破坏数据库
 (setq supertag-sync-snapshot-guard t)
+
+;; Sync data through Syncthing, Dropbox, iCloud, etc.
+(setq supertag-data-directory "~/org/org-supertag/")
 
 (with-eval-after-load 'org-supertag
   (supertag-enable-org-capture-integration))
