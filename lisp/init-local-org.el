@@ -340,6 +340,14 @@
 ;; Citation:      [cite:@Knuth:1984]
 
 
+;; Sync data through Syncthing, Dropbox, iCloud, etc.
+;; MUST be set BEFORE `(require 'org-supertag)' below: `supertag-db-file'
+;; derives its default from `supertag-data-directory' once, at load time.
+;; Setting it after the require leaves `supertag-db-file' frozen at the
+;; built-in default (~/.emacs.d/org-supertag/...), which then loads the wrong
+;; (local, stale) database instead of the synced one.
+(setq supertag-data-directory "~/org/org-supertag/")
+
 ;; org-supertag is a multi-file package cloned under external-packages/ by
 ;; async-installer (see package-list.el).  async-installer only adds it to
 ;; `load-path' during an interactive install/update, not on every startup, so
@@ -364,9 +372,6 @@
 ;; 快照保护：如果目录不可用（如网络盘断开），
 ;; 不会误判为"文件被删除"而破坏数据库
 (setq supertag-sync-snapshot-guard t)
-
-;; Sync data through Syncthing, Dropbox, iCloud, etc.
-(setq supertag-data-directory "~/org/org-supertag/")
 
 (with-eval-after-load 'org-supertag
   (supertag-enable-org-capture-integration))

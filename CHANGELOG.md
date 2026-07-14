@@ -6,6 +6,9 @@ continuously, so changes land under "Unreleased".
 
 ## Unreleased
 
+### Fixed
+- Set `supertag-data-directory` before `(require 'org-supertag)` in `lisp/init-local-org.el` so `supertag-db-file` derives the synced `~/org/org-supertag/` path at load time; the late setq had let it freeze at the default and load a stale local DB on machines with a leftover `~/.emacs.d/org-supertag/supertag-db.el`.
+
 ### Added
 - Meow leader bindings for org-supertag under `SPC s` (search, add/remove tag, table/node/kanban/schema views, capture, reference, full rescan), with which-key labels.
 
