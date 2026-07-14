@@ -13,6 +13,7 @@ continuously, so changes land under "Unreleased".
 - Meow leader bindings for org-supertag under `SPC s` (search, add/remove tag, table/node/kanban/schema views, capture, reference, full rescan), with which-key labels.
 
 ### Changed
+- Render org-supertag inline `#tags` as plain bold text (`org-priority` color, heading-matched height via font-lock `prepend`) instead of SVG pill badges, by disabling `supertag-svg-tag-enable` and restyling `supertag-inline-face` in `lisp/init-local-org.el`.
 - Bump bundled `anvil.el` to **v1.3.0** and drop the now-extracted `ide` module from `anvil-optional-modules`.
 - Source the anvil MCP stdio bridge (`anvil-stdio.sh`) via `M-x anvil-server-install` into `~/.emacs.d/` as a gitignored per-machine artifact, instead of tracking a vendored copy.
 - Document the anvil version-bump procedure inline in `lisp/package-list.el`.
