@@ -146,6 +146,17 @@ A kill is treated as linewise when it ends with a newline (e.g. from
    '("s c h" . consult-org-heading)
    '("s g h n" . rg-search-everything)
    '("s c d" . consult-dir)
+   ;; supertag (shares SPC s with search)
+   '("s s" . supertag-search)
+   '("s t" . supertag-add-tag)
+   '("s T" . supertag-remove-tag-from-node)
+   '("s v" . supertag-view-table)
+   '("s n" . supertag-view-node)
+   '("s k" . supertag-view-kanban)
+   '("s m" . supertag-view-schema)
+   '("s i" . supertag-capture)
+   '("s r" . supertag-add-reference)
+   '("s u" . supertag-sync-full-rescan)
    ;; tab
    '("t n" . tab-new)
    '("t c" . tab-close)
@@ -348,7 +359,7 @@ A kill is treated as linewise when it ends with a newline (e.g. from
     "SPC q"   "session"
     "SPC q q" "Quit Emacs"
     "SPC q r" "Restart Emacs"
-    "SPC s"       "search"
+    "SPC s"       "search / supertag"
     "SPC s g"     "rg"
     "SPC s g r"   "Search with rg"
     "SPC s g h"   "rg hidden"
@@ -358,6 +369,16 @@ A kill is treated as linewise when it ends with a newline (e.g. from
     "SPC s c f"   "Consult fd"
     "SPC s c h"   "Consult org heading"
     "SPC s c d"   "Consult dir"
+    "SPC s s"     "Supertag search"
+    "SPC s t"     "Add tag"
+    "SPC s T"     "Remove tag"
+    "SPC s v"     "Table view"
+    "SPC s n"     "Node view"
+    "SPC s k"     "Kanban view"
+    "SPC s m"     "Schema view"
+    "SPC s i"     "Supertag capture"
+    "SPC s r"     "Add reference"
+    "SPC s u"     "Full rescan"
     "SPC t"   "tab"
     "SPC t n" "New tab"
     "SPC t c" "Close tab"
