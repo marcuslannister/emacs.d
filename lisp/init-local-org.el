@@ -378,8 +378,8 @@
    "* %^{Title} #task\n"
    :supertag t
    :supertag-template
-   ((:tag "task" :field "status"   :value "todo")
-    (:tag "task" :field "priority" :value "c"))))
+   ((:tag "task" :field "status"   :value "TODO")
+    (:tag "task" :field "priority" :value "C"))))
 
 (provide 'init-local-org)
 ;;; init-local-org.el ends here
