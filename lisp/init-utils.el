@@ -33,8 +33,8 @@ BUFFER and ALIST are as for `display-buffer-full-frame'."
 
 
 ;; Side-window-tolerant variants of the window-deletion commands.  These
-;; live here (loaded on both GUI and TUI startup paths) so the meow
-;; bindings in `init-local-meow' resolve in terminal sessions too.
+;; live here (loaded on both GUI and TUI startup paths) so the Hel
+;; bindings in `init-local-hel' resolve in terminal sessions too.
 
 (defun sanityinc/select-main-window ()
   "Ensure the selected window is a main (non-side) window.

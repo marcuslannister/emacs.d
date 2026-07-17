@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Writes ERT regression tests for Emacs Lisp config modules, matching the existing tests/ style. Use to backfill coverage for local customizations (meow, shell/ghostel, denote helpers) before Emacs version bumps.
+description: Writes ERT regression tests for Emacs Lisp config modules, matching the existing tests/ style. Use to backfill coverage for local customizations (Hel, shell/Ghostel, Denote helpers) before Emacs version bumps.
 tools: Read, Grep, Glob, Write, Edit, Bash
 model: inherit
 ---

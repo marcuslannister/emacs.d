@@ -37,7 +37,7 @@
 (define-key sanityinc/org-global-prefix-map (kbd "l") 'org-clock-in-last)
 (define-key sanityinc/org-global-prefix-map (kbd "i") 'org-clock-in)
 (define-key sanityinc/org-global-prefix-map (kbd "o") 'org-clock-out)
-;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and reclaims `o'.
+;; Disabled: Hel uses SPC as its leader and reclaims `o'.
 ;; (define-key global-map (kbd "C-c o") sanityinc/org-global-prefix-map)
 
 
@@ -109,7 +109,7 @@ typical word processor."
 
 ;;; Capturing
 
-;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and needs `c' as a prefix.
+;; Disabled: Hel uses SPC as its leader and needs `c' as a prefix.
 ;; (global-set-key (kbd "C-c c") 'org-capture)
 
 (setq org-capture-templates

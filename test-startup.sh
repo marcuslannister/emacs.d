@@ -25,5 +25,37 @@ ${EMACS:=emacs} -nw --batch \
                                      (error "Eshell RET should submit input, got %S"
                                             (key-binding (kbd "RET")))))
                                (when (buffer-live-p buf)
-                                 (kill-buffer buf))))))'
+                                 (kill-buffer buf))))
+                           (when (featurep (quote hel))
+                             (with-temp-buffer
+                               (special-mode)
+                               (unless (and (eq hel-state (quote emacs))
+                                            (eq (key-binding (kbd "SPC b n"))
+                                                (quote next-buffer)))
+                                 (error "Hel leader unavailable in Emacs state: state=%S SPC-b-n=%S"
+                                        hel-state
+                                        (key-binding (kbd "SPC b n")))))
+                             (require (quote dired))
+                             (let ((buf (dired-noselect temporary-file-directory)))
+                               (unwind-protect
+                                   (with-current-buffer buf
+                                     (unless (and (eq hel-state (quote normal))
+                                                  (eq (key-binding (kbd "SPC b n"))
+                                                      (quote next-buffer))
+                                                  (eq (key-binding (kbd "h"))
+                                                      (quote hel-backward-char))
+                                                  (eq (key-binding (kbd "j"))
+                                                      (quote hel-next-line))
+                                                  (eq (key-binding (kbd "k"))
+                                                      (quote hel-previous-line))
+                                                  (eq (key-binding (kbd "l"))
+                                                      (quote hel-forward-char)))
+                                       (error "Dired Hel keys unavailable: state=%S leader=%S hjkl=%S"
+                                              hel-state
+                                              (key-binding (kbd "SPC b n"))
+                                              (mapcar (lambda (key)
+                                                        (key-binding (kbd key)))
+                                                      (quote ("h" "j" "k" "l"))))))
+                                 (when (buffer-live-p buf)
+                                   (kill-buffer buf)))))))'
 echo "Startup successful"

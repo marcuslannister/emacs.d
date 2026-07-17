@@ -38,8 +38,8 @@
 ;;   (require 'init-treesitter))
 
 ;; (require 'init-local-themes)
-(require-package 'meow)
-(require 'init-local-meow)
+(require 'init-local-async-installer)
+(require 'init-local-hel)
 
 (provide 'init-tui)
 ;;; init-tui.el ends here
