@@ -6,7 +6,11 @@
   "Minimum Emacs version supported by Hel.")
 
 (defvar my/hel--installing nil
-  "Non-nil while async-installer is cloning Hel.")
+  "Non-nil while async-installer is cloning a Hel package.")
+
+;; Hel defaults to a bar in Normal state and a box in Insert state.
+(setq hel-normal-state-cursor-type 'box
+      hel-insert-state-cursor-type 'bar)
 
 (defun my/save-all-buffers ()
   "Save every modified file-visiting buffer without prompting."
@@ -14,177 +18,188 @@
   (save-some-buffers t))
 
 (defun my/hel-setup-leader ()
-  "Configure Hel leader bindings in Normal and Emacs states."
+  "Configure native leader bindings in Hel Normal and Emacs states."
+  ;; Keep lowercase g available for the Git group; use SPC G for C-M-.
+  (setq hel-leader-ctrl-meta-prefix "G")
   (hel-keymap-global-set :state '(normal emacs)
     ;; Numeric arguments and help.
-    "SPC 1" #'digit-argument
-    "SPC 2" #'digit-argument
-    "SPC 3" #'digit-argument
-    "SPC 4" #'digit-argument
-    "SPC 5" #'digit-argument
-    "SPC 6" #'digit-argument
-    "SPC 7" #'digit-argument
-    "SPC 8" #'digit-argument
-    "SPC 9" #'digit-argument
-    "SPC 0" #'digit-argument
-    "SPC /" #'describe-key
-    "SPC ?" #'describe-bindings
+    "C-c 1" #'digit-argument
+    "C-c 2" #'digit-argument
+    "C-c 3" #'digit-argument
+    "C-c 4" #'digit-argument
+    "C-c 5" #'digit-argument
+    "C-c 6" #'digit-argument
+    "C-c 7" #'digit-argument
+    "C-c 8" #'digit-argument
+    "C-c 9" #'digit-argument
+    "C-c 0" #'digit-argument
+    "C-c /" #'describe-key
+    "C-c ?" #'describe-bindings
 
     ;; High frequency.
-    "SPC SPC" #'save-buffer
-    "SPC :" #'execute-extended-command
-    "SPC ." #'find-file
-    "SPC ," #'switch-to-buffer
-    "SPC ;" #'insert-timestamp
-    "SPC k" #'kill-this-buffer
-    "SPC f" #'find-file
-    "SPC i" #'imenu
-    "SPC F" #'toggle-frame-maximized
-    "SPC r" #'consult-recent-file
+    "C-c :" #'execute-extended-command
+    "C-c ." #'find-file
+    "C-c ," #'switch-to-buffer
+    "C-c ;" #'insert-timestamp
+    "C-c k" #'kill-this-buffer
+    "C-c f" #'find-file
+    "C-c i" #'imenu
+    "C-c F" #'toggle-frame-maximized
+    "C-c r" #'consult-recent-file
 
     ;; Buffer.
-    "SPC b n" #'next-buffer
-    "SPC b p" #'previous-buffer
-    "SPC b s" #'basic-save-buffer
-    "SPC b a" #'my/save-all-buffers
-    "SPC b k" #'kill-current-buffer
-    "SPC b o" #'read-only-mode
-    "SPC b m" #'view-echo-area-messages
-    "SPC b e" #'eval-buffer
-    "SPC b r" #'revert-buffer
+    "C-c b n" #'next-buffer
+    "C-c b p" #'previous-buffer
+    "C-c b s" #'basic-save-buffer
+    "C-c b a" #'my/save-all-buffers
+    "C-c b k" #'kill-current-buffer
+    "C-c b o" #'read-only-mode
+    "C-c b m" #'view-echo-area-messages
+    "C-c b e" #'eval-buffer
+    "C-c b r" #'revert-buffer
 
     ;; Claude / comment / clock.
-    "SPC c c" #'claude-code-ide
-    "SPC c m" #'claude-code-ide-menu
-    "SPC c /" #'comment-dwim
-    "SPC c t" #'org-clock-update-time-maybe
-    "SPC c i" #'org-clock-in
-    "SPC c o" #'org-clock-out
-    "SPC c p i" #'bh/punch-in
-    "SPC c p o" #'bh/punch-out
-    "SPC c g" #'org-clock-goto
-    "SPC c l t" #'bh/clock-in-last-task
-    "SPC c s" #'kk/org-clock-in-switch-task
+    "C-c a c" #'claude-code-ide
+    "C-c a m" #'claude-code-ide-menu
+    "C-c a /" #'comment-dwim
+    "C-c a t" #'org-clock-update-time-maybe
+    "C-c a i" #'org-clock-in
+    "C-c a o" #'org-clock-out
+    "C-c a p i" #'bh/punch-in
+    "C-c a p o" #'bh/punch-out
+    "C-c a g" #'org-clock-goto
+    "C-c a l t" #'bh/clock-in-last-task
+    "C-c a s" #'kk/org-clock-in-switch-task
 
     ;; Eval / eshell / ediff.
-    "SPC e e" #'eval-last-sexp
-    "SPC e s" #'eshell
-    "SPC e c" #'eshell-current-directory
-    "SPC e d" #'ediff
-    "SPC e b" #'ediff-buffers
-    "SPC e w" #'ml-init-ediff-current-with-other-window
+    "C-c e e" #'eval-last-sexp
+    "C-c e s" #'eshell
+    "C-c e c" #'eshell-current-directory
+    "C-c e d" #'ediff
+    "C-c e b" #'ediff-buffers
+    "C-c e w" #'ml-init-ediff-current-with-other-window
 
     ;; Edit / Denote / Dired.
-    "SPC d d" #'kill-whole-line
-    "SPC d w" #'delete-trailing-whitespace
-    "SPC d D" #'move-dup-duplicate-down
-    "SPC d n" #'denote
-    "SPC d r" #'denote-rename-file
-    "SPC d c" #'ai/cd-to-current-buffer
-    "SPC d i" #'dired
-    "SPC d p" #'pwd
+    "C-c d d" #'kill-whole-line
+    "C-c d w" #'delete-trailing-whitespace
+    "C-c d D" #'move-dup-duplicate-down
+    "C-c d n" #'denote
+    "C-c d r" #'denote-rename-file
+    "C-c d c" #'ai/cd-to-current-buffer
+    "C-c d i" #'dired
+    "C-c d p" #'pwd
 
     ;; Git / translate / Ghostel.
-    "SPC g s" #'magit-status
-    "SPC g b" #'emacs-solo/switch-git-status-buffer
-    "SPC g i" #'magit
-    "SPC g d" #'magit-diff-working-tree
-    "SPC g t" #'gt-translate
-    "SPC g p" #'my/git-push
-    "SPC g l" #'magit-log-current
-    "SPC g f" #'my/git-pull-ff-only
-    "SPC g P" #'ml-gt-polish-using-llm
-    "SPC g h" #'ghostel
+    "C-c g s" #'magit-status
+    "C-c g b" #'emacs-solo/switch-git-status-buffer
+    "C-c g i" #'magit
+    "C-c g d" #'magit-diff-working-tree
+    "C-c g t" #'gt-translate
+    "C-c g p" #'my/git-push
+    "C-c g l" #'magit-log-current
+    "C-c g f" #'my/git-pull-ff-only
+    "C-c g P" #'ml-gt-polish-using-llm
+    "C-c g h" #'ghostel
 
     ;; Highlight.
-    "SPC h l" #'pulsar-highlight-permanently-dwim
+    "C-c h l" #'pulsar-highlight-permanently-dwim
 
     ;; Project.
-    "SPC p p" #'project-find-file
+    "C-c p p" #'project-find-file
 
     ;; Denote journal.
-    "SPC j n" #'my/denote-journal-new-or-existing-entry
-    "SPC j t" #'my/denote-journal-new-entry-with-open-todos
-    "SPC j o" #'denote-journal-new-or-existing-entry
+    "C-c j n" #'my/denote-journal-new-or-existing-entry
+    "C-c j t" #'my/denote-journal-new-entry-with-open-todos
+    "C-c j o" #'denote-journal-new-or-existing-entry
 
     ;; Blinko.
-    "SPC n b" #'blinko-post-buffer
-    "SPC n r" #'blinko-post-region
-    "SPC n p" #'blinko-post-content
+    "C-c n b" #'blinko-post-buffer
+    "C-c n r" #'blinko-post-region
+    "C-c n p" #'blinko-post-content
 
     ;; Org.
-    "SPC o a" #'org-agenda
-    "SPC o l" #'org-todo-list
-    "SPC o m" #'org-tags-view
-    "SPC o v" #'org-search-view
-    "SPC o t" #'org-todo
-    "SPC o c" #'org-capture
-    "SPC o d" #'org-deadline
-    "SPC o s" #'org-schedule
-    "SPC o r" #'org-refile
-    "SPC o p" #'org-priority
-    "SPC o g" #'org-goto
-    "SPC o o" #'org-open-at-point
-    "SPC o i l" #'org-insert-link
-    "SPC o i h" #'org-insert-heading
-    "SPC o i s" #'org-insert-subheading
-    "SPC o n l" #'org-now-link
-    "SPC o n t" #'org-now
+    "C-c o a" #'org-agenda
+    "C-c o l" #'org-todo-list
+    "C-c o m" #'org-tags-view
+    "C-c o v" #'org-search-view
+    "C-c o t" #'org-todo
+    "C-c o c" #'org-capture
+    "C-c o d" #'org-deadline
+    "C-c o s" #'org-schedule
+    "C-c o r" #'org-refile
+    "C-c o p" #'org-priority
+    "C-c o g" #'org-goto
+    "C-c o o" #'org-open-at-point
+    "C-c o i l" #'org-insert-link
+    "C-c o i h" #'org-insert-heading
+    "C-c o i s" #'org-insert-subheading
+    "C-c o n l" #'org-now-link
+    "C-c o n t" #'org-now
 
     ;; Session.
-    "SPC q q" #'save-buffers-kill-terminal
-    "SPC q r" #'restart-emacs
+    "C-c q q" #'save-buffers-kill-terminal
+    "C-c q r" #'restart-emacs
 
     ;; Search / supertag.
-    "SPC s g r" #'rgrep
-    "SPC s c g" #'consult-ripgrep
-    "SPC s c f" #'consult-fd
-    "SPC s c h" #'consult-org-heading
-    "SPC s g h n" #'rg-search-everything
-    "SPC s c d" #'consult-dir
-    "SPC s s" #'supertag-search
-    "SPC s t" #'supertag-add-tag
-    "SPC s T" #'supertag-remove-tag-from-node
-    "SPC s v" #'supertag-view-table
-    "SPC s n" #'supertag-view-node
-    "SPC s k" #'supertag-view-kanban
-    "SPC s m" #'supertag-view-schema
-    "SPC s i" #'supertag-capture
-    "SPC s r" #'supertag-add-reference
-    "SPC s u" #'supertag-sync-full-rescan
+    "C-c s g r" #'rgrep
+    "C-c s c g" #'consult-ripgrep
+    "C-c s c f" #'consult-fd
+    "C-c s c h" #'consult-org-heading
+    "C-c s g h n" #'rg-search-everything
+    "C-c s c d" #'consult-dir
+    "C-c s s" #'supertag-search
+    "C-c s t" #'supertag-add-tag
+    "C-c s T" #'supertag-remove-tag-from-node
+    "C-c s v" #'supertag-view-table
+    "C-c s n" #'supertag-view-node
+    "C-c s k" #'supertag-view-kanban
+    "C-c s m" #'supertag-view-schema
+    "C-c s i" #'supertag-capture
+    "C-c s r" #'supertag-add-reference
+    "C-c s u" #'supertag-sync-full-rescan
 
     ;; Tab.
-    "SPC t n" #'tab-new
-    "SPC t c" #'tab-close
+    "C-c t n" #'tab-new
+    "C-c t c" #'tab-close
 
     ;; Window.
-    "SPC w w" #'other-window
-    "SPC w o" #'sanityinc/delete-other-windows
-    "SPC w q" #'sanityinc/delete-window
-    "SPC w v" #'split-window-right
-    "SPC w h" #'split-window-below
+    "C-c w w" #'other-window
+    "C-c w o" #'sanityinc/delete-other-windows
+    "C-c w q" #'sanityinc/delete-window
+    "C-c w v" #'split-window-right
+    "C-c w h" #'split-window-below
 
     ;; Zoxide.
-    "SPC z f" #'zoxide-find-file
-    "SPC z t" #'zoxide-travel
-    "SPC z d" #'zoxide-cd))
+    "C-c z f" #'zoxide-find-file
+    "C-c z t" #'zoxide-travel
+    "C-c z d" #'zoxide-cd))
 
 (defun my/hel--activate ()
-  "Load Hel, configure personal bindings, and enable it globally."
-  (when (require 'hel nil t)
+  "Load Hel and hel-leader, configure them, and enable Hel globally."
+  (when (and (require 'hel nil t)
+             (require 'hel-leader nil t))
     (hel-set-initial-state 'dired-mode 'normal)
     (my/hel-setup-leader)
     (hel-mode 1)
     t))
 
+(defun my/hel--missing-package ()
+  "Return the first unavailable Hel package name."
+  (seq-find (lambda (name)
+              (not (locate-library name)))
+            '("hel" "hel-leader")))
+
 (defun my/hel--install ()
-  "Install Hel asynchronously through async-installer."
+  "Install missing Hel packages asynchronously through async-installer."
   (when (boundp 'async-installer-git-list)
-    (let ((package
-           (seq-find
-            (lambda (entry)
-              (string-match-p "anuvyklack/hel" (plist-get entry :repo)))
-            async-installer-git-list)))
+    (let* ((name (my/hel--missing-package))
+           (suffix (and name (concat "/" name ".git")))
+           (package
+            (and suffix
+                 (seq-find
+                  (lambda (entry)
+                    (string-suffix-p suffix (plist-get entry :repo)))
+                  async-installer-git-list))))
       (when (and package (not my/hel--installing))
         (setq my/hel--installing t)
         (async-installer-git--install-one
@@ -194,145 +209,154 @@
            (if dir
                (progn
                  (add-to-list 'load-path dir)
-                 (my/hel--activate))
-             (message "Hel installation failed"))))))))
+                 (let ((next (my/hel--missing-package)))
+                   (cond
+                    ((equal next name)
+                     (message "%s installed but its library is unavailable" name))
+                    (next
+                     (my/hel--install))
+                    ((not (my/hel--activate))
+                     (message "Hel packages installed but activation failed")))))
+             (message "%s installation failed" name))))))))
 
 (if (version< emacs-version my/hel-minimum-emacs-version)
     (message "Hel requires Emacs %s or newer; running without Hel"
              my/hel-minimum-emacs-version)
-  (dolist (package '(dash avy pcre2el ultra-scroll))
+  (dolist (package '(dash s avy pcre2el ultra-scroll))
     (require-package package))
-  (let ((dir (expand-file-name "external-packages/hel" user-emacs-directory)))
-    (when (file-directory-p dir)
-      (add-to-list 'load-path dir)))
+  (dolist (name '("hel" "hel-leader"))
+    (let ((dir (expand-file-name (concat "external-packages/" name)
+                                 user-emacs-directory)))
+      (when (file-directory-p dir)
+        (add-to-list 'load-path dir))))
   (unless (or (my/hel--activate) noninteractive)
     (my/hel--install)))
 
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements
-    "SPC :"   "M-x"
-    "SPC ."   "Find file"
-    "SPC ,"   "Switch buffer"
-    "SPC ;"   "Insert timestamp"
-    "SPC b"   "buffer"
-    "SPC b n" "Next buffer"
-    "SPC b p" "Prev buffer"
-    "SPC b s" "Save buffer"
-    "SPC b a" "Save all buffers"
-    "SPC b k" "Kill current buffer"
-    "SPC b o" "Read only mode"
-    "SPC b m" "View message buffer"
-    "SPC b e" "Eval buffer"
-    "SPC b r" "Revert buffer"
-    "SPC c"     "claude / comment / clock"
-    "SPC c c"   "Claude Code IDE"
-    "SPC c m"   "Claude Code menu"
-    "SPC c /"   "Comment dwim"
-    "SPC c t"   "Update time"
-    "SPC c i"   "Start clock"
-    "SPC c o"   "Stop clock"
-    "SPC c p"   "punch"
-    "SPC c p i" "Punch in clock"
-    "SPC c p o" "Punch out clock"
-    "SPC c g"   "Go to clock"
-    "SPC c l"   "last task"
-    "SPC c l t" "Clock in last task"
-    "SPC c s"   "Switch task"
-    "SPC e"   "eval / eshell / ediff"
-    "SPC e e" "Eval last sexp"
-    "SPC e s" "Start eshell"
-    "SPC e c" "Eshell current directory"
-    "SPC e d" "Ediff"
-    "SPC e b" "Ediff buffers"
-    "SPC e w" "Ediff current vs other window"
-    "SPC d"   "edit / denote / dired"
-    "SPC d d" "Kill whole line"
-    "SPC d w" "Delete trailing whitespace"
-    "SPC d D" "Duplicate line down"
-    "SPC d n" "Create a denote"
-    "SPC d r" "Rename denote file"
-    "SPC d c" "Cd to current buffer dir"
-    "SPC d i" "Dired"
-    "SPC d p" "Show current directory"
-    "SPC g"   "git / translate / ghostel"
-    "SPC g s" "Magit status"
-    "SPC g b" "Switch git status buffer"
-    "SPC g i" "Magit"
-    "SPC g d" "Git diff working tree"
-    "SPC g t" "Translate"
-    "SPC g p" "Git push"
-    "SPC g l" "Git log"
-    "SPC g f" "Git pull (ff-only)"
-    "SPC g P" "Polish sentence"
-    "SPC g h" "Ghostel terminal"
-    "SPC h"   "highlight"
-    "SPC h l" "Permanently highlight line"
-    "SPC p"   "project"
-    "SPC p p" "Project find file"
-    "SPC j"   "denote journal"
-    "SPC j n" "Create an entry"
-    "SPC j t" "Entry with todos"
-    "SPC j o" "Open current journal"
-    "SPC n"   "blinko"
-    "SPC n b" "Post buffer"
-    "SPC n r" "Post region"
-    "SPC n p" "Post content"
-    "SPC o"     "org"
-    "SPC o a"   "Agenda"
-    "SPC o l"   "Todo list"
-    "SPC o m"   "Tags search"
-    "SPC o v"   "View search"
-    "SPC o t"   "Todo change"
-    "SPC o c"   "Capture"
-    "SPC o d"   "Insert deadline"
-    "SPC o s"   "Insert schedule"
-    "SPC o r"   "Refile"
-    "SPC o p"   "Change priority"
-    "SPC o g"   "Lookup location"
-    "SPC o o"   "Open at point"
-    "SPC o i"   "insert"
-    "SPC o i l" "Insert link"
-    "SPC o i h" "Insert heading"
-    "SPC o i s" "Insert subheading"
-    "SPC o n"   "now"
-    "SPC o n l" "Add link to org-now"
-    "SPC o n t" "Toggle org-now side window"
-    "SPC q"   "session"
-    "SPC q q" "Quit Emacs"
-    "SPC q r" "Restart Emacs"
-    "SPC s"       "search / supertag"
-    "SPC s g"     "rg"
-    "SPC s g r"   "Search with rg"
-    "SPC s g h"   "rg hidden"
-    "SPC s g h n" "Search with rg everything"
-    "SPC s c"     "consult"
-    "SPC s c g"   "Consult ripgrep"
-    "SPC s c f"   "Consult fd"
-    "SPC s c h"   "Consult org heading"
-    "SPC s c d"   "Consult dir"
-    "SPC s s"     "Supertag search"
-    "SPC s t"     "Add tag"
-    "SPC s T"     "Remove tag"
-    "SPC s v"     "Table view"
-    "SPC s n"     "Node view"
-    "SPC s k"     "Kanban view"
-    "SPC s m"     "Schema view"
-    "SPC s i"     "Supertag capture"
-    "SPC s r"     "Add reference"
-    "SPC s u"     "Full rescan"
-    "SPC t"   "tab"
-    "SPC t n" "New tab"
-    "SPC t c" "Close tab"
-    "SPC w"   "window"
-    "SPC w w" "Other window"
-    "SPC w o" "Only current window"
-    "SPC w q" "Close current window"
-    "SPC w v" "Split window right"
-    "SPC w h" "Split window below"
-    "SPC z"   "zoxide"
-    "SPC z f" "Find file under zoxide path"
-    "SPC z t" "Travel to zoxide path"
-    "SPC z d" "Cd to zoxide path"))
+    "C-c :"   "M-x"
+    "C-c ."   "Find file"
+    "C-c ,"   "Switch buffer"
+    "C-c ;"   "Insert timestamp"
+    "C-c b"   "buffer"
+    "C-c b n" "Next buffer"
+    "C-c b p" "Prev buffer"
+    "C-c b s" "Save buffer"
+    "C-c b a" "Save all buffers"
+    "C-c b k" "Kill current buffer"
+    "C-c b o" "Read only mode"
+    "C-c b m" "View message buffer"
+    "C-c b e" "Eval buffer"
+    "C-c b r" "Revert buffer"
+    "C-c a"     "claude / comment / clock"
+    "C-c a c"   "Claude Code IDE"
+    "C-c a m"   "Claude Code menu"
+    "C-c a /"   "Comment dwim"
+    "C-c a t"   "Update time"
+    "C-c a i"   "Start clock"
+    "C-c a o"   "Stop clock"
+    "C-c a p"   "punch"
+    "C-c a p i" "Punch in clock"
+    "C-c a p o" "Punch out clock"
+    "C-c a g"   "Go to clock"
+    "C-c a l"   "last task"
+    "C-c a l t" "Clock in last task"
+    "C-c a s"   "Switch task"
+    "C-c e"   "eval / eshell / ediff"
+    "C-c e e" "Eval last sexp"
+    "C-c e s" "Start eshell"
+    "C-c e c" "Eshell current directory"
+    "C-c e d" "Ediff"
+    "C-c e b" "Ediff buffers"
+    "C-c e w" "Ediff current vs other window"
+    "C-c d"   "edit / denote / dired"
+    "C-c d d" "Kill whole line"
+    "C-c d w" "Delete trailing whitespace"
+    "C-c d D" "Duplicate line down"
+    "C-c d n" "Create a denote"
+    "C-c d r" "Rename denote file"
+    "C-c d c" "Cd to current buffer dir"
+    "C-c d i" "Dired"
+    "C-c d p" "Show current directory"
+    "C-c g"   "git / translate / ghostel"
+    "C-c g s" "Magit status"
+    "C-c g b" "Switch git status buffer"
+    "C-c g i" "Magit"
+    "C-c g d" "Git diff working tree"
+    "C-c g t" "Translate"
+    "C-c g p" "Git push"
+    "C-c g l" "Git log"
+    "C-c g f" "Git pull (ff-only)"
+    "C-c g P" "Polish sentence"
+    "C-c g h" "Ghostel terminal"
+    "C-c h"   "highlight"
+    "C-c h l" "Permanently highlight line"
+    "C-c p"   "project"
+    "C-c p p" "Project find file"
+    "C-c j"   "denote journal"
+    "C-c j n" "Create an entry"
+    "C-c j t" "Entry with todos"
+    "C-c j o" "Open current journal"
+    "C-c n"   "blinko"
+    "C-c n b" "Post buffer"
+    "C-c n r" "Post region"
+    "C-c n p" "Post content"
+    "C-c o"     "org"
+    "C-c o a"   "Agenda"
+    "C-c o l"   "Todo list"
+    "C-c o m"   "Tags search"
+    "C-c o v"   "View search"
+    "C-c o t"   "Todo change"
+    "C-c o c"   "Capture"
+    "C-c o d"   "Insert deadline"
+    "C-c o s"   "Insert schedule"
+    "C-c o r"   "Refile"
+    "C-c o p"   "Change priority"
+    "C-c o g"   "Lookup location"
+    "C-c o o"   "Open at point"
+    "C-c o i"   "insert"
+    "C-c o i l" "Insert link"
+    "C-c o i h" "Insert heading"
+    "C-c o i s" "Insert subheading"
+    "C-c o n"   "now"
+    "C-c o n l" "Add link to org-now"
+    "C-c o n t" "Toggle org-now side window"
+    "C-c q"   "session"
+    "C-c q q" "Quit Emacs"
+    "C-c q r" "Restart Emacs"
+    "C-c s"       "search / supertag"
+    "C-c s g"     "rg"
+    "C-c s g r"   "Search with rg"
+    "C-c s g h"   "rg hidden"
+    "C-c s g h n" "Search with rg everything"
+    "C-c s c"     "consult"
+    "C-c s c g"   "Consult ripgrep"
+    "C-c s c f"   "Consult fd"
+    "C-c s c h"   "Consult org heading"
+    "C-c s c d"   "Consult dir"
+    "C-c s s"     "Supertag search"
+    "C-c s t"     "Add tag"
+    "C-c s T"     "Remove tag"
+    "C-c s v"     "Table view"
+    "C-c s n"     "Node view"
+    "C-c s k"     "Kanban view"
+    "C-c s m"     "Schema view"
+    "C-c s i"     "Supertag capture"
+    "C-c s r"     "Add reference"
+    "C-c s u"     "Full rescan"
+    "C-c t"   "tab"
+    "C-c t n" "New tab"
+    "C-c t c" "Close tab"
+    "C-c w"   "window"
+    "C-c w w" "Other window"
+    "C-c w o" "Only current window"
+    "C-c w q" "Close current window"
+    "C-c w v" "Split window right"
+    "C-c w h" "Split window below"
+    "C-c z"   "zoxide"
+    "C-c z f" "Find file under zoxide path"
+    "C-c z t" "Travel to zoxide path"
+    "C-c z d" "Cd to zoxide path"))
 
 (provide 'init-local-hel)
 ;;; init-local-hel.el ends here

@@ -26,21 +26,56 @@ ${EMACS:=emacs} -nw --batch \
                                             (key-binding (kbd "RET")))))
                                (when (buffer-live-p buf)
                                  (kill-buffer buf))))
-                           (when (featurep (quote hel))
+                           (when (featurep (quote hel-leader))
                              (with-temp-buffer
                                (special-mode)
                                (unless (and (eq hel-state (quote emacs))
-                                            (eq (key-binding (kbd "SPC b n"))
-                                                (quote next-buffer)))
-                                 (error "Hel leader unavailable in Emacs state: state=%S SPC-b-n=%S"
+                                            (eq (key-binding (kbd "SPC"))
+                                                (quote hel-leader))
+                                            (eq (key-binding (kbd "C-c b n"))
+                                                (quote next-buffer))
+                                            (equal hel-leader-ctrl-meta-prefix "G"))
+                                 (error "Hel leader unavailable: state=%S SPC=%S target=%S C-M=%S"
                                         hel-state
-                                        (key-binding (kbd "SPC b n")))))
+                                        (key-binding (kbd "SPC"))
+                                        (key-binding (kbd "C-c b n"))
+                                        hel-leader-ctrl-meta-prefix))
+                               (let ((hel-leader--keys nil)
+                                     (hel-leader--pending-modifier nil)
+                                     (hel-leader--command nil))
+                                 (hel-leader--handle-input-event ?b)
+                                 (unless (and (eq (hel-leader--handle-input-event ?n)
+                                                  :quit)
+                                              (eq hel-leader--command
+                                                  (quote next-buffer)))
+                                   (error "SPC b n translation failed: %S"
+                                          hel-leader--command))))
+                             (let ((my/hel--installing nil)
+                                   (inhibit-message t)
+                                   (load-path load-path)
+                                   (install-calls 0))
+                               (cl-letf (((symbol-function
+                                           (quote my/hel--missing-package))
+                                          (lambda () "hel-leader"))
+                                         ((symbol-function
+                                           (quote async-installer-git--install-one))
+                                          (lambda (_package callback)
+                                            (setq install-calls
+                                                  (1+ install-calls))
+                                            (funcall callback
+                                                     temporary-file-directory))))
+                                 (my/hel--install))
+                               (unless (= install-calls 1)
+                                 (error "Broken Hel install retried %d times"
+                                        install-calls)))
                              (require (quote dired))
                              (let ((buf (dired-noselect temporary-file-directory)))
                                (unwind-protect
                                    (with-current-buffer buf
                                      (unless (and (eq hel-state (quote normal))
-                                                  (eq (key-binding (kbd "SPC b n"))
+                                                  (eq (key-binding (kbd "SPC"))
+                                                      (quote hel-leader))
+                                                  (eq (key-binding (kbd "C-c b n"))
                                                       (quote next-buffer))
                                                   (eq (key-binding (kbd "h"))
                                                       (quote hel-backward-char))
@@ -50,9 +85,10 @@ ${EMACS:=emacs} -nw --batch \
                                                       (quote hel-previous-line))
                                                   (eq (key-binding (kbd "l"))
                                                       (quote hel-forward-char)))
-                                       (error "Dired Hel keys unavailable: state=%S leader=%S hjkl=%S"
+                                       (error "Dired Hel unavailable: state=%S SPC=%S target=%S hjkl=%S"
                                               hel-state
-                                              (key-binding (kbd "SPC b n"))
+                                              (key-binding (kbd "SPC"))
+                                              (key-binding (kbd "C-c b n"))
                                               (mapcar (lambda (key)
                                                         (key-binding (kbd key)))
                                                       (quote ("h" "j" "k" "l"))))))

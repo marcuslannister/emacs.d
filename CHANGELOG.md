@@ -14,6 +14,7 @@ continuously, so changes land under "Unreleased".
 - Leader bindings for org-supertag under `SPC s` (search, add/remove tag, table/node/kanban/schema views, capture, reference, full rescan), with which-key labels.
 
 ### Changed
+- Add pinned `hel-leader` native key translation; keep Git on `SPC g`, move C-M- to `SPC G`, and move the former `SPC c` group to `SPC a`.
 - Replace Meow with Hel, installed at a pinned Git commit through a shared GUI/TUI async-installer bootstrap, while preserving the personal `SPC` leader map in Hel Normal and Emacs states.
 - Render org-supertag inline `#tags` as plain bold text (`org-priority` color, heading-matched height via font-lock `prepend`) instead of SVG pill badges, by disabling `supertag-svg-tag-enable` and restyling `supertag-inline-face` in `lisp/init-local-org.el`.
 - Bump bundled `anvil.el` to **v1.3.0** and drop the now-extracted `ide` module from `anvil-optional-modules`.
