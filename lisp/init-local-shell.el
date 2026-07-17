@@ -40,7 +40,7 @@
 
 
 ;; Vim-style navigation + selection for ghostel copy mode (tmux copy-mode-vi
-;; feel).  meow is disabled in copy mode (see `ml/ghostel-sync-meow') so these
+;; feel).  Hel is disabled in copy mode (see `ml/ghostel-sync-hel') so these
 ;; keys are free.  A minor-mode map outranks ghostel's read-only/fast-exit local
 ;; map, so h/j/k/l move point instead of tripping fast-exit.  Reuses ghostel's
 ;; own commands: `ghostel-readonly-copy' both copies the region and exits
@@ -88,19 +88,28 @@ start selecting, keep moving to extend, RET to copy and exit, q or
 C-g to cancel."
   :keymap ml/ghostel-copy-vi-mode-map)
 
-;; meow conflicts with ghostel's terminal-input modes; this helper is shared by
+;; Hel conflicts with ghostel's terminal-input modes; this helper is shared by
 ;; both the Windows (kiennq fork) and Mac/Linux (MELPA) ghostel setups below.
-(defun ml/ghostel-sync-meow (&rest _)
+(defun ml/ghostel-sync-hel (&rest _)
   "Sync editing modes to ghostel's input mode.
-In semi-char/char modes meow swallows ESC and the leader key, so the
+In semi-char/char modes Hel swallows ESC and the leader key, so the
 terminal misses keys -- disable it.  In emacs mode the buffer is
-read-only, so meow's space leader is what we want.  In copy mode use
-`ml/ghostel-copy-vi-mode' (tmux-style hjkl select) instead of meow."
+read-only, so Hel's space leader is what we want when available.  In copy mode use
+`ml/ghostel-copy-vi-mode' (tmux-style hjkl select) instead of Hel."
   (when (derived-mode-p 'ghostel-mode)
     (pcase ghostel--input-mode
-      ('emacs (ml/ghostel-copy-vi-mode -1) (meow-mode 1))
-      ('copy  (meow-mode -1) (ml/ghostel-copy-vi-mode 1))
-      (_      (ml/ghostel-copy-vi-mode -1) (meow-mode -1)))))
+      ('emacs
+       (ml/ghostel-copy-vi-mode -1)
+       (when (fboundp 'hel-local-mode)
+         (hel-local-mode 1)))
+      ('copy
+       (when (fboundp 'hel-local-mode)
+         (hel-local-mode -1))
+       (ml/ghostel-copy-vi-mode 1))
+      (_
+       (ml/ghostel-copy-vi-mode -1)
+       (when (fboundp 'hel-local-mode)
+         (hel-local-mode -1))))))
 
 (if IS-WINDOWS
     ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
@@ -125,7 +134,7 @@ read-only, so meow's space leader is what we want.  In copy mode use
                  ghostel-exec
                  ghostel-download-module
                  ghostel-reload-module)
-      :hook (ghostel-mode . ml/ghostel-sync-meow)
+      :hook (ghostel-mode . ml/ghostel-sync-hel)
       :bind (:map ghostel-semi-char-mode-map
                   ("M-v" . ghostel-copy-mode)
                   ("M-e" . ghostel-emacs-mode)
@@ -224,11 +233,11 @@ read-only, so meow's space leader is what we want.  In copy mode use
                     ghostel-emacs-mode
                     ghostel-copy-mode
                     ghostel-readonly-exit))
-        (advice-add fn :after #'ml/ghostel-sync-meow)))
+        (advice-add fn :after #'ml/ghostel-sync-hel)))
   ;; Mac/Linux: MELPA ghostel (dakra).  Unchanged.
   (use-package ghostel
     :ensure t
-    :hook (ghostel-mode . ml/ghostel-sync-meow)
+    :hook (ghostel-mode . ml/ghostel-sync-hel)
     :bind (:map ghostel-semi-char-mode-map
                 ("M-v" . ghostel-copy-mode)
                 ("M-e" . ghostel-emacs-mode)
@@ -243,7 +252,7 @@ read-only, so meow's space leader is what we want.  In copy mode use
                   ghostel-emacs-mode
                   ghostel-copy-mode
                   ghostel-readonly-exit))
-      (advice-add fn :after #'ml/ghostel-sync-meow))
+      (advice-add fn :after #'ml/ghostel-sync-hel))
     (when-let* ((lib (locate-library "ghostel"))
                 (script (expand-file-name "etc/shell/ghostel.zsh"
                                           (file-name-directory lib))))

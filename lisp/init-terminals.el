@@ -34,7 +34,7 @@
             (t "xterm"))))
   (setq eat-term-name 'sanityinc/eat-term-get-suitable-term-name)
 
-  ;; Disabled: meow leader uses SPC (== C-c via mode-specific-map) and reclaims `t'.
+  ;; Disabled: Hel uses SPC as its leader and reclaims `t'.
   ;; (global-set-key (kbd "C-c t") 'sanityinc/eat-map)
   )
 

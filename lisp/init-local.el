@@ -38,23 +38,7 @@
   (add-to-list 'load-path (expand-file-name dir user-emacs-directory)))
 
 
-;; --- async-installer bootstrap ---
-;; Self-installs on first run, then loads normally on subsequent starts.
-(let ((dir (expand-file-name "external-packages/async-installer" user-emacs-directory)))
-  (unless (file-exists-p (expand-file-name "async-installer.el" dir))
-    (make-directory dir t)
-    (message "Bootstrapping async-installer...")
-    (call-process "git" nil nil nil "clone"
-                  "https://github.com/zawatton/async-installer.git" dir))
-  (add-to-list 'load-path dir))
-(require 'async-installer)
-
-;; ~/.emacs.d/init.el
-(setq async-installer-reload-files
-      (list (expand-file-name "lisp/package-list.el" user-emacs-directory)))
-
-(async-installer-reload)
-(async-installer-auto-reload-mode 1)
+(require 'init-local-async-installer)
 
 
 ;; Load themes config
@@ -436,7 +420,7 @@ The completion candidates include the Git status of each file."
 
 (require 'init-local-program)
 
-(require 'init-local-meow)
+(require 'init-local-hel)
 
 
 (defun ml-update-all-packages ()

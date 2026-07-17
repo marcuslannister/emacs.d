@@ -20,7 +20,7 @@
 ;; loading the stale v0.31.0 fork whose module downloader 404s (it fetches a
 ;; Windows `.tar.xz' bundle that dakra's releases do not ship for macOS/Linux).
 ;; external-packages/ is gitignored and not committed.
-(when IS-WINDOWS
+(when (eq system-type 'windows-nt)
   (async-installer-git-add "https://github.com/kiennq/ghostel.git"
                            :tag "v0.31.0.79.a7b0c9"
                            :subdir "lisp"
@@ -31,3 +31,9 @@
 ;; simple-httpd) must be installed separately, and a module must `require' it.
 (async-installer-git-add "https://github.com/yibie/org-supertag.git"
                          :main "org-supertag.el")
+
+;; Hel: Helix-style modal editing, pinned to the reviewed commit below.
+;; Dependencies stay managed by package.el.
+(async-installer-git-add "https://github.com/anuvyklack/hel.git"
+                         :commit "93c88d8c67dcad08a7eb85949faf71b115973b5d"
+                         :main "hel.el")

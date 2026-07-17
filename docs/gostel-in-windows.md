@@ -71,7 +71,7 @@ reinstalling fresh tarball files.
 | Installed matching Windows DLLs (dyn-loader + ghostel + conpty + .json + .version) | `~/.emacs.d/ghostel-module/` (sidecar now `0.31.0`) |
 | `:ensure t` → `:ensure nil` + `:load-path "external-packages/ghostel/lisp"` | `lisp/init-local-shell.el:42` |
 | Removed dead `GHOSTEL_SH_INTEGRATION` block (fork has built-in `ghostel-shell-integration`, default `t`; old `etc/shell/ghostel.zsh` path doesn't exist in clone's lisp/ layout) | `lisp/init-local-shell.el` `:config` |
-| Kept: Windows `ghostel-module-directory` pin, meow-sync hook, M-v binds | unchanged |
+| Kept: Windows `ghostel-module-directory` pin, Hel-sync hook, M-v binds | unchanged |
 | **Shell config (Windows): set `ghostel-shell` to PowerShell 7 + added `ml/ghostel-bash` escape hatch** | `lisp/init-local-shell.el` `:init` |
 
 ## Shell Configuration (Windows) — added 2026-05-31, revised 2026-06-01
