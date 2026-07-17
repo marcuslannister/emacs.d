@@ -37,3 +37,8 @@
 (async-installer-git-add "https://github.com/anuvyklack/hel.git"
                          :commit "93c88d8c67dcad08a7eb85949faf71b115973b5d"
                          :main "hel.el")
+
+;; Native leader translation for Hel, pinned to the reviewed commit below.
+(async-installer-git-add "https://github.com/anuvyklack/hel-leader.git"
+                         :commit "32230075e01749ace44ddf2d25fca0ba6aa98fbd"
+                         :main "hel-leader.el")
