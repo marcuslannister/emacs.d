@@ -19,3 +19,17 @@ Adopt Conventional Commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`) as seen 
 
 ## Configuration & Safety Notes
 Never commit machine-specific artifacts (`transient/`, `undo-fu-session/`, cache files). If you add new optional tooling, gate it with `maybe-require-package` and guard macOS-specific code with `*is-a-mac*`. When touching startup performance, measure with `M-x profiler-start` or the existing benchmarking hooks before merging. Respect the "never break userspace" rule: changes must preserve a clean startup for existing users without forcing resets of their local `custom.el`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default five-role triage vocabulary. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use the single-context domain-doc layout. See `docs/agents/domain.md`.
