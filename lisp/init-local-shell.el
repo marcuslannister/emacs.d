@@ -121,7 +121,6 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
     ;;   M-x async-installer-git-install-all-interactive  ; clones to external-packages/
     (use-package ghostel
       :ensure nil
-      :load-path "external-packages/ghostel/lisp"
       :commands (ghostel
                  ghostel-project
                  ghostel-other
@@ -144,6 +143,15 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
                   ("M-e" . ghostel-emacs-mode)
                   ("M-t" . ml/ghostel-split-new))
       :init
+      ;; Put the kiennq checkout on `load-path' at runtime, gated by the
+      ;; enclosing `IS-WINDOWS' `if'.  Do NOT use use-package `:load-path' for
+      ;; this: its handler mutates `load-path' at macro-expansion time, and
+      ;; Emacs expands *both* branches of the `if' when this file loads -- so a
+      ;; `:load-path' here leaks the fork onto Mac/Linux, where it lands at the
+      ;; front of `load-path' and shadows the MELPA `ghostel' (dakra).
+      (add-to-list 'load-path
+                   (expand-file-name "external-packages/ghostel/lisp"
+                                     user-emacs-directory))
       ;; Use the kiennq fork's Windows runtime, not upstream dakra's latest
       ;; module.  Keep it outside the elpa tree so package refreshes do not
       ;; replace the working DLL bundle.

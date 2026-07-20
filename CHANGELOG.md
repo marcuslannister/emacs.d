@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Load the MELPA `ghostel` (dakra) on macOS/Linux instead of the Windows-only kiennq fork. The Windows branch's `use-package :load-path` added the fork's checkout to `load-path` at macro-expansion time — and Emacs expands both arms of the `IS-WINDOWS` `if` when the file loads — so the fork shadowed the MELPA build on macOS/Linux and its native-module download 404'd against dakra's `.dylib`-only release assets. The Windows branch now adds the fork to `load-path` at runtime under `IS-WINDOWS`, which the `if` actually gates.
 - Start Dired buffers in Hel Normal state so `SPC` leader bindings and `hjkl` navigation remain available.
 - Set `supertag-data-directory` before `(require 'org-supertag)` in `lisp/init-local-org.el` so `supertag-db-file` derives the synced `~/org/org-supertag/` path at load time; the late setq had let it freeze at the default and load a stale local DB on machines with a leftover `~/.emacs.d/org-supertag/supertag-db.el`.
 
