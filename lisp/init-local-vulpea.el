@@ -17,6 +17,7 @@
                   (package &optional min-version no-refresh))
 (declare-function make-vulpea-note "vulpea-note" (&rest slots))
 (declare-function vulpea-db-autosync-mode "vulpea-db-sync" (&optional arg))
+(declare-function vulpea-db-get-by-id "vulpea-db-query" (id))
 (declare-function vulpea-db-query "vulpea-db-query" (&optional predicate))
 (declare-function vulpea-db-worker-busy-p "vulpea-db-worker" ())
 (declare-function vulpea-note-aliases "vulpea-note" (note))
@@ -40,6 +41,7 @@
 (declare-function vulpea-note-tags "vulpea-note" (note))
 (declare-function vulpea-note-title "vulpea-note" (note))
 (declare-function vulpea-note-todo "vulpea-note" (note))
+(declare-function vulpea-visit "vulpea" (note-or-id &optional other-window))
 (declare-function vulpea-ui-collection-open "vulpea-ui" (view))
 (declare-function vulpea-ui-collection-refresh "vulpea-ui" ())
 (defvar init-local-vulpea-task-table-unavailable-reason
@@ -280,6 +282,18 @@ OPEN-STATES defaults to the configured global Org workflow."
   (interactive)
   (user-error "Task Table is read-only; edit the source Org heading"))
 
+(defun init-local-vulpea-task-table-visit ()
+  "Visit the selected Task after resolving its stable ID."
+  (interactive)
+  (let ((id (tabulated-list-get-id)))
+    (unless (and (stringp id) (not (string-empty-p id)))
+      (user-error "No valid Task selected"))
+    (let ((note (vulpea-db-get-by-id id)))
+      (if note
+          (vulpea-visit note)
+        (vulpea-ui-collection-refresh)
+        (user-error "Task disappeared; Task Table refreshed")))))
+
 (defun init-local-vulpea-task-table--state ()
   "Return the current ephemeral filter state or signal a user error."
   (or init-local-vulpea-task-table-state
@@ -357,6 +371,7 @@ OPEN-STATES defaults to the configured global Org workflow."
 
 (defvar init-local-vulpea-task-table-read-only-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") #'init-local-vulpea-task-table-visit)
     (define-key map (kbd "f") init-local-vulpea-task-table-filter-map)
     (dolist (command '(vulpea-ui-collection-add-tag
                        vulpea-ui-collection-remove-tag
@@ -398,8 +413,9 @@ OPEN-STATES defaults to the configured global Org workflow."
 (defun my/vulpea-task-table ()
   "Open the named read-only Task Table through Vulpea UI Collection View.
 Each launch resets filters and captures the current Org file.  In the
-Task Table, use `f t', `f p', `f x', and `f s' to filter, `f b' to
-scope to that launch file, and `f c' to clear every filter."
+Task Table, use `RET' to visit a Task, `f t', `f p', `f x', and `f s'
+to filter, `f b' to scope to that launch file, and `f c' to clear every
+filter."
   (interactive)
   (init-local-vulpea--ensure-available)
   (condition-case err

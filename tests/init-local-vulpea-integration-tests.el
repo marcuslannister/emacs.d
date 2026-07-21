@@ -15,15 +15,8 @@
        (locate-library "vulpea")
        (locate-library "vulpea-ui")))
 
-(defun init-local-vulpea-integration-entry-ids ()
-  "Return current Collection View row IDs in display order."
-  (mapcar #'car tabulated-list-entries))
-
-(defun init-local-vulpea-integration-entry (id)
-  "Return current Collection View entry identified by ID."
-  (assoc id tabulated-list-entries))
-
-(ert-deftest init-local-vulpea-public-indexing-opens-read-only-task-table ()
+(defun init-local-vulpea-integration-require ()
+  "Load real Task Table dependencies or skip the current test."
   (unless (init-local-vulpea-integration-available-p)
     (ert-skip "Vulpea or Vulpea UI is unavailable; no packages are installed by tests"))
   (condition-case err
@@ -33,7 +26,28 @@
     (error
      (ert-skip
       (format "Vulpea dependencies cannot load: %s"
-              (error-message-string err)))))
+              (error-message-string err))))))
+
+(defun init-local-vulpea-integration-entry-ids ()
+  "Return current Collection View row IDs in display order."
+  (mapcar #'car tabulated-list-entries))
+
+(defun init-local-vulpea-integration-entry (id)
+  "Return current Collection View entry identified by ID."
+  (assoc id tabulated-list-entries))
+
+(defun init-local-vulpea-integration-goto-entry (id)
+  "Move point to the rendered Collection View row identified by ID."
+  (goto-char (point-min))
+  (catch 'found
+    (while (< (point) (point-max))
+      (when (equal id (tabulated-list-get-id))
+        (throw 'found t))
+      (forward-line 1))
+    nil))
+
+(ert-deftest init-local-vulpea-public-indexing-opens-read-only-task-table ()
+  (init-local-vulpea-integration-require)
   (let* ((temporary-directory (make-temp-file "vulpea-task-table" t))
          (org-file (expand-file-name "tasks.org" temporary-directory))
          (database (expand-file-name "vulpea.db" temporary-directory))
@@ -139,6 +153,75 @@
             (vulpea-db-close)))
       (when (buffer-live-p collection-buffer)
         (kill-buffer collection-buffer))
+      (ignore-errors (vulpea-db-close))
+      (set-default 'org-todo-keywords old-workflow)
+      (delete-directory temporary-directory t))))
+
+(ert-deftest init-local-vulpea-navigation-survives-move-and-deletion ()
+  (init-local-vulpea-integration-require)
+  (let* ((temporary-directory (make-temp-file "vulpea-task-navigation" t))
+         (source-file (expand-file-name "inbox.org" temporary-directory))
+         (target-file (expand-file-name "archive.org" temporary-directory))
+         (database (expand-file-name "vulpea.db" temporary-directory))
+         (org-id-locations-file
+          (expand-file-name "org-id-locations" temporary-directory))
+         (old-workflow (default-value 'org-todo-keywords))
+         collection-buffer)
+    (unwind-protect
+        (progn
+          (set-default 'org-todo-keywords
+                       '((sequence "TODO(t)" "|" "DONE(d)")))
+          (with-temp-file source-file
+            (insert
+             "#+title: Inbox\n"
+             "* Parent\n"
+             "** TODO Movable Task\n"
+             ":PROPERTIES:\n:ID: movable-task\n:END:\n"))
+          (with-temp-file target-file
+            (insert "#+title: Archive\n* Destination\n"))
+          (vulpea-db-close)
+          (let ((vulpea-db-location database)
+                (vulpea-db-index-heading-level t)
+                (vulpea-db-sync-directories
+                 (list (file-name-as-directory temporary-directory)))
+                (init-local-vulpea-task-table-unavailable-reason nil))
+            (vulpea-db-update-file source-file)
+            (vulpea-db-update-file target-file)
+            (my/vulpea-task-table)
+            (setq collection-buffer (current-buffer))
+            (should (init-local-vulpea-integration-goto-entry "movable-task"))
+            (with-temp-file source-file
+              (insert "#+title: Inbox\n* Parent\n"))
+            (with-temp-file target-file
+              (insert
+               "#+title: Archive\n"
+               "* Destination\n"
+               "** TODO Movable Task\n"
+               ":PROPERTIES:\n:ID: movable-task\n:END:\n"))
+            (vulpea-db-update-file source-file)
+            (vulpea-db-update-file target-file)
+            (vulpea-ui-collection-refresh)
+            (should (init-local-vulpea-integration-goto-entry "movable-task"))
+            (init-local-vulpea-task-table-visit)
+            (should (equal (file-truename target-file)
+                           (file-truename buffer-file-name)))
+            (should (equal "Movable Task" (org-get-heading t t t t)))
+            (switch-to-buffer collection-buffer)
+            (with-temp-file target-file
+              (insert "#+title: Archive\n* Destination\n"))
+            (vulpea-db-update-file target-file)
+            (let ((message
+                   (condition-case err
+                       (progn (init-local-vulpea-task-table-visit) nil)
+                     (user-error (error-message-string err)))))
+              (should (string-match-p "disappeared" message)))
+            (should-not (init-local-vulpea-integration-entry "movable-task"))
+            (vulpea-db-close)))
+      (when (buffer-live-p collection-buffer)
+        (kill-buffer collection-buffer))
+      (dolist (file (list source-file target-file))
+        (when-let* ((buffer (find-buffer-visiting file)))
+          (kill-buffer buffer)))
       (ignore-errors (vulpea-db-close))
       (set-default 'org-todo-keywords old-workflow)
       (delete-directory temporary-directory t))))

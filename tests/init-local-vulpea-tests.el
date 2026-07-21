@@ -4,6 +4,7 @@
 (require 'cl-lib)
 (require 'org)
 (require 'seq)
+(require 'tabulated-list)
 
 (cl-defstruct vulpea-note
   id path level pos title primary-title aliases tags links properties meta
@@ -116,6 +117,18 @@
        (when (buffer-live-p collection-buffer)
          (kill-buffer collection-buffer))
        (delete-file database))))
+
+(defmacro init-local-vulpea-test-with-selected-task-row (id &rest body)
+  "Run BODY in a table buffer with Task ID selected."
+  (declare (indent 1) (debug t))
+  `(with-temp-buffer
+     (tabulated-list-mode)
+     (setq tabulated-list-format [("Task" 20 t)]
+           tabulated-list-entries (list (list ,id ["Cached Task"])))
+     (tabulated-list-init-header)
+     (tabulated-list-print)
+     (goto-char (point-min))
+     ,@body))
 
 (ert-deftest init-local-vulpea-task-model-classifies-workflow-and-priority ()
   (init-local-vulpea-test-with-workflow
@@ -304,6 +317,10 @@
       (should (string-match-p "progress" message)))))
 
 (ert-deftest init-local-vulpea-read-only-mode-remaps-source-mutations ()
+  (should
+   (eq #'init-local-vulpea-task-table-visit
+       (lookup-key init-local-vulpea-task-table-read-only-mode-map
+                   (kbd "RET"))))
   (dolist (command '(vulpea-ui-collection-add-tag
                      vulpea-ui-collection-remove-tag
                      vulpea-ui-collection-quick-edit
@@ -443,6 +460,52 @@
               (should (string-match-p "Org launch" message))))
         (delete-file origin-a)
         (delete-file origin-b)))))
+
+(ert-deftest init-local-vulpea-selected-task-visits-fresh-stable-id-result ()
+  (let ((fresh (init-local-vulpea-test-note
+                "task-id" "TODO" ?A "Fresh Task"))
+        lookup-id
+        visited)
+    (init-local-vulpea-test-with-selected-task-row "task-id"
+      (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                 (lambda (id)
+                   (setq lookup-id id)
+                   fresh))
+                ((symbol-function 'vulpea-visit)
+                 (lambda (note)
+                   (setq visited note))))
+        (init-local-vulpea-task-table-visit)))
+    (should (equal "task-id" lookup-id))
+    (should (eq fresh visited))))
+
+(ert-deftest init-local-vulpea-disappeared-task-refreshes-without-visiting ()
+  (let (refreshed)
+    (init-local-vulpea-test-with-selected-task-row "deleted-id"
+      (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                 (lambda (_id) nil))
+                ((symbol-function 'vulpea-ui-collection-refresh)
+                 (lambda () (setq refreshed t)))
+                ((symbol-function 'vulpea-visit)
+                 (lambda (_note)
+                   (ert-fail "Disappeared Task was visited"))))
+        (let ((message
+               (condition-case err
+                   (progn (init-local-vulpea-task-table-visit) nil)
+                 (user-error (error-message-string err)))))
+          (should (string-match-p "disappeared" message)))))
+    (should refreshed)))
+
+(ert-deftest init-local-vulpea-task-table-visit-rejects-no-selected-task ()
+  (with-temp-buffer
+    (tabulated-list-mode)
+    (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+               (lambda (_id)
+                 (ert-fail "No Task selection reached database lookup"))))
+      (let ((message
+             (condition-case err
+                 (progn (init-local-vulpea-task-table-visit) nil)
+               (user-error (error-message-string err)))))
+        (should (string-match-p "No valid Task selected" message))))))
 
 (provide 'init-local-vulpea-tests)
 ;;; init-local-vulpea-tests.el ends here
