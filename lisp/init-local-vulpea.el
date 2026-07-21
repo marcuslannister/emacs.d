@@ -1,6 +1,7 @@
-;;; init-local-vulpea.el --- Read-only Vulpea Task Table -*- lexical-binding: t; -*-
+;;; init-local-vulpea.el --- Vulpea Task Table -*- lexical-binding: t; -*-
 ;;; Commentary:
-;; Optional Vulpea indexing and one read-only Collection View over Open Tasks.
+;; Optional Vulpea indexing and a Collection View over Open Tasks.
+;; Task and Source stay read-only; TODO and Priority edit through Org writeback.
 ;;; Code:
 
 (require 'cl-lib)
@@ -294,6 +295,83 @@ OPEN-STATES defaults to the configured global Org workflow."
         (vulpea-ui-collection-refresh)
         (user-error "Task disappeared; Task Table refreshed")))))
 
+(defun init-local-vulpea-task-table--run-note-sync (note thunk)
+  "Run THUNK at NOTE through Vulpea's public note-sync helper.
+Uses `vulpea-utils-with-note-sync' when available.  Unit tests may stub
+this function to prove the write seam without loading Vulpea."
+  (if (macrop 'vulpea-utils-with-note-sync)
+      (eval
+       `(vulpea-utils-with-note-sync ,note
+          (funcall ,thunk))
+       t)
+    (error "vulpea-utils-with-note-sync is unavailable")))
+
+(defun init-local-vulpea-task-table--mutate-note (note field value)
+  "Write NOTE FIELD to VALUE with Org commands inside public note sync."
+  (init-local-vulpea-task-table--run-note-sync
+   note
+   (lambda ()
+     (pcase field
+       ('todo
+        (org-todo value))
+       ('priority
+        (if value
+            (org-priority value)
+          (org-priority 'remove)))
+       (_
+        (error "Unknown Task Table field: %S" field))))))
+
+(defun init-local-vulpea-task-table--fetch-selected-note ()
+  "Re-fetch the selected Task by stable ID immediately before an edit."
+  (let ((id (tabulated-list-get-id)))
+    (unless (and (stringp id) (not (string-empty-p id)))
+      (user-error "No valid Task selected"))
+    (let ((note (vulpea-db-get-by-id id)))
+      (unless note
+        (vulpea-ui-collection-refresh)
+        (user-error "Task disappeared; Task Table refreshed"))
+      note)))
+
+(defun init-local-vulpea-task-table-edit (&optional field value)
+  "Edit the selected Task FIELD to VALUE, save through Org, and refresh.
+FIELD is the string TODO or Priority.  VALUE is a configured TODO name
+or a Priority choice among A, B, C, and None.  None removes the explicit
+source priority without inventing B data.  Task and Source stay read-only.
+The selected Task is re-fetched by stable ID immediately before every edit."
+  (interactive (list nil nil))
+  ;; Fail fast when the selected row has already disappeared.
+  (init-local-vulpea-task-table--fetch-selected-note)
+  (unless field
+    (setq field
+          (completing-read "Edit field: " '("TODO" "Priority") nil t)))
+  (unless (member field '("TODO" "Priority"))
+    (user-error "Edit field must be TODO or Priority"))
+  (unless value
+    (setq value
+          (if (equal field "TODO")
+              (completing-read
+               "TODO: "
+               (plist-get (init-local-vulpea-task-workflow) :all)
+               nil t)
+            (completing-read "Priority: " '("A" "B" "C" "None") nil t))))
+  (let* ((note (init-local-vulpea-task-table--fetch-selected-note))
+         (field-sym (if (equal field "TODO") 'todo 'priority))
+         (parsed
+          (pcase field-sym
+            ('todo value)
+            ('priority
+             (unless (equal value "None")
+               (string-to-char (upcase value)))))))
+    (condition-case err
+        (progn
+          (init-local-vulpea-task-table--mutate-note note field-sym parsed)
+          (vulpea-ui-collection-refresh))
+      (user-error
+       (signal (car err) (cdr err)))
+      (error
+       (message "Task Table edit failed: %s" (error-message-string err))
+       (signal (car err) (cdr err))))))
+
 (defun init-local-vulpea-task-table--state ()
   "Return the current ephemeral filter state or signal a user error."
   (or init-local-vulpea-task-table-state
@@ -482,6 +560,7 @@ OPEN-STATES defaults to the configured global Org workflow."
 (defvar init-local-vulpea-task-table-read-only-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") #'init-local-vulpea-task-table-visit)
+    (define-key map (kbd "e") #'init-local-vulpea-task-table-edit)
     (define-key map (kbd "g") #'vulpea-ui-collection-refresh)
     (define-key map (kbd "f") init-local-vulpea-task-table-filter-map)
     (dolist (command '(vulpea-ui-collection-add-tag
@@ -498,7 +577,7 @@ OPEN-STATES defaults to the configured global Org workflow."
   "Keymap that keeps Task Table source data read-only.")
 
 (define-minor-mode init-local-vulpea-task-table-read-only-mode
-  "Keep the current Vulpea Collection View read-only."
+  "Keep Task and Source read-only; allow TODO and Priority edits."
   :init-value nil
   :lighter " TaskRO"
   :keymap init-local-vulpea-task-table-read-only-mode-map)
@@ -522,11 +601,11 @@ OPEN-STATES defaults to the configured global Org workflow."
 
 ;;;###autoload
 (defun my/vulpea-task-table ()
-  "Open the named read-only Task Table through Vulpea UI Collection View.
+  "Open the named Task Table through Vulpea UI Collection View.
 Each launch resets filters and captures the current Org file.  In the
-Task Table, use `RET' to visit a Task, `f t', `f p', `f x', and `f s'
-to filter, `f b' to scope to that launch file, and `f c' to clear every
-filter."
+Task Table, use `RET' to visit a Task, `e' to edit TODO or Priority,
+`f t', `f p', `f x', and `f s' to filter, `f b' to scope to that launch
+file, and `f c' to clear every filter.  Task and Source stay read-only."
   (interactive)
   (init-local-vulpea--ensure-available)
   (condition-case err
