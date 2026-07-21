@@ -13,6 +13,7 @@
 (defvar vulpea-db-location)
 (defvar vulpea-db-sync-directories)
 (defvar vulpea-db-sync-scan-on-enable)
+(defvar vulpea-db-worker-done-functions)
 
 (declare-function maybe-require-package "init-elpa"
                   (package &optional min-version no-refresh))
@@ -639,6 +640,21 @@ file, and `f c' to clear every filter.  Task and Source stay read-only."
     reason)
    :warning))
 
+(defun init-local-vulpea--warn-worker-failure (path status _count)
+  "Warn actionably when background synchronization of PATH has failed."
+  (when (eq status 'error)
+    (display-warning
+     'init-local-vulpea
+     (format
+      "Vulpea Task Table synchronization failed for %s. Run M-x vulpea-doctor, then retry the scan"
+      (abbreviate-file-name path))
+     :warning)))
+
+(defun init-local-vulpea--install-worker-failure-hook ()
+  "Report public Vulpea worker failures without disrupting startup."
+  (add-hook 'vulpea-db-worker-done-functions
+            #'init-local-vulpea--warn-worker-failure))
+
 (defun init-local-vulpea--initialize ()
   "Initialize guarded Vulpea indexing and UI support."
   (cond
@@ -665,6 +681,7 @@ file, and `f c' to clear every filter.  Task and Source stay read-only."
             (require 'vulpea)
             (require 'vulpea-ui)
             (init-local-vulpea-task-table--install-refresh-advice)
+            (init-local-vulpea--install-worker-failure-hook)
             (vulpea-db-autosync-mode +1)
             (setq init-local-vulpea-task-table-unavailable-reason nil))
         (error
