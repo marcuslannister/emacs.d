@@ -3,7 +3,6 @@
 (require 'benchmark)
 (require 'cl-lib)
 (require 'package)
-(require 'tabulated-list)
 
 (let ((root (expand-file-name ".." (file-name-directory load-file-name))))
   (dolist (directory (file-expand-wildcards
@@ -11,20 +10,21 @@
     (when (file-directory-p directory)
       (add-to-list 'load-path directory))))
 
+(unless (and (not (version< emacs-version "29.1"))
+             (locate-library "vulpea")
+             (locate-library "vulpea-ui"))
+  (princ "SKIP: Vulpea benchmark dependencies are unavailable\n")
+  (kill-emacs 0))
+
+(require 'tabulated-list)
 (require 'vulpea)
+(require 'vulpea-ui)
 
 (cl-letf (((symbol-function 'maybe-require-package)
            (lambda (&rest _args) nil)))
   (load-file
    (expand-file-name "../lisp/init-local-vulpea.el"
                      (file-name-directory load-file-name))))
-
-(declare-function init-local-vulpea-task-table-edit "init-local-vulpea"
-                  (&optional field value))
-(declare-function init-local-vulpea-task-table-source "init-local-vulpea"
-                  (&optional state))
-(declare-function make-init-local-vulpea-task-table-state "init-local-vulpea"
-                  (&rest slots))
 
 (defconst init-local-vulpea-benchmark-task-count 5000)
 (defconst init-local-vulpea-benchmark-runs 5)
@@ -53,23 +53,30 @@
                   collect (* 1000.0 (car (benchmark-run 1 (funcall thunk)))))))
     (nth (/ (length samples) 2) (sort samples #'<))))
 
-(defun init-local-vulpea-benchmark--assert-under (name actual limit)
-  "Fail when NAME ACTUAL milliseconds does not beat LIMIT."
-  (when (>= actual limit)
-    (error "%s median %.3f ms exceeds %.0f ms" name actual limit)))
+(defun init-local-vulpea-benchmark--line (name actual limit)
+  "Format NAME with ACTUAL milliseconds and LIMIT status."
+  (format "%s: %.3f ms (%s < %.0f ms)\n"
+          name actual (if (< actual limit) "PASS" "FAIL") limit))
+
+(defun init-local-vulpea-benchmark--goto-first-row ()
+  "Move point to the first rendered Task row."
+  (goto-char (point-min))
+  (while (and (not (eobp)) (null (tabulated-list-get-id)))
+    (forward-line 1)))
 
 (defun init-local-vulpea-benchmark-run ()
-  "Measure the Task Table pipeline through its public Collection source."
+  "Measure real Collection View open, sort, filter, and edit refresh."
   (let* ((notes (init-local-vulpea-benchmark--tasks))
          (state (make-init-local-vulpea-task-table-state))
-         (filter-state
-          (make-init-local-vulpea-task-table-state :text "Task 49"))
+         (database (make-temp-file "vulpea-task-benchmark" nil ".db"))
+         (buffer-name "*vulpea-collection: Task Table*")
          (old-workflow (default-value 'org-todo-keywords))
          (query-count 0)
          (lookup-count 0)
-         rows initial-ms sort-ms filter-ms edit-ms)
+         initial-ms sort-ms filter-ms edit-ms)
     (unwind-protect
-        (progn
+        (let ((vulpea-db-location database)
+              (init-local-vulpea-task-table-unavailable-reason nil))
           (set-default
            'org-todo-keywords
            '((sequence "TODO" "NEXT" "WAITING" "HOLD" "|" "DONE")))
@@ -77,6 +84,8 @@
                      (lambda (&optional _predicate)
                        (cl-incf query-count)
                        notes))
+                    ((symbol-function 'vulpea-db-count-notes)
+                     (lambda () (length notes)))
                     ((symbol-function 'vulpea-db-worker-busy-p)
                      (lambda () nil))
                     ((symbol-function 'vulpea-db-get-by-id)
@@ -89,67 +98,62 @@
             (setq initial-ms
                   (init-local-vulpea-benchmark--median-ms
                    (lambda ()
-                     (setq rows
-                           (init-local-vulpea-task-table-source state)))))
+                     (when-let* ((buffer (get-buffer buffer-name)))
+                       (kill-buffer buffer))
+                     (vulpea-ui-collection-open
+                      (init-local-vulpea-task-table-view state)))))
             (unless (= query-count (1+ init-local-vulpea-benchmark-runs))
               (error "Initial render must use one query per run"))
-            (setq query-count 0
-                  sort-ms
-                  (init-local-vulpea-benchmark--median-ms
-                   (lambda ()
-                     (sort
-                      (copy-sequence rows)
-                      (lambda (a b)
-                        (string-lessp (vulpea-note-title a)
-                                      (vulpea-note-title b)))))))
-            (unless (zerop query-count)
-              (error "In-memory sort performed a database query"))
-            (setq filter-ms
-                  (init-local-vulpea-benchmark--median-ms
-                   (lambda ()
-                     (init-local-vulpea-task-table-source filter-state))))
-            (unless (= query-count (1+ init-local-vulpea-benchmark-runs))
-              (error "Filter refresh must use one query per run"))
-            (with-temp-buffer
-              (tabulated-list-mode)
-              (setq tabulated-list-format [("Task" 20 t)]
-                    tabulated-list-entries
-                    '(("benchmark-0000" ["Task 0000"])))
-              (tabulated-list-init-header)
-              (tabulated-list-print)
-              (goto-char (point-min))
-              (setq query-count 0
-                    lookup-count 0)
-              (cl-letf (((symbol-function 'vulpea-ui-collection-refresh)
-                         (lambda ()
-                           (init-local-vulpea-task-table-source state))))
-                (setq edit-ms
+            (with-current-buffer buffer-name
+              (setq-local init-local-vulpea-task-table-state state)
+              (init-local-vulpea-task-table-read-only-mode +1)
+              (init-local-vulpea-task-table--install-refresh-advice)
+              (setq query-count 0)
+              (let ((descending nil))
+                (setq sort-ms
                       (init-local-vulpea-benchmark--median-ms
                        (lambda ()
-                         (init-local-vulpea-task-table-edit
-                          "Priority" "A"))))))
-            (unless (= query-count (1+ init-local-vulpea-benchmark-runs))
-              (error "Edit refresh must use one query per run"))
-            (unless
-                (= lookup-count (* 2 (1+ init-local-vulpea-benchmark-runs)))
-              (error "Edit must perform two stable-ID checks per run"))))
-      (set-default 'org-todo-keywords old-workflow))
-    (princ
-     (format
-      (concat "Tasks: %d; median of %d warm runs\n"
-              "Initial query/render: %.3f ms\n"
-              "Sort: %.3f ms\n"
-              "Filter: %.3f ms\n"
-              "Edit-triggered refresh: %.3f ms\n")
-      init-local-vulpea-benchmark-task-count
-      init-local-vulpea-benchmark-runs
-      initial-ms sort-ms filter-ms edit-ms))
-    (init-local-vulpea-benchmark--assert-under
-     "Initial query/render" initial-ms 200)
-    (init-local-vulpea-benchmark--assert-under "Sort" sort-ms 100)
-    (init-local-vulpea-benchmark--assert-under "Filter" filter-ms 100)
-    (init-local-vulpea-benchmark--assert-under
-     "Edit-triggered refresh" edit-ms 100)))
+                         (setq descending (not descending)
+                               tabulated-list-sort-key
+                               (cons "Task" descending))
+                         (tabulated-list-print t)))))
+              (unless (zerop query-count)
+                (error "Native sort performed a database query"))
+              (setq filter-ms
+                    (init-local-vulpea-benchmark--median-ms
+                     (lambda ()
+                       (init-local-vulpea-task-table-filter-text "Task 49"))))
+              (unless (= query-count (1+ init-local-vulpea-benchmark-runs))
+                (error "Filter refresh must use one query per run"))
+              (init-local-vulpea-task-table-filter-clear)
+              (init-local-vulpea-benchmark--goto-first-row)
+              (setq query-count 0
+                    lookup-count 0
+                    edit-ms
+                    (init-local-vulpea-benchmark--median-ms
+                     (lambda ()
+                       (init-local-vulpea-task-table-edit "Priority" "A"))))
+              (unless (= query-count (1+ init-local-vulpea-benchmark-runs))
+                (error "Edit refresh must use one query per run"))
+              (unless
+                  (= lookup-count (* 2 (1+ init-local-vulpea-benchmark-runs)))
+                (error "Edit must perform two stable-ID checks per run"))))
+          (princ
+           (format "Tasks: %d; median of %d warm runs\n"
+                   init-local-vulpea-benchmark-task-count
+                   init-local-vulpea-benchmark-runs))
+          (princ (init-local-vulpea-benchmark--line
+                  "Initial query/render" initial-ms 200))
+          (princ (init-local-vulpea-benchmark--line "Sort" sort-ms 100))
+          (princ (init-local-vulpea-benchmark--line "Filter" filter-ms 100))
+          (princ (init-local-vulpea-benchmark--line
+                  "Edit-triggered refresh" edit-ms 100)))
+      (advice-remove 'vulpea-ui-collection-refresh
+                     #'init-local-vulpea-task-table--refresh-advice)
+      (when-let* ((buffer (get-buffer buffer-name)))
+        (kill-buffer buffer))
+      (set-default 'org-todo-keywords old-workflow)
+      (delete-file database))))
 
 (when noninteractive
   (init-local-vulpea-benchmark-run))

@@ -51,11 +51,7 @@ Real public-API integration suite, using only packages already installed for
 the running Emacs version:
 
 ```sh
-emacs -Q --batch \
-  --eval '(setq user-emacs-directory default-directory package-user-dir (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version) user-emacs-directory))' \
-  --funcall package-initialize \
-  -l tests/init-local-vulpea-integration-tests.el \
-  -f ert-run-tests-batch-and-exit
+tests/run-vulpea-integration.sh
 ```
 
 The integration suite skips with an explicit reason on Emacs older than 29.1
@@ -72,22 +68,24 @@ emacs -Q --batch -l tests/init-local-vulpea-benchmark.el
 ```
 
 The benchmark generates 5,000 Task snapshots and reports the median of five
-warm runs. It measures the integration-owned pipeline through the documented
-Collection View `:source` boundary: public query, snapshot rendering,
-in-memory sort/filter, and edit-triggered re-query. Vulpea UI owns buffer
-painting beyond that boundary.
+warm runs. It measures the public Collection View end to end: opening and
+painting the buffer, native `tabulated-list` sorting, filtering and repainting,
+and editing followed by a query and repaint.
 
 Recorded 2026-07-21 on a Mac mini (M1, arm64), macOS 26.5.1, Emacs 31.0.50:
 
 | Operation | Median | Limit |
 | --- | ---: | ---: |
-| Initial query/render | 94.318 ms | < 200 ms |
-| Sort | 6.731 ms | < 100 ms |
-| Filter | 29.523 ms | < 100 ms |
-| Edit-triggered refresh | 69.444 ms | < 100 ms |
+| Initial query/render | 587.390 ms | < 200 ms (not met) |
+| Sort | 518.836 ms | < 100 ms (not met) |
+| Filter | 47.470 ms | < 100 ms |
+| Edit-triggered refresh | 1,277.412 ms | < 100 ms (not met) |
 
 Wall-clock results are workstation evidence, not CI gates. Query-count and
-per-row-read assertions are deterministic CI gates.
+per-row-read assertions are deterministic CI gates. The public Vulpea UI
+Collection View renderer does not currently meet the open, sort, or edit
+targets at 5,000 Tasks; meeting them requires either revised targets or a
+different rendering architecture.
 
 ## Manual Verification
 

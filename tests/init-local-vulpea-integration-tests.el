@@ -56,6 +56,7 @@
           (expand-file-name "org-id-locations" temporary-directory))
          (old-workflow (default-value 'org-todo-keywords))
          (collection-buffer nil)
+         (launch-buffer nil)
          source-before)
     (unwind-protect
         (progn
@@ -91,8 +92,13 @@
                  (list (file-name-as-directory temporary-directory)))
                 (init-local-vulpea-task-table-unavailable-reason nil))
             (vulpea-db-update-file org-file)
-            (my/vulpea-task-table)
-            (setq collection-buffer (current-buffer))
+            (setq launch-buffer (find-file-noselect org-file))
+            (with-current-buffer launch-buffer
+              (org-mode)
+              (my/vulpea-task-table))
+            (setq collection-buffer
+                  (get-buffer "*vulpea-collection: Task Table*"))
+            (switch-to-buffer collection-buffer)
             (should (derived-mode-p 'vulpea-ui-collection-mode))
             (should init-local-vulpea-task-table-read-only-mode)
             (should
@@ -141,6 +147,14 @@
              (equal '("explicit-b" "missing-b" "priority-a" "unicode")
                     (sort (init-local-vulpea-integration-entry-ids)
                           #'string-lessp)))
+            (init-local-vulpea-task-table-filter-source "Project Alpha")
+            (should (= 4 (length (init-local-vulpea-integration-entry-ids))))
+            (init-local-vulpea-task-table-filter-source "Missing Source")
+            (should-not (init-local-vulpea-integration-entry-ids))
+            (init-local-vulpea-task-table-filter-clear)
+            (init-local-vulpea-task-table-filter-launch-source)
+            (should (= 4 (length (init-local-vulpea-integration-entry-ids))))
+            (init-local-vulpea-task-table-filter-clear)
             (should
              (init-local-vulpea-integration-goto-entry "explicit-b"))
             (let ((query (symbol-function 'vulpea-db-query))
@@ -155,7 +169,7 @@
                 (run-hook-with-args
                  'vulpea-db-worker-done-functions
                  org-file 'applied 1))
-              (should (> queries 0))
+              (should (= 1 queries))
               (should (equal "explicit-b" (tabulated-list-get-id)))
               (should (equal sort-key tabulated-list-sort-key)))
             (init-local-vulpea-task-table-filter-text "重复")
@@ -171,6 +185,8 @@
             (vulpea-db-close)))
       (when (buffer-live-p collection-buffer)
         (kill-buffer collection-buffer))
+      (when (buffer-live-p launch-buffer)
+        (kill-buffer launch-buffer))
       (ignore-errors (vulpea-db-close))
       (set-default 'org-todo-keywords old-workflow)
       (delete-directory temporary-directory t))))
