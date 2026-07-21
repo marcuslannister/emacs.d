@@ -352,6 +352,71 @@
       (should (string-match-p "index" message))
       (should (string-match-p "progress" message)))))
 
+(ert-deftest init-local-vulpea-committed-index-opens-while-worker-is-busy ()
+  (let ((note (init-local-vulpea-test-note "committed" "TODO" ?A "Ready")))
+    (cl-letf (((symbol-function 'vulpea-db-query) (lambda () (list note)))
+              ((symbol-function 'vulpea-db-worker-busy-p) (lambda () t)))
+      (should
+       (equal '("committed")
+              (mapcar #'vulpea-note-id
+                      (init-local-vulpea-task-table-source)))))))
+
+(ert-deftest init-local-vulpea-worker-failure-warns-actionably ()
+  (let ((vulpea-db-worker-done-functions nil)
+        warnings)
+    (cl-letf (((symbol-function 'display-warning)
+               (lambda (_type message &optional _level _buffer-name)
+                 (push message warnings))))
+      (init-local-vulpea--install-worker-failure-hook)
+      (run-hook-with-args 'vulpea-db-worker-done-functions
+                          "/tmp/tasks.org" 'applied 2)
+      (should-not warnings)
+      (run-hook-with-args 'vulpea-db-worker-done-functions
+                          "/tmp/tasks.org" 'error nil))
+    (should (= 1 (length warnings)))
+    (should (string-match-p "tasks\\.org" (car warnings)))
+    (should (string-match-p "vulpea-doctor" (car warnings)))))
+
+(ert-deftest init-local-vulpea-initialization-is-local-and-failure-safe ()
+  (let* ((temporary-directory (make-temp-file "vulpea-init" t))
+         (user-emacs-directory
+          (file-name-as-directory
+           (expand-file-name "emacs" temporary-directory)))
+         (org-directory
+          (file-name-as-directory
+           (expand-file-name "org" temporary-directory)))
+         init-local-vulpea-task-table-unavailable-reason
+         warnings)
+    (unwind-protect
+        (cl-letf (((symbol-function 'maybe-require-package)
+                   (lambda (&rest _args) t))
+                  ((symbol-function 'require)
+                   (lambda (&rest _args) t))
+                  ((symbol-function
+                    'init-local-vulpea-task-table--install-refresh-advice)
+                   #'ignore)
+                  ((symbol-function
+                    'init-local-vulpea--install-worker-failure-hook)
+                   #'ignore)
+                  ((symbol-function 'vulpea-db-autosync-mode)
+                   (lambda (&optional _arg) (error "worker unavailable")))
+                  ((symbol-function 'display-warning)
+                   (lambda (_type message &optional _level _buffer-name)
+                     (push message warnings))))
+          (should (condition-case nil
+                      (progn (init-local-vulpea--initialize) t)
+                    (error nil)))
+          (should
+           (equal (expand-file-name "var/vulpea/vulpea.db"
+                                    user-emacs-directory)
+                  vulpea-db-location))
+          (should (equal (list org-directory) vulpea-db-sync-directories))
+          (should (eq 'async vulpea-db-sync-scan-on-enable))
+          (should (string-match-p "worker unavailable"
+                                  init-local-vulpea-task-table-unavailable-reason))
+          (should (string-match-p "vulpea-doctor" (car warnings))))
+      (delete-directory temporary-directory t))))
+
 (ert-deftest init-local-vulpea-read-only-mode-remaps-source-mutations ()
   (should
    (eq #'init-local-vulpea-task-table-visit
@@ -781,7 +846,8 @@
 (ert-deftest init-local-vulpea-edit-done-state-removes-open-task-row ()
   (init-local-vulpea-test-with-workflow
     (let* ((fresh (init-local-vulpea-test-note "done-me" "TODO" ?A "Alpha"))
-           (keep (init-local-vulpea-test-note "keep" "TODO" ?B "Keep")))
+           (keep (init-local-vulpea-test-note "keep" "TODO" ?B "Keep"))
+           (queries 0))
       (init-local-vulpea-test-with-refresh-table
           (list (init-local-vulpea-test-table-entry "done-me" "Alpha")
                 (init-local-vulpea-test-table-entry "keep" "Keep"))
@@ -799,7 +865,9 @@
                      (should (eq field 'todo))
                      (setf (vulpea-note-todo note) value)))
                   ((symbol-function 'vulpea-db-query)
-                   (lambda () (list fresh keep)))
+                   (lambda ()
+                     (cl-incf queries)
+                     (list fresh keep)))
                   ((symbol-function 'vulpea-db-worker-busy-p)
                    (lambda () nil))
                   ((symbol-function 'vulpea-ui-collection-refresh)
@@ -822,6 +890,7 @@
           (unwind-protect
               (progn
                 (call-interactively #'init-local-vulpea-task-table-edit)
+                (should (= 1 queries))
                 (should (equal '("keep")
                                (mapcar #'car tabulated-list-entries)))
                 (should (equal "keep" (tabulated-list-get-id))))

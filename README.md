@@ -39,6 +39,13 @@ LSP support is provided using `eglot`.
 Various popular Emacs tools are included and configured here, such as
 `magit`, `docker.el`, `projectile`, `org-mode` etc., but the focus is moderate
 
+## Task Table
+
+On Emacs 29.1 or newer, `M-x my/vulpea-task-table` opens the optional Vulpea
+Task Table. See [Task Table operations and verification](docs/task-table.md)
+for synchronization boundaries, controls, failure recovery, tests, and the
+5,000-Task benchmark.
+
 ## Supported Emacs versions
 
 Use the latest released Emacs version available to you. The author
