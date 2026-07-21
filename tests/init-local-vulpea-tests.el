@@ -130,6 +130,42 @@
      (goto-char (point-min))
      ,@body))
 
+(defun init-local-vulpea-test-table-entry (id title &optional source)
+  "Return one synthetic table entry for ID, TITLE, and SOURCE."
+  (list id (vector title (or source ""))))
+
+(defmacro init-local-vulpea-test-with-refresh-table (entries selected-id
+                                                             &rest body)
+  "Render ENTRIES, select SELECTED-ID, then run BODY."
+  (declare (indent 2) (debug t))
+  `(with-temp-buffer
+     (tabulated-list-mode)
+     (setq tabulated-list-format [("Task" 20 t) ("Source" 20 t)]
+           tabulated-list-entries ,entries)
+     (tabulated-list-init-header)
+     (tabulated-list-print)
+     (goto-char (point-min))
+     (while (and (not (eobp))
+                 (not (equal ,selected-id (tabulated-list-get-id))))
+       (forward-line 1))
+     ,@body))
+
+(defun init-local-vulpea-test-public-refresh (refresh &optional action)
+  "Call mocked public REFRESH through Task preservation, then run ACTION."
+  (let ((original (and (fboundp 'vulpea-ui-collection-refresh)
+                       (symbol-function 'vulpea-ui-collection-refresh))))
+    (unwind-protect
+        (progn
+          (fset 'vulpea-ui-collection-refresh refresh)
+          (init-local-vulpea-task-table--install-refresh-advice)
+          (let ((init-local-vulpea-task-table-read-only-mode t))
+            (funcall (or action #'vulpea-ui-collection-refresh))))
+      (advice-remove 'vulpea-ui-collection-refresh
+                     #'init-local-vulpea-task-table--refresh-advice)
+      (if original
+          (fset 'vulpea-ui-collection-refresh original)
+        (fmakunbound 'vulpea-ui-collection-refresh)))))
+
 (ert-deftest init-local-vulpea-task-model-classifies-workflow-and-priority ()
   (init-local-vulpea-test-with-workflow
     (let ((open (init-local-vulpea-test-note "open" "WAITING" nil "Open"))
@@ -506,6 +542,134 @@
                  (progn (init-local-vulpea-task-table-visit) nil)
                (user-error (error-message-string err)))))
         (should (string-match-p "No valid Task selected" message))))))
+
+(ert-deftest init-local-vulpea-refresh-preserves-view-across-reorder-and-move ()
+  (let ((state
+         (make-init-local-vulpea-task-table-state
+          :todo "NEXT"
+          :priority "A"
+          :text "needle"
+          :source "Project"
+          :origin-path "/tmp/project.org"
+          :launch-source-only-p t)))
+    (init-local-vulpea-test-with-refresh-table
+        (list (init-local-vulpea-test-table-entry "a" "Alpha")
+              (init-local-vulpea-test-table-entry
+               "b" "Beta" "/tmp/inbox.org")
+              (init-local-vulpea-test-table-entry "c" "Gamma"))
+        "b"
+      (setq-local init-local-vulpea-task-table-state state
+                  tabulated-list-sort-key '("Task" . t))
+      (init-local-vulpea-test-public-refresh
+       (lambda ()
+         (setq tabulated-list-entries
+               (list (init-local-vulpea-test-table-entry "c" "Aardvark")
+                     (init-local-vulpea-test-table-entry "a" "Middle")
+                     (init-local-vulpea-test-table-entry
+                      "b" "Zulu" "/tmp/archive.org")))
+         (tabulated-list-print t)))
+      (should (equal "b" (tabulated-list-get-id)))
+      (should (equal "/tmp/archive.org"
+                     (aref (cadr (assoc "b" tabulated-list-entries)) 1)))
+      (should (equal '("Task" . t) tabulated-list-sort-key))
+      (should (eq state init-local-vulpea-task-table-state))
+      (should (equal "NEXT" (init-local-vulpea-task-table-state-todo state)))
+      (should (equal "/tmp/project.org"
+                     (init-local-vulpea-task-table-state-origin-path state)))
+      (should (init-local-vulpea-task-table-state-launch-source-only-p state)))))
+
+(ert-deftest init-local-vulpea-refresh-removes-completed-task ()
+  (init-local-vulpea-test-with-workflow
+    (let ((task-a (init-local-vulpea-test-note "a" "TODO" ?A "Alpha"))
+          (task-b (init-local-vulpea-test-note "b" "TODO" ?B "Beta"))
+          (task-c (init-local-vulpea-test-note "c" "TODO" ?C "Gamma")))
+      (init-local-vulpea-test-with-refresh-table
+          (list (init-local-vulpea-test-table-entry "a" "Alpha")
+                (init-local-vulpea-test-table-entry "b" "Beta")
+                (init-local-vulpea-test-table-entry "c" "Gamma"))
+          "b"
+        (setf (vulpea-note-todo task-b) "DONE")
+        (cl-letf (((symbol-function 'vulpea-db-query)
+                   (lambda () (list task-a task-b task-c)))
+                  ((symbol-function 'vulpea-db-worker-busy-p)
+                   (lambda () nil)))
+          (init-local-vulpea-test-public-refresh
+           (lambda ()
+             (setq tabulated-list-entries
+                   (mapcar
+                    (lambda (note)
+                      (init-local-vulpea-test-table-entry
+                       (vulpea-note-id note) (vulpea-note-title note)))
+                    (init-local-vulpea-task-table-source)))
+             (tabulated-list-print t))))
+        (should (equal '("a" "c") (mapcar #'car tabulated-list-entries)))
+        (should (equal "c" (tabulated-list-get-id)))))))
+
+(ert-deftest init-local-vulpea-refresh-uses-nearest-old-row-then-header ()
+  (init-local-vulpea-test-with-refresh-table
+      (list (init-local-vulpea-test-table-entry "a" "Alpha")
+            (init-local-vulpea-test-table-entry "b" "Beta")
+            (init-local-vulpea-test-table-entry "c" "Gamma")
+            (init-local-vulpea-test-table-entry "d" "Delta"))
+      "c"
+    (init-local-vulpea-test-public-refresh
+     (lambda ()
+       (setq tabulated-list-entries
+             (list (init-local-vulpea-test-table-entry "b" "Beta")
+                   (init-local-vulpea-test-table-entry "a" "Alpha")))
+       (tabulated-list-print t)))
+    (should (equal "b" (tabulated-list-get-id)))
+    (init-local-vulpea-test-public-refresh
+     (lambda ()
+       (setq tabulated-list-entries nil)
+       (tabulated-list-print t)))
+    (should (= (point-min) (point)))
+    (should-not (tabulated-list-get-id))))
+
+(ert-deftest init-local-vulpea-refresh-failure-restores-prior-view ()
+  (let ((state
+         (make-init-local-vulpea-task-table-state
+          :todo "WAITING"
+          :origin-path "/tmp/tasks.org"
+          :launch-source-only-p t))
+        reported)
+    (init-local-vulpea-test-with-refresh-table
+        (list (init-local-vulpea-test-table-entry "a" "Alpha")
+              (init-local-vulpea-test-table-entry "b" "Beta"))
+        "b"
+      (setq-local init-local-vulpea-task-table-state state
+                  tabulated-list-sort-key '("Task" . nil))
+      (cl-letf (((symbol-function 'message)
+                 (lambda (format-string &rest args)
+                   (setq reported (apply #'format format-string args)))))
+        (should-not
+         (init-local-vulpea-test-public-refresh
+          (lambda ()
+            (setq tabulated-list-entries
+                  (list (init-local-vulpea-test-table-entry "x" "Broken")))
+            (tabulated-list-print t)
+            (error "database locked"))
+          (lambda ()
+            (init-local-vulpea-task-table-filter-todo "NEXT"))))
+        (should (equal "WAITING"
+                       (init-local-vulpea-task-table-state-todo state)))
+        (should-not
+         (init-local-vulpea-test-public-refresh
+          (lambda () (error "database locked"))
+          #'init-local-vulpea-task-table-filter-clear)))
+      (should (equal '("a" "b") (mapcar #'car tabulated-list-entries)))
+      (should (equal "b" (tabulated-list-get-id)))
+      (should (equal '("Task" . nil) tabulated-list-sort-key))
+      (should (eq state init-local-vulpea-task-table-state))
+      (should (equal "WAITING"
+                     (init-local-vulpea-task-table-state-todo state)))
+      (should (init-local-vulpea-task-table-state-launch-source-only-p state))
+      (should (string-match-p "refresh failed.*database locked" reported)))))
+
+(ert-deftest init-local-vulpea-refresh-keeps-public-manual-boundary ()
+  (should
+   (eq #'vulpea-ui-collection-refresh
+       (lookup-key init-local-vulpea-task-table-read-only-mode-map (kbd "g")))))
 
 (provide 'init-local-vulpea-tests)
 ;;; init-local-vulpea-tests.el ends here
