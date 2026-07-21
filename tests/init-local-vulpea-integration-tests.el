@@ -81,8 +81,9 @@
             (should (derived-mode-p 'vulpea-ui-collection-mode))
             (should init-local-vulpea-task-table-read-only-mode)
             (should
-             (equal '("priority-a" "missing-b" "explicit-b" "unicode")
-                    (init-local-vulpea-integration-entry-ids)))
+             (equal '("explicit-b" "missing-b" "priority-a" "unicode")
+                    (sort (init-local-vulpea-integration-entry-ids)
+                          #'string-lessp)))
             (let* ((missing
                     (init-local-vulpea-integration-entry "missing-b"))
                    (cells (cadr missing))
@@ -111,6 +112,25 @@
               (should
                (equal '("priority-a" "unicode")
                       (sort (seq-drop ids 2) #'string-lessp))))
+            (init-local-vulpea-task-table-filter-todo "TODO")
+            (should
+             (equal '("explicit-b" "missing-b" "priority-a")
+                    (sort (init-local-vulpea-integration-entry-ids)
+                          #'string-lessp)))
+            (init-local-vulpea-task-table-filter-priority "None")
+            (should
+             (equal '("missing-b")
+                    (init-local-vulpea-integration-entry-ids)))
+            (init-local-vulpea-task-table-filter-clear)
+            (should
+             (equal '("explicit-b" "missing-b" "priority-a" "unicode")
+                    (sort (init-local-vulpea-integration-entry-ids)
+                          #'string-lessp)))
+            (init-local-vulpea-task-table-filter-text "重复")
+            (should
+             (equal '("unicode")
+                    (init-local-vulpea-integration-entry-ids)))
+            (init-local-vulpea-task-table-filter-clear)
             (should
              (equal source-before
                     (with-temp-buffer

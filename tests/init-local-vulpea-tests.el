@@ -55,7 +55,8 @@
    (init-local-vulpea-test-note "priority-a" "TODO" ?A "zeta")
    (init-local-vulpea-test-note "priority-c" "TODO" ?C "Ångström")
    (init-local-vulpea-test-note "next" "NEXT" ?A "Next task")
-   (init-local-vulpea-test-note "unicode" "WAITING" nil "重复")
+   (init-local-vulpea-test-note "unicode" "WAITING" nil "重复" 1
+                                "项目" '("等待"))
    (init-local-vulpea-test-note "duplicate-1" "HOLD" ?A "Duplicate")
    (init-local-vulpea-test-note "duplicate-2" "HOLD" ?A "Duplicate")
    (init-local-vulpea-test-note "done" "DONE" ?A "Finished")
@@ -77,6 +78,44 @@
      ((null priority) "")
      ((characterp priority) (char-to-string priority))
      (t (format "%s" priority)))))
+
+(defmacro init-local-vulpea-test-with-command-table (notes &rest body)
+  "Open a mocked command-seam Task Table over NOTES, then run BODY."
+  (declare (indent 1) (debug t))
+  `(let ((database (make-temp-file "vulpea-task-table" nil ".db"))
+         (database-notes ,notes)
+         (collection-buffer
+          (generate-new-buffer " *vulpea-task-table-command-test*"))
+         (init-local-vulpea-task-table-unavailable-reason nil)
+         view rows)
+     (unwind-protect
+         (cl-labels
+             ((render ()
+                (setq rows
+                      (funcall
+                       (plist-get (plist-get view :filter) :source))))
+              (launch (mode &optional file)
+                (let ((vulpea-db-location database))
+                  (with-temp-buffer
+                    (funcall mode)
+                    (setq buffer-file-name file)
+                    (my/vulpea-task-table)))))
+           (cl-letf (((symbol-function 'vulpea-db-query)
+                      (lambda () database-notes))
+                     ((symbol-function 'vulpea-db-worker-busy-p)
+                      (lambda () nil))
+                     ((symbol-function 'vulpea-ui-collection-open)
+                      (lambda (new-view)
+                        (setq view new-view)
+                        (switch-to-buffer collection-buffer)
+                        (setq-local vulpea-ui-collection--view new-view)
+                        (render)))
+                     ((symbol-function 'vulpea-ui-collection-refresh)
+                      #'render))
+             ,@body))
+       (when (buffer-live-p collection-buffer)
+         (kill-buffer collection-buffer))
+       (delete-file database))))
 
 (ert-deftest init-local-vulpea-task-model-classifies-workflow-and-priority ()
   (init-local-vulpea-test-with-workflow
@@ -276,7 +315,134 @@
     (should
      (eq #'init-local-vulpea-task-table-read-only
          (lookup-key init-local-vulpea-task-table-read-only-mode-map
-                     (vector 'remap command))))))
+                     (vector 'remap command)))))
+  (dolist (binding '(("f t" . init-local-vulpea-task-table-filter-todo)
+                     ("f p" . init-local-vulpea-task-table-filter-priority)
+                     ("f x" . init-local-vulpea-task-table-filter-text)
+                     ("f s" . init-local-vulpea-task-table-filter-source)
+                     ("f c" . init-local-vulpea-task-table-filter-clear)
+                     ("f b" . init-local-vulpea-task-table-filter-launch-source)))
+    (should
+     (eq (cdr binding)
+         (lookup-key init-local-vulpea-task-table-read-only-mode-map
+                     (kbd (car binding)))))))
+
+(ert-deftest init-local-vulpea-command-filters-and-clears ()
+  (init-local-vulpea-test-with-workflow
+    (init-local-vulpea-test-with-command-table
+        (init-local-vulpea-test-fixtures)
+      (let ((inputs '("WAITING" "None" "A" "B" "C" "TODO" "None"))
+            (strings '("PARENT" "重复" "DUPLICATE"
+                       "parent" "项目" "TASKS" "ALPHA" "work")))
+        (cl-letf (((symbol-function 'completing-read)
+                   (lambda (&rest _) (pop inputs)))
+                  ((symbol-function 'read-string)
+                   (lambda (&rest _) (pop strings))))
+          (cl-labels
+              ((check-filter (command expected)
+                 (launch #'org-mode)
+                 (with-current-buffer collection-buffer
+                   (should
+                    (local-variable-p
+                     'init-local-vulpea-task-table-state))
+                   (call-interactively command))
+                 (should
+                  (equal expected (mapcar #'vulpea-note-id rows)))))
+            (check-filter #'init-local-vulpea-task-table-filter-todo
+                          '("unicode"))
+            (check-filter #'init-local-vulpea-task-table-filter-priority
+                          '("missing-b" "unicode"))
+            (check-filter #'init-local-vulpea-task-table-filter-priority
+                          '("priority-a" "next"
+                            "duplicate-1" "duplicate-2"))
+            (check-filter #'init-local-vulpea-task-table-filter-priority
+                          '("explicit-b"))
+            (check-filter #'init-local-vulpea-task-table-filter-priority
+                          '("priority-c"))
+            (check-filter #'init-local-vulpea-task-table-filter-text
+                          '("missing-b" "explicit-b"))
+            (check-filter #'init-local-vulpea-task-table-filter-text
+                          '("unicode"))
+            (check-filter #'init-local-vulpea-task-table-filter-text
+                          '("duplicate-1" "duplicate-2"))
+            (check-filter #'init-local-vulpea-task-table-filter-source
+                          '("missing-b" "explicit-b"))
+            (check-filter #'init-local-vulpea-task-table-filter-source
+                          '("unicode"))
+            (check-filter #'init-local-vulpea-task-table-filter-source
+                          '("priority-a" "priority-c" "next"
+                            "duplicate-1" "duplicate-2"))
+            (launch #'org-mode)
+            (with-current-buffer collection-buffer
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-todo)
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-priority)
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-text)
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-source))
+            (should
+             (equal '("missing-b") (mapcar #'vulpea-note-id rows)))
+            (with-current-buffer collection-buffer
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-clear))
+            (should
+             (equal '("priority-a" "missing-b" "explicit-b" "priority-c"
+                      "next" "unicode" "duplicate-1" "duplicate-2")
+                    (mapcar #'vulpea-note-id rows)))))))))
+
+(ert-deftest init-local-vulpea-command-scopes-to-org-launch ()
+  (init-local-vulpea-test-with-workflow
+    (let* ((origin-a (make-temp-file "vulpea-origin-a" nil ".org"))
+           (origin-b (make-temp-file "vulpea-origin-b" nil ".org"))
+           (task-a-1
+            (init-local-vulpea-test-note "a-1" "TODO" ?A "First A"))
+           (task-a-2
+            (init-local-vulpea-test-note "a-2" "NEXT" nil "Second A"))
+           (task-b
+            (init-local-vulpea-test-note "b-1" "WAITING" ?C "Only B")))
+      (setf (vulpea-note-path task-a-1) origin-a
+            (vulpea-note-path task-a-2) origin-a
+            (vulpea-note-path task-b) origin-b)
+      (unwind-protect
+          (init-local-vulpea-test-with-command-table
+              (list task-a-1 task-a-2 task-b)
+            (launch #'org-mode origin-a)
+            (with-current-buffer collection-buffer
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-launch-source))
+            (should
+             (equal '("a-1" "a-2") (mapcar #'vulpea-note-id rows)))
+            (with-current-buffer collection-buffer
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-clear))
+            (should
+             (equal '("a-1" "a-2" "b-1")
+                    (mapcar #'vulpea-note-id rows)))
+            (launch #'org-mode origin-b)
+            (should
+             (equal '("a-1" "a-2" "b-1")
+                    (mapcar #'vulpea-note-id rows)))
+            (with-current-buffer collection-buffer
+              (call-interactively
+               #'init-local-vulpea-task-table-filter-launch-source))
+            (should (equal '("b-1") (mapcar #'vulpea-note-id rows)))
+            (launch #'fundamental-mode)
+            (should
+             (equal '("a-1" "a-2" "b-1")
+                    (mapcar #'vulpea-note-id rows)))
+            (let ((message
+                   (with-current-buffer collection-buffer
+                     (condition-case err
+                         (progn
+                           (call-interactively
+                            #'init-local-vulpea-task-table-filter-launch-source)
+                           nil)
+                       (user-error (error-message-string err))))))
+              (should (string-match-p "Org launch" message))))
+        (delete-file origin-a)
+        (delete-file origin-b)))))
 
 (provide 'init-local-vulpea-tests)
 ;;; init-local-vulpea-tests.el ends here

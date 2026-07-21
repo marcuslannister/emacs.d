@@ -41,9 +41,17 @@
 (declare-function vulpea-note-title "vulpea-note" (note))
 (declare-function vulpea-note-todo "vulpea-note" (note))
 (declare-function vulpea-ui-collection-open "vulpea-ui" (view))
+(declare-function vulpea-ui-collection-refresh "vulpea-ui" ())
 (defvar init-local-vulpea-task-table-unavailable-reason
   "Vulpea setup has not completed"
   "Reason the Task Table cannot currently open, or nil when available.")
+
+(cl-defstruct init-local-vulpea-task-table-state
+  "Ephemeral filters and captured launch context for one Task Table."
+  todo priority text source origin-path launch-source-only-p)
+
+(defvar-local init-local-vulpea-task-table-state nil
+  "Ephemeral filter state for the current Task Table buffer.")
 
 (defun init-local-vulpea--keyword-name (keyword)
   "Return the TODO state name from configured KEYWORD."
@@ -172,21 +180,93 @@ OPEN-STATES defaults to the configured global Org workflow."
    :created-at (vulpea-note-created-at note)
    :modified-at (vulpea-note-modified-at note)))
 
-(defun init-local-vulpea-task-table-source ()
-  "Query and return Open Tasks for the Task Table Collection View."
+(defun init-local-vulpea-task-table--source-text (note)
+  "Return searchable Source note title and outline context for NOTE."
+  (string-join
+   (seq-filter
+    #'stringp
+    (cons (vulpea-note-file-title note)
+          (vulpea-note-outline-path note)))
+   "\n"))
+
+(defun init-local-vulpea-task-table--search-text (note)
+  "Return searchable Task and Source text for NOTE."
+  (string-join
+   (seq-filter
+    #'stringp
+    (list (vulpea-note-title note)
+          (init-local-vulpea-task-table--source-text note)))
+   "\n"))
+
+(defun init-local-vulpea-task-table--text-matches-p (needle haystack)
+  "Return non-nil when literal NEEDLE occurs in HAYSTACK, ignoring case."
+  (let ((case-fold-search t))
+    (string-match-p (regexp-quote needle) haystack)))
+
+(defun init-local-vulpea-task-table--priority-matches-p (expected actual)
+  "Return non-nil when EXPECTED Priority matches ACTUAL."
+  (cond
+   ((null expected) t)
+   ((equal expected "None") (null actual))
+   ((null actual) nil)
+   (t
+    (equal expected
+           (upcase
+            (if (characterp actual)
+                (char-to-string actual)
+              actual))))))
+
+(defun init-local-vulpea-task-table--matches-state-p (note state)
+  "Return non-nil when NOTE matches every filter in STATE."
+  (let ((todo (init-local-vulpea-task-table-state-todo state))
+        (priority (init-local-vulpea-task-table-state-priority state))
+        (text (init-local-vulpea-task-table-state-text state))
+        (source (init-local-vulpea-task-table-state-source state))
+        (origin (init-local-vulpea-task-table-state-origin-path state))
+        (origin-only
+         (init-local-vulpea-task-table-state-launch-source-only-p state)))
+    (and
+     (or (null todo)
+         (equal todo (vulpea-note-todo note)))
+     (init-local-vulpea-task-table--priority-matches-p
+      priority (vulpea-note-priority note))
+     (or (null text)
+         (init-local-vulpea-task-table--text-matches-p
+          text (init-local-vulpea-task-table--search-text note)))
+     (or (null source)
+         (init-local-vulpea-task-table--text-matches-p
+          source (init-local-vulpea-task-table--source-text note)))
+     (or (not origin-only)
+         (let ((path (vulpea-note-path note)))
+           (and (stringp path)
+                (equal origin (expand-file-name path))))))))
+
+(defun init-local-vulpea-task-table-source (&optional state)
+  "Query and return Open Tasks matching ephemeral filter STATE."
   (let ((notes (vulpea-db-query)))
     (when (and (null notes)
                (fboundp 'vulpea-db-worker-busy-p)
                (vulpea-db-worker-busy-p))
       (user-error
        "Vulpea index synchronization is still in progress; retry when it finishes"))
+    (when state
+      (setq notes
+            (seq-filter
+             (lambda (note)
+               (init-local-vulpea-task-table--matches-state-p note state))
+             notes)))
     (mapcar #'init-local-vulpea--display-note
             (init-local-vulpea--sorted-open-notes notes))))
 
-(defun init-local-vulpea-task-table-view ()
-  "Return the public Vulpea UI Collection View specification."
+(defun init-local-vulpea-task-table-view (&optional state)
+  "Return the public Collection View specification using filter STATE."
   (list :name "Task Table"
-        :filter (list :source #'init-local-vulpea-task-table-source)
+        :filter
+        (list :source
+              (if state
+                  (lambda ()
+                    (init-local-vulpea-task-table-source state))
+                #'init-local-vulpea-task-table-source))
         :columns '((todo :name "TODO" :width 10)
                    (priority :name "Priority" :width 8)
                    (title :name "Task" :width 48)
@@ -200,8 +280,84 @@ OPEN-STATES defaults to the configured global Org workflow."
   (interactive)
   (user-error "Task Table is read-only; edit the source Org heading"))
 
+(defun init-local-vulpea-task-table--state ()
+  "Return the current ephemeral filter state or signal a user error."
+  (or init-local-vulpea-task-table-state
+      (user-error "Not in a Task Table")))
+
+(defun init-local-vulpea-task-table-filter-todo (todo)
+  "Set the current Task Table TODO filter to TODO."
+  (interactive
+   (list (completing-read
+          "TODO: "
+          (plist-get (init-local-vulpea-task-workflow) :open)
+          nil t)))
+  (setf (init-local-vulpea-task-table-state-todo
+         (init-local-vulpea-task-table--state))
+        todo)
+  (vulpea-ui-collection-refresh))
+
+(defun init-local-vulpea-task-table-filter-priority (priority)
+  "Set the current Task Table PRIORITY filter."
+  (interactive
+   (list (completing-read "Priority: " '("A" "B" "C" "None") nil t)))
+  (setf (init-local-vulpea-task-table-state-priority
+         (init-local-vulpea-task-table--state))
+        priority)
+  (vulpea-ui-collection-refresh))
+
+(defun init-local-vulpea-task-table-filter-text (text)
+  "Set the current Task Table literal TEXT filter."
+  (interactive (list (read-string "Task or Source text: ")))
+  (setf (init-local-vulpea-task-table-state-text
+         (init-local-vulpea-task-table--state))
+        (unless (string-empty-p text) text))
+  (vulpea-ui-collection-refresh))
+
+(defun init-local-vulpea-task-table-filter-source (source)
+  "Set the current Task Table literal SOURCE filter."
+  (interactive (list (read-string "Source text: ")))
+  (setf (init-local-vulpea-task-table-state-source
+         (init-local-vulpea-task-table--state))
+        (unless (string-empty-p source) source))
+  (vulpea-ui-collection-refresh))
+
+(defun init-local-vulpea-task-table-filter-clear ()
+  "Clear every ephemeral filter from the current Task Table."
+  (interactive)
+  (let ((state (init-local-vulpea-task-table--state)))
+    (setf (init-local-vulpea-task-table-state-todo state) nil
+          (init-local-vulpea-task-table-state-priority state) nil
+          (init-local-vulpea-task-table-state-text state) nil
+          (init-local-vulpea-task-table-state-source state) nil
+          (init-local-vulpea-task-table-state-launch-source-only-p state)
+          nil))
+  (vulpea-ui-collection-refresh))
+
+(defun init-local-vulpea-task-table-filter-launch-source ()
+  "Scope the Task Table to the Org file that launched it."
+  (interactive)
+  (let ((state (init-local-vulpea-task-table--state)))
+    (unless (init-local-vulpea-task-table-state-origin-path state)
+      (user-error "An Org launch is required for source-file scope"))
+    (setf (init-local-vulpea-task-table-state-launch-source-only-p state)
+          t))
+  (vulpea-ui-collection-refresh))
+
+(defvar init-local-vulpea-task-table-filter-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "t") #'init-local-vulpea-task-table-filter-todo)
+    (define-key map (kbd "p") #'init-local-vulpea-task-table-filter-priority)
+    (define-key map (kbd "x") #'init-local-vulpea-task-table-filter-text)
+    (define-key map (kbd "s") #'init-local-vulpea-task-table-filter-source)
+    (define-key map (kbd "c") #'init-local-vulpea-task-table-filter-clear)
+    (define-key map (kbd "b") #'init-local-vulpea-task-table-filter-launch-source)
+    map)
+  "Keymap for ephemeral Task Table filters.")
+
 (defvar init-local-vulpea-task-table-read-only-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "f") init-local-vulpea-task-table-filter-map)
     (dolist (command '(vulpea-ui-collection-add-tag
                        vulpea-ui-collection-remove-tag
                        vulpea-ui-collection-quick-edit
@@ -240,12 +396,21 @@ OPEN-STATES defaults to the configured global Org workflow."
 
 ;;;###autoload
 (defun my/vulpea-task-table ()
-  "Open the named read-only Task Table through Vulpea UI Collection View."
+  "Open the named read-only Task Table through Vulpea UI Collection View.
+Each launch resets filters and captures the current Org file.  In the
+Task Table, use `f t', `f p', `f x', and `f s' to filter, `f b' to
+scope to that launch file, and `f c' to clear every filter."
   (interactive)
   (init-local-vulpea--ensure-available)
   (condition-case err
-      (progn
-        (vulpea-ui-collection-open (init-local-vulpea-task-table-view))
+      (let ((state
+             (make-init-local-vulpea-task-table-state
+              :origin-path
+              (when (and (derived-mode-p 'org-mode) buffer-file-name)
+                (expand-file-name buffer-file-name)))))
+        (vulpea-ui-collection-open
+         (init-local-vulpea-task-table-view state))
+        (setq-local init-local-vulpea-task-table-state state)
         (let ((workflow (init-local-vulpea-task-workflow)))
           (setq-local org-todo-keywords-1 (plist-get workflow :all)
                       org-not-done-keywords (plist-get workflow :open)
