@@ -23,6 +23,10 @@
   (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode)
   (define-key dired-mode-map (kbd "'") 'dired-up-directory)
   (define-key dired-mode-map (kbd "/") 'dired-isearch-filenames)
+  (define-key dired-mode-map (kbd "h") #'backward-char)
+  (define-key dired-mode-map (kbd "j") #'dired-next-line)
+  (define-key dired-mode-map (kbd "k") #'dired-previous-line)
+  (define-key dired-mode-map (kbd "l") #'forward-char)
   (define-key dired-mode-map (kbd "n") 'isearch-repeat-forward)
   (define-key dired-mode-map (kbd "p") 'isearch-repeat-backward))
 

@@ -85,13 +85,26 @@ ${EMACS:=emacs} -nw --batch \
                                                       (quote hel-previous-line))
                                                   (eq (key-binding (kbd "l"))
                                                       (quote hel-forward-char)))
-                                       (error "Dired Hel unavailable: state=%S SPC=%S target=%S hjkl=%S"
+                                       (error "Dired Normal keys: %S %S %S %S"
                                               hel-state
                                               (key-binding (kbd "SPC"))
                                               (key-binding (kbd "C-c b n"))
                                               (mapcar (lambda (key)
                                                         (key-binding (kbd key)))
-                                                      (quote ("h" "j" "k" "l"))))))
+                                                      (quote ("h" "j" "k" "l")))))
+                                     (hel-switch-state (quote emacs))
+                                     (unless (equal
+                                              (mapcar
+                                               (lambda (key)
+                                                 (key-binding (kbd key)))
+                                               (quote ("h" "j" "k" "l")))
+                                              (quote (backward-char dired-next-line
+                                                      dired-previous-line forward-char)))
+                                       (error "Dired Emacs-state hjkl unavailable: %S"
+                                              (mapcar
+                                               (lambda (key)
+                                                 (key-binding (kbd key)))
+                                               (quote ("h" "j" "k" "l"))))))
                                  (when (buffer-live-p buf)
                                    (kill-buffer buf)))))))'
 echo "Startup successful"
