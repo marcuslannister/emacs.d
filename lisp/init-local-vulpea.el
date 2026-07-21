@@ -299,6 +299,117 @@ OPEN-STATES defaults to the configured global Org workflow."
   (or init-local-vulpea-task-table-state
       (user-error "Not in a Task Table")))
 
+(defvar init-local-vulpea-task-table--refresh-failed nil
+  "Dynamically non-nil after a preserved Task Table refresh fails.")
+
+(defun init-local-vulpea-task-table--goto-id (id)
+  "Move point to the Task row identified by ID and return non-nil."
+  (goto-char (point-min))
+  (catch 'found
+    (while (< (point) (point-max))
+      (when (equal id (tabulated-list-get-id))
+        (throw 'found t))
+      (forward-line 1))
+    nil))
+
+(defun init-local-vulpea-task-table--nearest-surviving-id (ids row-index)
+  "Return the ID nearest ROW-INDEX in old row order IDS that still survives."
+  (cl-loop
+   for distance from 1 below (length ids)
+   for next = (nth (+ row-index distance) ids)
+   for previous = (and (>= (- row-index distance) 0)
+                       (nth (- row-index distance) ids))
+   thereis (cond
+            ((and next (assoc next tabulated-list-entries)) next)
+            ((and previous (assoc previous tabulated-list-entries)) previous))))
+
+(defun init-local-vulpea-task-table--restore-point (id ids row-index)
+  "Restore point to Task ID, nearest old row in IDS, or the header."
+  (cond
+   ((null id) (goto-char (point-min)))
+   ((init-local-vulpea-task-table--goto-id id))
+   ((when-let* ((fallback
+                 (init-local-vulpea-task-table--nearest-surviving-id
+                  ids row-index)))
+      (init-local-vulpea-task-table--goto-id fallback)))
+   (t (goto-char (point-min)))))
+
+(defun init-local-vulpea-task-table--preserve-refresh (refresh &rest args)
+  "Call public Collection View REFRESH with ARGS, preserving Task view state."
+  (let* ((selected-id (tabulated-list-get-id))
+         (old-ids (mapcar #'car tabulated-list-entries))
+         (row-index (and selected-id
+                         (cl-position selected-id old-ids :test #'equal)))
+         (old-entries (copy-tree tabulated-list-entries))
+         (old-format (copy-sequence tabulated-list-format))
+         (old-sort-key (copy-tree tabulated-list-sort-key))
+         (old-groups (and (boundp 'tabulated-list-groups)
+                          (copy-tree tabulated-list-groups))))
+    (condition-case err
+        (prog1 (apply refresh args)
+          (setq tabulated-list-sort-key old-sort-key)
+          (init-local-vulpea-task-table--restore-point
+           selected-id old-ids row-index))
+      (error
+       (setq tabulated-list-entries old-entries
+             tabulated-list-format old-format
+             tabulated-list-sort-key old-sort-key
+             init-local-vulpea-task-table--refresh-failed t)
+       (when (boundp 'tabulated-list-groups)
+         (setq tabulated-list-groups old-groups))
+       (tabulated-list-init-header)
+       (tabulated-list-print)
+       (init-local-vulpea-task-table--restore-point
+        selected-id old-ids row-index)
+       (message "Task Table refresh failed: %s" (error-message-string err))
+       nil))))
+
+(defun init-local-vulpea-task-table--refresh-advice (refresh &rest args)
+  "Preserve Task Table state around public REFRESH with ARGS."
+  (if init-local-vulpea-task-table-read-only-mode
+      (apply #'init-local-vulpea-task-table--preserve-refresh refresh args)
+    (apply refresh args)))
+
+(defun init-local-vulpea-task-table--install-refresh-advice ()
+  "Preserve Task Table state across manual and worker-driven refreshes."
+  (unless (advice-member-p #'init-local-vulpea-task-table--refresh-advice
+                           'vulpea-ui-collection-refresh)
+    (advice-add 'vulpea-ui-collection-refresh :around
+                #'init-local-vulpea-task-table--refresh-advice)))
+
+(defun init-local-vulpea-task-table--restore-state (state saved)
+  "Restore mutable Task Table STATE fields from SAVED."
+  (setf (init-local-vulpea-task-table-state-todo state)
+        (init-local-vulpea-task-table-state-todo saved)
+        (init-local-vulpea-task-table-state-priority state)
+        (init-local-vulpea-task-table-state-priority saved)
+        (init-local-vulpea-task-table-state-text state)
+        (init-local-vulpea-task-table-state-text saved)
+        (init-local-vulpea-task-table-state-source state)
+        (init-local-vulpea-task-table-state-source saved)
+        (init-local-vulpea-task-table-state-origin-path state)
+        (init-local-vulpea-task-table-state-origin-path saved)
+        (init-local-vulpea-task-table-state-launch-source-only-p state)
+        (init-local-vulpea-task-table-state-launch-source-only-p saved)))
+
+(defun init-local-vulpea-task-table--update-state (update)
+  "Apply UPDATE to Task Table state and roll it back when refresh fails."
+  (let* ((state (init-local-vulpea-task-table--state))
+         (saved (copy-init-local-vulpea-task-table-state state)))
+    (funcall update state)
+    (let ((init-local-vulpea-task-table--refresh-failed nil))
+      (condition-case err
+          (progn
+            (vulpea-ui-collection-refresh)
+            (if init-local-vulpea-task-table--refresh-failed
+                (progn
+                  (init-local-vulpea-task-table--restore-state state saved)
+                  nil)
+              t))
+        (error
+         (init-local-vulpea-task-table--restore-state state saved)
+         (signal (car err) (cdr err)))))))
+
 (defun init-local-vulpea-task-table-filter-todo (todo)
   "Set the current Task Table TODO filter to TODO."
   (interactive
@@ -306,57 +417,56 @@ OPEN-STATES defaults to the configured global Org workflow."
           "TODO: "
           (plist-get (init-local-vulpea-task-workflow) :open)
           nil t)))
-  (setf (init-local-vulpea-task-table-state-todo
-         (init-local-vulpea-task-table--state))
-        todo)
-  (vulpea-ui-collection-refresh))
+  (init-local-vulpea-task-table--update-state
+   (lambda (state)
+     (setf (init-local-vulpea-task-table-state-todo state) todo))))
 
 (defun init-local-vulpea-task-table-filter-priority (priority)
   "Set the current Task Table PRIORITY filter."
   (interactive
    (list (completing-read "Priority: " '("A" "B" "C" "None") nil t)))
-  (setf (init-local-vulpea-task-table-state-priority
-         (init-local-vulpea-task-table--state))
-        priority)
-  (vulpea-ui-collection-refresh))
+  (init-local-vulpea-task-table--update-state
+   (lambda (state)
+     (setf (init-local-vulpea-task-table-state-priority state) priority))))
 
 (defun init-local-vulpea-task-table-filter-text (text)
   "Set the current Task Table literal TEXT filter."
   (interactive (list (read-string "Task or Source text: ")))
-  (setf (init-local-vulpea-task-table-state-text
-         (init-local-vulpea-task-table--state))
-        (unless (string-empty-p text) text))
-  (vulpea-ui-collection-refresh))
+  (init-local-vulpea-task-table--update-state
+   (lambda (state)
+     (setf (init-local-vulpea-task-table-state-text state)
+           (unless (string-empty-p text) text)))))
 
 (defun init-local-vulpea-task-table-filter-source (source)
   "Set the current Task Table literal SOURCE filter."
   (interactive (list (read-string "Source text: ")))
-  (setf (init-local-vulpea-task-table-state-source
-         (init-local-vulpea-task-table--state))
-        (unless (string-empty-p source) source))
-  (vulpea-ui-collection-refresh))
+  (init-local-vulpea-task-table--update-state
+   (lambda (state)
+     (setf (init-local-vulpea-task-table-state-source state)
+           (unless (string-empty-p source) source)))))
 
 (defun init-local-vulpea-task-table-filter-clear ()
   "Clear every ephemeral filter from the current Task Table."
   (interactive)
-  (let ((state (init-local-vulpea-task-table--state)))
-    (setf (init-local-vulpea-task-table-state-todo state) nil
-          (init-local-vulpea-task-table-state-priority state) nil
-          (init-local-vulpea-task-table-state-text state) nil
-          (init-local-vulpea-task-table-state-source state) nil
-          (init-local-vulpea-task-table-state-launch-source-only-p state)
-          nil))
-  (vulpea-ui-collection-refresh))
+  (init-local-vulpea-task-table--update-state
+   (lambda (state)
+     (setf (init-local-vulpea-task-table-state-todo state) nil
+           (init-local-vulpea-task-table-state-priority state) nil
+           (init-local-vulpea-task-table-state-text state) nil
+           (init-local-vulpea-task-table-state-source state) nil
+           (init-local-vulpea-task-table-state-launch-source-only-p state)
+           nil))))
 
 (defun init-local-vulpea-task-table-filter-launch-source ()
   "Scope the Task Table to the Org file that launched it."
   (interactive)
   (let ((state (init-local-vulpea-task-table--state)))
     (unless (init-local-vulpea-task-table-state-origin-path state)
-      (user-error "An Org launch is required for source-file scope"))
-    (setf (init-local-vulpea-task-table-state-launch-source-only-p state)
-          t))
-  (vulpea-ui-collection-refresh))
+      (user-error "An Org launch is required for source-file scope")))
+  (init-local-vulpea-task-table--update-state
+   (lambda (state)
+     (setf (init-local-vulpea-task-table-state-launch-source-only-p state)
+           t))))
 
 (defvar init-local-vulpea-task-table-filter-map
   (let ((map (make-sparse-keymap)))
@@ -372,6 +482,7 @@ OPEN-STATES defaults to the configured global Org workflow."
 (defvar init-local-vulpea-task-table-read-only-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") #'init-local-vulpea-task-table-visit)
+    (define-key map (kbd "g") #'vulpea-ui-collection-refresh)
     (define-key map (kbd "f") init-local-vulpea-task-table-filter-map)
     (dolist (command '(vulpea-ui-collection-add-tag
                        vulpea-ui-collection-remove-tag
@@ -474,6 +585,7 @@ filter."
           (progn
             (require 'vulpea)
             (require 'vulpea-ui)
+            (init-local-vulpea-task-table--install-refresh-advice)
             (vulpea-db-autosync-mode +1)
             (setq init-local-vulpea-task-table-unavailable-reason nil))
         (error

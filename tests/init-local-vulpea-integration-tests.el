@@ -22,7 +22,8 @@
   (condition-case err
       (progn
         (require 'vulpea)
-        (require 'vulpea-ui))
+        (require 'vulpea-ui)
+        (init-local-vulpea-task-table--install-refresh-advice))
     (error
      (ert-skip
       (format "Vulpea dependencies cannot load: %s"
@@ -140,6 +141,23 @@
              (equal '("explicit-b" "missing-b" "priority-a" "unicode")
                     (sort (init-local-vulpea-integration-entry-ids)
                           #'string-lessp)))
+            (should
+             (init-local-vulpea-integration-goto-entry "explicit-b"))
+            (let ((query (symbol-function 'vulpea-db-query))
+                  (sort-key (copy-tree tabulated-list-sort-key))
+                  (queries 0))
+              (cl-letf (((symbol-function 'vulpea-db-query)
+                         (lambda (&rest args)
+                           (cl-incf queries)
+                           (apply query args)))
+                        ((symbol-function 'vulpea-db-worker-busy-p)
+                         (lambda () nil)))
+                (run-hook-with-args
+                 'vulpea-db-worker-done-functions
+                 org-file 'applied 1))
+              (should (> queries 0))
+              (should (equal "explicit-b" (tabulated-list-get-id)))
+              (should (equal sort-key tabulated-list-sort-key)))
             (init-local-vulpea-task-table-filter-text "重复")
             (should
              (equal '("unicode")
