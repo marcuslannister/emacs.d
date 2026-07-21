@@ -36,9 +36,7 @@ jobs:
     - name: Check Task Table behavior
       run: emacs -Q --batch -l tests/init-local-vulpea-tests.el -f ert-run-tests-batch-and-exit
     - name: Check real Task Table integration when available
-      run: |
-        emacs -Q --batch \
-          --eval '(setq user-emacs-directory default-directory package-user-dir (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version) user-emacs-directory))' \
-          --funcall package-initialize \
-          -l tests/init-local-vulpea-integration-tests.el \
-          -f ert-run-tests-batch-and-exit
+      run: tests/run-vulpea-integration.sh
+    - name: Benchmark Task Table (advisory)
+      continue-on-error: true
+      run: emacs -Q --batch -l tests/init-local-vulpea-benchmark.el
