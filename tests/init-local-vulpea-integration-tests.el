@@ -244,5 +244,118 @@
       (set-default 'org-todo-keywords old-workflow)
       (delete-directory temporary-directory t))))
 
+
+(ert-deftest init-local-vulpea-edit-todo-and-priority-writeback ()
+  (init-local-vulpea-integration-require)
+  (let* ((temporary-directory (make-temp-file "vulpea-task-edit" t))
+         (org-file (expand-file-name "tasks.org" temporary-directory))
+         (database (expand-file-name "vulpea.db" temporary-directory))
+         (org-id-locations-file
+          (expand-file-name "org-id-locations" temporary-directory))
+         (old-workflow (default-value 'org-todo-keywords))
+         collection-buffer)
+    (unwind-protect
+        (progn
+          (set-default 'org-todo-keywords
+                       '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")))
+          (with-temp-file org-file
+            (insert
+             "#+title: Tasks\n"
+             "* Parent\n"
+             "** TODO [#A] Editable\n"
+             ":PROPERTIES:\n:ID: editable-task\n:END:\n"
+             "** TODO [#B] Keep Open\n"
+             ":PROPERTIES:\n:ID: keep-open\n:END:\n"))
+          (vulpea-db-close)
+          (let ((vulpea-db-location database)
+                (vulpea-db-index-heading-level t)
+                (vulpea-db-sync-directories
+                 (list (file-name-as-directory temporary-directory)))
+                (init-local-vulpea-task-table-unavailable-reason nil))
+            (vulpea-db-update-file org-file)
+            (my/vulpea-task-table)
+            (setq collection-buffer (current-buffer))
+            (should (init-local-vulpea-integration-goto-entry "editable-task"))
+            (init-local-vulpea-task-table-edit "Priority" "None")
+            (should (init-local-vulpea-integration-goto-entry "editable-task"))
+            (let ((note (vulpea-db-get-by-id "editable-task")))
+              (should note)
+              (should-not (vulpea-note-priority note)))
+            (should
+             (string-match-p
+              "\\*\\* TODO Editable"
+              (with-temp-buffer
+                (insert-file-contents org-file)
+                (buffer-string))))
+            (should-not
+             (string-match-p
+              "\\[#A\\]"
+              (with-temp-buffer
+                (insert-file-contents org-file)
+                (buffer-string))))
+            (should (init-local-vulpea-integration-goto-entry "editable-task"))
+            (init-local-vulpea-task-table-edit "TODO" "NEXT")
+            (let ((note (vulpea-db-get-by-id "editable-task")))
+              (should (equal "NEXT" (vulpea-note-todo note)))
+              (should-not (vulpea-note-priority note)))
+            (should (member "editable-task"
+                            (init-local-vulpea-integration-entry-ids)))
+            (should (init-local-vulpea-integration-goto-entry "editable-task"))
+            (init-local-vulpea-task-table-edit "TODO" "DONE")
+            (should-not (init-local-vulpea-integration-entry "editable-task"))
+            (should (equal '("keep-open")
+                           (init-local-vulpea-integration-entry-ids)))
+            (should (equal "keep-open" (tabulated-list-get-id)))
+            (should
+             (string-match-p
+              "\\*\\* DONE Editable"
+              (with-temp-buffer
+                (insert-file-contents org-file)
+                (buffer-string))))
+            ;; Move keeps ID and stays editable.
+            (let ((target-file (expand-file-name "archive.org"
+                                                 temporary-directory)))
+              (with-temp-file org-file
+                (insert "#+title: Tasks\n* Parent\n"
+                        "** TODO [#B] Keep Open\n"
+                        ":PROPERTIES:\n:ID: keep-open\n:END:\n"))
+              (with-temp-file target-file
+                (insert
+                 "#+title: Archive\n"
+                 "* Destination\n"
+                 "** TODO Moved Task\n"
+                 ":PROPERTIES:\n:ID: moved-edit\n:END:\n"))
+              (vulpea-db-update-file org-file)
+              (vulpea-db-update-file target-file)
+              (vulpea-ui-collection-refresh)
+              (should (init-local-vulpea-integration-goto-entry "moved-edit"))
+              (init-local-vulpea-task-table-edit "Priority" "A")
+              (let ((note (vulpea-db-get-by-id "moved-edit")))
+                (should note)
+                (should (eq ?A (vulpea-note-priority note))))
+              (with-temp-file target-file
+                (insert "#+title: Archive\n* Destination\n"))
+              (vulpea-db-update-file target-file)
+              (let ((message
+                     (condition-case err
+                         (progn
+                           (init-local-vulpea-integration-goto-entry
+                            "moved-edit")
+                           (init-local-vulpea-task-table-edit "TODO" "NEXT")
+                           nil)
+                       (user-error (error-message-string err)))))
+                (should (string-match-p "disappeared" message))
+                (should-not
+                 (init-local-vulpea-integration-entry "moved-edit"))))
+            (vulpea-db-close)))
+      (when (buffer-live-p collection-buffer)
+        (kill-buffer collection-buffer))
+      (dolist (file (directory-files temporary-directory t "\\.org\\'"))
+        (when-let* ((buffer (find-buffer-visiting file)))
+          (kill-buffer buffer)))
+      (ignore-errors (vulpea-db-close))
+      (set-default 'org-todo-keywords old-workflow)
+      (delete-directory temporary-directory t))))
+
 (provide 'init-local-vulpea-integration-tests)
 ;;; init-local-vulpea-integration-tests.el ends here

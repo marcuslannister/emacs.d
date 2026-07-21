@@ -12,6 +12,7 @@ continuously, so changes land under "Unreleased".
 - Set `supertag-data-directory` before `(require 'org-supertag)` in `lisp/init-local-org.el` so `supertag-db-file` derives the synced `~/org/org-supertag/` path at load time; the late setq had let it freeze at the default and load a stale local DB on machines with a leftover `~/.emacs.d/org-supertag/supertag-db.el`.
 
 ### Added
+- Edit Task Table TODO state and Priority with `e`, writing through Org commands inside Vulpea's public note-sync helper and refreshing Open Tasks immediately.
 - Preserve Task Table filters, native sort, launch scope, and Task-ID selection across manual and worker refreshes, with nearest-row/header fallbacks and atomic failure recovery.
 - Navigate from Task Table rows by stable Org ID, refreshing and failing safely when a Task disappeared.
 - Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.

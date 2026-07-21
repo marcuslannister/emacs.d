@@ -671,5 +671,270 @@
    (eq #'vulpea-ui-collection-refresh
        (lookup-key init-local-vulpea-task-table-read-only-mode-map (kbd "g")))))
 
+
+(ert-deftest init-local-vulpea-edit-key-prompts-todo-or-priority ()
+  (should
+   (eq #'init-local-vulpea-task-table-edit
+       (lookup-key init-local-vulpea-task-table-read-only-mode-map (kbd "e"))))
+  (should
+   (eq #'init-local-vulpea-task-table-read-only
+       (lookup-key init-local-vulpea-task-table-read-only-mode-map
+                   (vector 'remap 'vulpea-ui-collection-quick-edit)))))
+
+(ert-deftest init-local-vulpea-edit-todo-uses-public-lookup-and-note-sync ()
+  (init-local-vulpea-test-with-workflow
+    (let* ((fresh (init-local-vulpea-test-note "edit-todo" "TODO" ?A "Alpha"))
+           (lookups 0)
+           (mutated nil)
+           (refreshed nil)
+           (todo-value nil)
+           (sync-note nil))
+      (init-local-vulpea-test-with-refresh-table
+          (list (init-local-vulpea-test-table-entry "edit-todo" "Alpha")
+                (init-local-vulpea-test-table-entry "keep" "Keep"))
+          "edit-todo"
+        (setq-local init-local-vulpea-task-table-state
+                    (make-init-local-vulpea-task-table-state)
+                    init-local-vulpea-task-table-read-only-mode t)
+        (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                   (lambda (id)
+                     (cl-incf lookups)
+                     (should (equal "edit-todo" id))
+                     fresh))
+                  ((symbol-function 'init-local-vulpea-task-table--mutate-note)
+                   (lambda (note field value)
+                     (setq mutated t
+                           sync-note note
+                           todo-value value)
+                     (should (eq note fresh))
+                     (should (eq field 'todo))
+                     (setf (vulpea-note-todo note) value)))
+                  ((symbol-function 'vulpea-ui-collection-refresh)
+                   (lambda ()
+                     (setq refreshed t)
+                     (setq tabulated-list-entries
+                           (list (init-local-vulpea-test-table-entry
+                                  "edit-todo" "Alpha")
+                                 (init-local-vulpea-test-table-entry
+                                  "keep" "Keep")))
+                     (tabulated-list-print t)))
+                  ((symbol-function 'completing-read)
+                   (lambda (prompt collection &rest _)
+                     (cond
+                      ((string-match-p "field" prompt) "TODO")
+                      ((string-match-p "TODO" prompt)
+                       (should (member "NEXT" collection))
+                       (should (member "DONE" collection))
+                       "NEXT")
+                      (t (error "unexpected prompt %s" prompt))))))
+          (call-interactively #'init-local-vulpea-task-table-edit)
+          (should (>= lookups 1))
+          (should mutated)
+          (should (eq sync-note fresh))
+          (should (equal "NEXT" todo-value))
+          (should refreshed)
+          (should (equal "NEXT" (vulpea-note-todo fresh)))
+          (should (equal "edit-todo" (tabulated-list-get-id))))))))
+
+(ert-deftest init-local-vulpea-edit-priority-can-clear-missing-cookie ()
+  (init-local-vulpea-test-with-workflow
+    (let* ((fresh (init-local-vulpea-test-note "edit-pri" "TODO" ?A "Alpha"))
+           (field-arg nil)
+           (value-arg nil)
+           (refreshed nil))
+      (init-local-vulpea-test-with-refresh-table
+          (list (init-local-vulpea-test-table-entry "edit-pri" "Alpha"))
+          "edit-pri"
+        (setq-local init-local-vulpea-task-table-state
+                    (make-init-local-vulpea-task-table-state)
+                    init-local-vulpea-task-table-read-only-mode t)
+        (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                   (lambda (_) fresh))
+                  ((symbol-function 'init-local-vulpea-task-table--mutate-note)
+                   (lambda (note field value)
+                     (should (eq note fresh))
+                     (setq field-arg field
+                           value-arg value)
+                     (when (and (eq field 'priority) (null value))
+                       (setf (vulpea-note-priority note) nil))))
+                  ((symbol-function 'vulpea-ui-collection-refresh)
+                   (lambda ()
+                     (setq refreshed t)
+                     (setq tabulated-list-entries
+                           (list (init-local-vulpea-test-table-entry
+                                  "edit-pri" "Alpha")))
+                     (tabulated-list-print t)))
+                  ((symbol-function 'completing-read)
+                   (lambda (prompt collection &rest _)
+                     (cond
+                      ((string-match-p "field" prompt) "Priority")
+                      ((string-match-p "Priority" prompt)
+                       (should (equal '("A" "B" "C" "None") collection))
+                       "None")
+                      (t (error "unexpected prompt %s" prompt))))))
+          (call-interactively #'init-local-vulpea-task-table-edit)
+          (should (eq 'priority field-arg))
+          (should-not value-arg)
+          (should refreshed)
+          (should-not (vulpea-note-priority fresh)))))))
+
+(ert-deftest init-local-vulpea-edit-done-state-removes-open-task-row ()
+  (init-local-vulpea-test-with-workflow
+    (let* ((fresh (init-local-vulpea-test-note "done-me" "TODO" ?A "Alpha"))
+           (keep (init-local-vulpea-test-note "keep" "TODO" ?B "Keep")))
+      (init-local-vulpea-test-with-refresh-table
+          (list (init-local-vulpea-test-table-entry "done-me" "Alpha")
+                (init-local-vulpea-test-table-entry "keep" "Keep"))
+          "done-me"
+        (setq-local init-local-vulpea-task-table-state
+                    (make-init-local-vulpea-task-table-state)
+                    init-local-vulpea-task-table-read-only-mode t)
+        (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                   (lambda (id)
+                     (pcase id
+                       ("done-me" fresh)
+                       ("keep" keep))))
+                  ((symbol-function 'init-local-vulpea-task-table--mutate-note)
+                   (lambda (note field value)
+                     (should (eq field 'todo))
+                     (setf (vulpea-note-todo note) value)))
+                  ((symbol-function 'vulpea-db-query)
+                   (lambda () (list fresh keep)))
+                  ((symbol-function 'vulpea-db-worker-busy-p)
+                   (lambda () nil))
+                  ((symbol-function 'vulpea-ui-collection-refresh)
+                   (lambda ()
+                     (setq tabulated-list-entries
+                           (mapcar
+                            (lambda (note)
+                              (init-local-vulpea-test-table-entry
+                               (vulpea-note-id note)
+                               (vulpea-note-title note)))
+                            (init-local-vulpea-task-table-source)))
+                     (tabulated-list-print t)))
+                  ((symbol-function 'completing-read)
+                   (lambda (prompt collection &rest _)
+                     (cond
+                      ((string-match-p "field" prompt) "TODO")
+                      ((string-match-p "TODO" prompt) "DONE")
+                      (t (error "unexpected prompt %s" prompt))))))
+          (init-local-vulpea-task-table--install-refresh-advice)
+          (unwind-protect
+              (progn
+                (call-interactively #'init-local-vulpea-task-table-edit)
+                (should (equal '("keep")
+                               (mapcar #'car tabulated-list-entries)))
+                (should (equal "keep" (tabulated-list-get-id))))
+            (advice-remove 'vulpea-ui-collection-refresh
+                           #'init-local-vulpea-task-table--refresh-advice)))))))
+
+(ert-deftest init-local-vulpea-edit-disappeared-task-refreshes-without-write ()
+  (let (mutated refreshed reported)
+    (init-local-vulpea-test-with-refresh-table
+        (list (init-local-vulpea-test-table-entry "gone" "Gone")
+              (init-local-vulpea-test-table-entry "keep" "Keep"))
+        "gone"
+      (setq-local init-local-vulpea-task-table-state
+                  (make-init-local-vulpea-task-table-state)
+                  init-local-vulpea-task-table-read-only-mode t)
+      (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                 (lambda (_) nil))
+                ((symbol-function 'init-local-vulpea-task-table--mutate-note)
+                 (lambda (&rest _)
+                   (setq mutated t)
+                   (error "should not mutate")))
+                ((symbol-function 'vulpea-ui-collection-refresh)
+                 (lambda ()
+                   (setq refreshed t)
+                   (setq tabulated-list-entries
+                         (list (init-local-vulpea-test-table-entry
+                                "keep" "Keep")))
+                   (tabulated-list-print t))))
+        (setq reported
+              (condition-case err
+                  (progn (call-interactively #'init-local-vulpea-task-table-edit) nil)
+                (user-error (error-message-string err))))
+        (should-not mutated)
+        (should refreshed)
+        (should (string-match-p "disappeared" reported))
+        (should (equal '("keep") (mapcar #'car tabulated-list-entries)))))))
+
+(ert-deftest init-local-vulpea-edit-write-failure-preserves-rows ()
+  (init-local-vulpea-test-with-workflow
+    (let* ((fresh (init-local-vulpea-test-note "fail" "TODO" ?A "Alpha"))
+           (state
+            (make-init-local-vulpea-task-table-state
+             :todo "TODO"
+             :origin-path "/tmp/tasks.org"
+             :launch-source-only-p t))
+           reported)
+      (init-local-vulpea-test-with-refresh-table
+          (list (init-local-vulpea-test-table-entry "fail" "Alpha")
+                (init-local-vulpea-test-table-entry "keep" "Keep"))
+          "fail"
+        (setq-local init-local-vulpea-task-table-state state
+                    init-local-vulpea-task-table-read-only-mode t
+                    tabulated-list-sort-key '("Task" . nil))
+        (cl-letf (((symbol-function 'vulpea-db-get-by-id)
+                   (lambda (_) fresh))
+                  ((symbol-function 'init-local-vulpea-task-table--mutate-note)
+                   (lambda (&rest _)
+                     (error "disk full")))
+                  ((symbol-function 'vulpea-ui-collection-refresh)
+                   (lambda ()
+                     (error "should not refresh after write failure")))
+                  ((symbol-function 'completing-read)
+                   (lambda (prompt collection &rest _)
+                     (cond
+                      ((string-match-p "field" prompt) "TODO")
+                      ((string-match-p "TODO" prompt) "NEXT")
+                      (t (error "unexpected prompt %s" prompt)))))
+                  ((symbol-function 'message)
+                   (lambda (format-string &rest args)
+                     (setq reported (apply #'format format-string args)))))
+          (let ((signaled
+                 (condition-case err
+                     (progn (call-interactively #'init-local-vulpea-task-table-edit) nil)
+                   (error err))))
+            (should signaled)
+            (should (equal '("fail" "keep")
+                           (mapcar #'car tabulated-list-entries)))
+            (should (equal "fail" (tabulated-list-get-id)))
+            (should (equal '("Task" . nil) tabulated-list-sort-key))
+            (should (eq state init-local-vulpea-task-table-state))
+            (should (equal "TODO"
+                           (init-local-vulpea-task-table-state-todo state)))
+            (should
+             (init-local-vulpea-task-table-state-launch-source-only-p state))
+            (should (string-match-p
+                     "disk full"
+                     (error-message-string signaled)))))))))
+
+(ert-deftest init-local-vulpea-mutate-note-uses-org-commands-and-sync ()
+  "Prove the write seam uses Org commands inside the public note-sync runner."
+  (let* ((note (init-local-vulpea-test-note "write" "TODO" ?A "Alpha"))
+         (todo-arg nil)
+         (priority-arg nil)
+         (sync-calls 0))
+    (cl-letf (((symbol-function 'org-todo)
+               (lambda (state) (setq todo-arg state)))
+              ((symbol-function 'org-priority)
+               (lambda (&optional action) (setq priority-arg action)))
+              ((symbol-function 'init-local-vulpea-task-table--run-note-sync)
+               (lambda (target thunk)
+                 (should (eq target note))
+                 (cl-incf sync-calls)
+                 (funcall thunk))))
+      (init-local-vulpea-task-table--mutate-note note 'todo "NEXT")
+      (init-local-vulpea-task-table--mutate-note note 'priority nil)
+      (init-local-vulpea-task-table--mutate-note note 'priority ?B)
+      (should (equal "NEXT" todo-arg))
+      (should (eq ?B priority-arg))
+      (should (= sync-calls 3))
+      ;; Final priority call overwrote remove with B; re-check remove path.
+      (init-local-vulpea-task-table--mutate-note note 'priority nil)
+      (should (eq 'remove priority-arg))
+      (should (= sync-calls 4)))))
+
 (provide 'init-local-vulpea-tests)
 ;;; init-local-vulpea-tests.el ends here
