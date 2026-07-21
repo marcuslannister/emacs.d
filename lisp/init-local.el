@@ -138,6 +138,7 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 ;; (require 'init-local-majutsu nil t)
 ;; Load org config
 (require 'init-local-org)
+(require 'init-local-vulpea nil t)
 
 (defun my/setup-vim-tab-bar ()
   (vim-tab-bar-mode 1)
