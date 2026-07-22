@@ -162,6 +162,9 @@
     "C-c t n" #'tab-new
     "C-c t c" #'tab-close
 
+    ;; Vulpea.
+    "C-c v t" #'my/vulpea-task-table
+
     ;; Window.
     "C-c w w" #'other-window
     "C-c w o" #'sanityinc/delete-other-windows
@@ -347,6 +350,8 @@
     "C-c t"   "tab"
     "C-c t n" "New tab"
     "C-c t c" "Close tab"
+    "C-c v"   "vulpea"
+    "C-c v t" "Task Table"
     "C-c w"   "window"
     "C-c w w" "Other window"
     "C-c w o" "Only current window"

@@ -2,7 +2,8 @@
 
 `M-x my/vulpea-task-table` opens all indexed Open Tasks through Vulpea UI's
 Collection View. It requires Emacs 29.1 or newer, Vulpea, Vulpea UI, and a
-readable Vulpea database.
+readable Vulpea database. In Hel Normal or Emacs state, `SPC v t` opens the
+same command.
 
 The table uses one derived database per machine at
 `var/vulpea/vulpea.db`. The repository ignores `var/`, including SQLite WAL

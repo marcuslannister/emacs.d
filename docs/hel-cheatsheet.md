@@ -27,6 +27,7 @@ state and keeps `hjkl` movement after switching to Emacs state. Hel requires Ema
 | `SPC j` | Journal commands |
 | `SPC o` | Org commands |
 | `SPC s` | Search and org-supertag commands |
+| `SPC v` | Vulpea commands (`t` opens the Task Table) |
 | `SPC w` | Window commands |
 
 ## Native modifier keys
