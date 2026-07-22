@@ -34,11 +34,14 @@ ${EMACS:=emacs} -nw --batch \
                                                 (quote hel-leader))
                                             (eq (key-binding (kbd "C-c b n"))
                                                 (quote next-buffer))
+                                            (eq (key-binding (kbd "C-c v t"))
+                                                (quote my/vulpea-task-table))
                                             (equal hel-leader-ctrl-meta-prefix "G"))
-                                 (error "Hel leader unavailable: state=%S SPC=%S target=%S C-M=%S"
+                                 (error "Hel leader unavailable: state=%S SPC=%S buffer=%S vulpea=%S C-M=%S"
                                         hel-state
                                         (key-binding (kbd "SPC"))
                                         (key-binding (kbd "C-c b n"))
+                                        (key-binding (kbd "C-c v t"))
                                         hel-leader-ctrl-meta-prefix))
                                (let ((hel-leader--keys nil)
                                      (hel-leader--pending-modifier nil)
@@ -49,6 +52,16 @@ ${EMACS:=emacs} -nw --batch \
                                               (eq hel-leader--command
                                                   (quote next-buffer)))
                                    (error "SPC b n translation failed: %S"
+                                          hel-leader--command)))
+                               (let ((hel-leader--keys nil)
+                                     (hel-leader--pending-modifier nil)
+                                     (hel-leader--command nil))
+                                 (hel-leader--handle-input-event ?v)
+                                 (unless (and (eq (hel-leader--handle-input-event ?t)
+                                                  :quit)
+                                              (eq hel-leader--command
+                                                  (quote my/vulpea-task-table)))
+                                   (error "SPC v t translation failed: %S"
                                           hel-leader--command))))
                              (let ((my/hel--installing nil)
                                    (inhibit-message t)
