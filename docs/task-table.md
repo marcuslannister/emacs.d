@@ -81,11 +81,11 @@ Recorded 2026-07-21 on a Mac mini (M1, arm64), macOS 26.5.1, Emacs 31.0.50:
 | Filter | 47.470 ms | < 100 ms |
 | Edit-triggered refresh | 1,277.412 ms | < 100 ms (not met) |
 
-Wall-clock results are workstation evidence, not CI gates. Query-count and
-per-row-read assertions are deterministic CI gates. The public Vulpea UI
-Collection View renderer does not currently meet the open, sort, or edit
-targets at 5,000 Tasks; meeting them requires either revised targets or a
-different rendering architecture.
+These limits are advisory engineering targets, not release gates. Query-count
+and per-row-read assertions remain deterministic CI gates. The public Vulpea
+UI Collection View currently misses the open, sort, and edit targets at 5,000
+Tasks; separate renderer work may improve them without blocking Task Table
+synchronization. See [ADR 0001](adr/0001-task-table-performance-targets.md).
 
 ## Manual Verification
 
