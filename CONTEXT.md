@@ -9,7 +9,9 @@ An Org heading representing actionable work, with a stable ID and a TODO state.
 _Avoid_: Item, record
 
 **Task Table**:
-An interactive collection view of Tasks showing their TODO state, Priority, and heading text.
+An interactive collection view of Tasks showing their TODO state, Priority,
+and heading text. Every Task in the collection participates in sorting and
+filtering even when only a viewport is visible.
 _Avoid_: Task list, spreadsheet
 
 **Priority**:
@@ -17,5 +19,6 @@ A Task's urgency rank: A, B, or C.
 _Avoid_: Importance, severity
 
 **Open Task**:
-A Task whose TODO state is not a done state. Done-state membership follows the configured Org workflow.
+A Task whose TODO state is not a done state. Done-state membership follows the
+configured Org workflow.
 _Avoid_: Active item, pending record
