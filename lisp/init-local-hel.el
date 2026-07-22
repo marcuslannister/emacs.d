@@ -163,7 +163,16 @@
     "C-c t c" #'tab-close
 
     ;; Vulpea.
+    "C-c v f" #'vulpea-find
+    "C-c v i" #'vulpea-insert
     "C-c v t" #'my/vulpea-task-table
+    "C-c v c" #'vulpea-ui-collection
+    "C-c v n" #'vulpea-ui-sidebar-toggle
+    "C-c v a" #'vulpea-buffer-tags-add
+    "C-c v A" #'vulpea-buffer-tags-remove
+    "C-c v m" #'vulpea-ui-schema-dashboard
+    "C-c v u" #'vulpea-db-sync-full-scan
+    "C-c v b" #'vulpea-find-backlink
 
     ;; Window.
     "C-c w w" #'other-window
@@ -351,7 +360,16 @@
     "C-c t n" "New tab"
     "C-c t c" "Close tab"
     "C-c v"   "vulpea"
-    "C-c v t" "Task Table"
+    "C-c v f" "Find note"
+    "C-c v i" "Insert link"
+    "C-c v t" "Task table"
+    "C-c v c" "Collection"
+    "C-c v n" "Sidebar"
+    "C-c v a" "Add tag"
+    "C-c v A" "Remove tag"
+    "C-c v m" "Schema dashboard"
+    "C-c v u" "Full rescan"
+    "C-c v b" "Backlink"
     "C-c w"   "window"
     "C-c w w" "Other window"
     "C-c w o" "Only current window"
