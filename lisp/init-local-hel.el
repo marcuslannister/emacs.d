@@ -140,23 +140,14 @@
     "C-c q q" #'save-buffers-kill-terminal
     "C-c q r" #'restart-emacs
 
-    ;; Search / supertag.
+    ;; Search.
     "C-c s g r" #'rgrep
     "C-c s c g" #'consult-ripgrep
     "C-c s c f" #'consult-fd
     "C-c s c h" #'consult-org-heading
     "C-c s g h n" #'rg-search-everything
     "C-c s c d" #'consult-dir
-    "C-c s s" #'supertag-search
-    "C-c s t" #'supertag-add-tag
-    "C-c s T" #'supertag-remove-tag-from-node
-    "C-c s v" #'supertag-view-table
-    "C-c s n" #'supertag-view-node
-    "C-c s k" #'supertag-view-kanban
-    "C-c s m" #'supertag-view-schema
-    "C-c s i" #'supertag-capture
-    "C-c s r" #'supertag-add-reference
-    "C-c s u" #'supertag-sync-full-rescan
+    "C-c s b" #'scratch-buffer
 
     ;; Tab.
     "C-c t n" #'tab-new
@@ -191,6 +182,7 @@
   (when (and (require 'hel nil t)
              (require 'hel-leader nil t))
     (hel-set-initial-state 'dired-mode 'normal)
+    (hel-set-initial-state 'magit-mode 'normal)
     (my/hel-setup-leader)
     (hel-mode 1)
     t))
