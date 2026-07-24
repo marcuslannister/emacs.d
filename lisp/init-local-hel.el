@@ -183,6 +183,11 @@
              (require 'hel-leader nil t))
     (hel-set-initial-state 'dired-mode 'normal)
     (hel-set-initial-state 'magit-mode 'normal)
+    (hel-keymap-global-set :state 'normal
+      "d" #'hel-delete
+      "D" #'hel-cut)
+    (hel-keymap-global-set :state '(normal insert emacs)
+      "C-v" #'yank)
     (my/hel-setup-leader)
     (hel-mode 1)
     t))

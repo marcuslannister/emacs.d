@@ -6,9 +6,9 @@ Hel normal-state editing follows the upstream
 key sequences into native Emacs bindings.
 
 Personal bindings live in `lisp/init-local-hel.el`. Press `SPC` in Hel Normal or
-Emacs state; which-key shows available continuations. Dired starts in Hel Normal
-state and keeps `hjkl` movement after switching to Emacs state. Hel requires Emacs
-29.1 or newer; older Emacs versions start without it.
+Emacs state; which-key shows available continuations. Dired and Magit start in Hel
+Normal state. Dired keeps `hjkl` movement after switching to Emacs state. Hel
+requires Emacs 29.1 or newer; older Emacs versions start without it.
 
 ## Frequent leader keys
 
@@ -26,9 +26,32 @@ state and keeps `hjkl` movement after switching to Emacs state. Hel requires Ema
 | `SPC g` | Git, translation, and Ghostel commands |
 | `SPC j` | Journal commands |
 | `SPC o` | Org commands |
-| `SPC s` | Search and org-supertag commands |
+| `SPC s` | Search commands |
+| `SPC s b` | Open the scratch buffer |
 | `SPC v` | Vulpea commands (`t` opens the Task Table) |
 | `SPC w` | Window commands |
+
+## Normal-state editing
+
+| Key | Action |
+| --- | --- |
+| `d` | Delete the selection without changing the kill ring; without a selection, delete forward |
+| `D` | Cut the selection into the kill ring; without a selection, delete backward without changing the kill ring |
+| `v` | Toggle selection extension |
+| `x` | Expand or contract the selection linewise downward |
+| `X` | Expand or contract the selection linewise upward |
+| `y` | Copy the selection into the kill ring |
+
+Use `v` plus motions for a characterwise selection, or `x` for a linewise
+selection. Press `D` to cut the selection or `y` to copy it.
+
+## Scrolling and paste
+
+| Key | Action |
+| --- | --- |
+| `C-v` | Paste from the kill ring |
+| `C-d` / `C-u` | Scroll down / up by half a page |
+| `C-f` / `C-b` | Scroll down / up by a full page |
 
 ## Native modifier keys
 
