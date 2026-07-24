@@ -57,6 +57,8 @@ The same clock commands remain available under `SPC a`.
 | `x` | Expand or contract the selection linewise downward |
 | `X` | Expand or contract the selection linewise upward |
 | `y` | Copy the selection into the kill ring |
+| `p` | Paste before the selection; linewise content goes above the current line |
+| `P` | Paste after the selection; linewise content goes below the current line |
 
 Use `v` plus motions for a characterwise selection, or `x` for a linewise
 selection. Press `D` to cut the selection or `y` to copy it.

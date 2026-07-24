@@ -201,7 +201,9 @@
         "l" #'hel-forward-char))
     (hel-keymap-global-set :state 'normal
       "d" #'hel-delete
-      "D" #'hel-cut)
+      "D" #'hel-cut
+      "p" #'hel-paste-before
+      "P" #'hel-paste-after)
     (hel-keymap-global-set :state '(normal insert emacs)
       "C-v" #'yank)
     (my/hel-setup-leader)
