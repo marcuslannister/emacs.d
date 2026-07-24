@@ -182,7 +182,13 @@
   (when (and (require 'hel nil t)
              (require 'hel-leader nil t))
     (hel-set-initial-state 'dired-mode 'normal)
-    (hel-set-initial-state 'magit-mode 'normal)
+    (hel-set-initial-state 'magit-mode 'emacs)
+    (with-eval-after-load 'magit
+      (hel-keymap-set magit-mode-map :state 'emacs
+        "h" #'hel-backward-char
+        "j" #'hel-next-line
+        "k" #'hel-previous-line
+        "l" #'hel-forward-char))
     (hel-keymap-global-set :state 'normal
       "d" #'hel-delete
       "D" #'hel-cut)

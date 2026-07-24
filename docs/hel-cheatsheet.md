@@ -6,9 +6,10 @@ Hel normal-state editing follows the upstream
 key sequences into native Emacs bindings.
 
 Personal bindings live in `lisp/init-local-hel.el`. Press `SPC` in Hel Normal or
-Emacs state; which-key shows available continuations. Dired and Magit start in Hel
-Normal state. Dired keeps `hjkl` movement after switching to Emacs state. Hel
-requires Emacs 29.1 or newer; older Emacs versions start without it.
+Emacs state; which-key shows available continuations. Dired starts in Hel Normal
+state and keeps `hjkl` movement after switching to Emacs state. Magit starts in
+Hel Emacs state, preserving Magit commands except for `hjkl` movement. Hel requires
+Emacs 29.1 or newer; older Emacs versions start without it.
 
 ## Frequent leader keys
 
