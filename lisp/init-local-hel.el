@@ -71,6 +71,16 @@
     "C-c a l t" #'bh/clock-in-last-task
     "C-c a s" #'kk/org-clock-in-switch-task
 
+    ;; Preserve physical SPC c clock paths through Hel's Control translation.
+    "C-c C-t" #'org-clock-update-time-maybe
+    "C-c C-i" #'org-clock-in
+    "C-c C-o" #'org-clock-out
+    "C-c C-p i" #'bh/punch-in
+    "C-c C-p o" #'bh/punch-out
+    "C-c C-g" #'org-clock-goto
+    "C-c C-l t" #'bh/clock-in-last-task
+    "C-c C-s" #'kk/org-clock-in-switch-task
+
     ;; Eval / eshell / ediff.
     "C-c e e" #'eval-last-sexp
     "C-c e s" #'eshell

@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Restore the legacy `SPC c` clock bindings through hel-leader's native Control translation.
 - Keep Magit buffers in Hel Emacs state with mode-local `hjkl` movement, preserving all other Magit commands.
 - Load the MELPA `ghostel` (dakra) on macOS/Linux instead of the Windows-only kiennq fork. The Windows branch's `use-package :load-path` added the fork's checkout to `load-path` at macro-expansion time — and Emacs expands both arms of the `IS-WINDOWS` `if` when the file loads — so the fork shadowed the MELPA build on macOS/Linux and its native-module download 404'd against dakra's `.dylib`-only release assets. The Windows branch now adds the fork to `load-path` at runtime under `IS-WINDOWS`, which the `if` actually gates.
 - Keep Dired `hjkl` as cursor and row movement in both Hel Normal and Emacs states; Dired still starts in Normal so `SPC` remains available.

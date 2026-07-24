@@ -32,6 +32,21 @@ Emacs 29.1 or newer; older Emacs versions start without it.
 | `SPC v` | Vulpea commands (`t` opens the Task Table) |
 | `SPC w` | Window commands |
 
+## Clock keys
+
+| Key | Command |
+| --- | --- |
+| `SPC c t` | Update clock time |
+| `SPC c i` | Clock in |
+| `SPC c o` | Clock out |
+| `SPC c p i` | Punch in using the Organization task in `todo.org` |
+| `SPC c p o` | Punch out |
+| `SPC c g` | Go to the active clock |
+| `SPC c l t` | Clock into the last interrupted task |
+| `SPC c s` | Switch task |
+
+The same clock commands remain available under `SPC a`.
+
 ## Normal-state editing
 
 | Key | Action |
