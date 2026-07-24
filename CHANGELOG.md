@@ -13,6 +13,7 @@ continuously, so changes land under "Unreleased".
 - Set `supertag-data-directory` before `(require 'org-supertag)` in `lisp/init-local-org.el` so `supertag-db-file` derives the synced `~/org/org-supertag/` path at load time; the late setq had let it freeze at the default and load a stale local DB on machines with a leftover `~/.emacs.d/org-supertag/supertag-db.el`.
 
 ### Added
+- Paste from the kill ring with `C-v` in Hel Normal, Insert, and Emacs states.
 - Open the scratch buffer with `SPC s b`.
 - Add the Vulpea leader group under `SPC v`, with `SPC v t` opening the Task Table.
 - Keep the complete Task Table usable during asynchronous synchronization, warn actionably on worker failures, and add an advisory end-to-end 5,000-Task benchmark with deterministic query-count checks.
@@ -22,6 +23,7 @@ continuously, so changes land under "Unreleased".
 - Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.
 
 ### Changed
+- Swap Hel Normal-state `d` and `D`, making delete-without-kill the lowercase default.
 - Remove the org-supertag leader group under `SPC s`.
 - Add pinned `hel-leader` native key translation; keep Git on `SPC g`, move C-M- to `SPC G`, and move the former `SPC c` group to `SPC a`.
 - Replace Meow with Hel, installed at a pinned Git commit through a shared GUI/TUI async-installer bootstrap, while preserving the personal `SPC` leader map in Hel Normal and Emacs states.
