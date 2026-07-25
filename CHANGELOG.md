@@ -14,6 +14,7 @@ continuously, so changes land under "Unreleased".
 - Set `supertag-data-directory` before `(require 'org-supertag)` in `lisp/init-local-org.el` so `supertag-db-file` derives the synced `~/org/org-supertag/` path at load time; the late setq had let it freeze at the default and load a stale local DB on machines with a leftover `~/.emacs.d/org-supertag/supertag-db.el`.
 
 ### Added
+- Create or retrieve the current Org heading ID with `C-c o i c` or `SPC o i c`.
 - Paste from the kill ring with `C-v` in Hel Normal, Insert, and Emacs states.
 - Open the scratch buffer with `SPC s b`.
 - Add the Vulpea leader group under `SPC v`, with `SPC v t` opening the Task Table.
