@@ -140,6 +140,7 @@
     "C-c o p" #'org-priority
     "C-c o g" #'org-goto
     "C-c o o" #'org-open-at-point
+    "C-c o i c" #'org-id-get-create
     "C-c o i l" #'org-insert-link
     "C-c o i h" #'org-insert-heading
     "C-c o i s" #'org-insert-subheading
