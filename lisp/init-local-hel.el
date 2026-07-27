@@ -17,6 +17,14 @@
   (interactive)
   (save-some-buffers t))
 
+(defun my/copy-buffer-file-name ()
+  "Copy the current buffer's full file name to the kill ring."
+  (interactive)
+  (unless buffer-file-name
+    (user-error "Current buffer does not visit a file"))
+  (kill-new buffer-file-name)
+  (message "Copied: %s" buffer-file-name))
+
 (defun my/hel-setup-leader ()
   "Configure native leader bindings in Hel Normal and Emacs states."
   ;; Keep lowercase g available for the Git group; use SPC G for C-M-.
@@ -57,6 +65,7 @@
     "C-c b m" #'view-echo-area-messages
     "C-c b e" #'eval-buffer
     "C-c b r" #'revert-buffer
+    "C-c b y" #'my/copy-buffer-file-name
 
     ;; Claude / comment / clock.
     "C-c a c" #'claude-code-ide
