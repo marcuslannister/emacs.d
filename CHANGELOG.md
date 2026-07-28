@@ -26,6 +26,7 @@ continuously, so changes land under "Unreleased".
 - Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.
 
 ### Changed
+- Disable org-supertag startup, synchronization, capture integration, and installation.
 - Swap Hel Normal-state `p` and `P`, making lowercase paste linewise content above the current line.
 - Swap Hel Normal-state `d` and `D`, making delete-without-kill the lowercase default.
 - Remove the org-supertag leader group under `SPC s`.
