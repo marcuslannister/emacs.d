@@ -26,12 +26,6 @@
                            :subdir "lisp"
                            :main "ghostel.el"))
 
-;; org-supertag: multi-file package (tracks the `main' branch).  async-installer
-;; only clones + loads `org-supertag.el'; its ELPA deps (ht, gptel, websocket,
-;; simple-httpd) must be installed separately, and a module must `require' it.
-(async-installer-git-add "https://github.com/yibie/org-supertag.git"
-                         :main "org-supertag.el")
-
 ;; Hel: Helix-style modal editing, pinned to the reviewed commit below.
 ;; Dependencies stay managed by package.el.
 (async-installer-git-add "https://github.com/anuvyklack/hel.git"

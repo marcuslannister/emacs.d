@@ -339,80 +339,11 @@
 ;;                [2021-12-24 Fri 14:00]
 ;; Citation:      [cite:@Knuth:1984]
 
-
-;; Sync data through Syncthing, Dropbox, iCloud, etc.
-;; MUST be set BEFORE `(require 'org-supertag)' below: `supertag-db-file'
-;; derives its default from `supertag-data-directory' once, at load time.
-;; Setting it after the require leaves `supertag-db-file' frozen at the
-;; built-in default (~/.emacs.d/org-supertag/...), which then loads the wrong
-;; (local, stale) database instead of the synced one.
-(setq supertag-data-directory "~/org/org-supertag/")
-
-;; org-supertag is a multi-file package cloned under external-packages/ by
-;; async-installer (see package-list.el).  async-installer only adds it to
-;; `load-path' during an interactive install/update, not on every startup, so
-;; put its directory on `load-path' here before requiring it.  Guarded so a
-;; fresh checkout without the package installed still starts cleanly.
-(let ((dir (expand-file-name "external-packages/org-supertag" user-emacs-directory)))
-  (when (file-directory-p dir)
-    (add-to-list 'load-path dir)
-    (when (require 'org-supertag nil t)
-      (setq org-supertag-sync-directories '("~/org/")))))
-
-;; 每 60 秒自动同步
-(setq org-supertag-sync-directories '("~/org/"))
-;; Syncthing 的历史版本目录不参与索引，否则旧文件里的重复 :ID:
-;; 会把数据库里的节点路径改写到 .stversions 下的过期副本
-(setq supertag-sync-exclude-directories '("~/org/.stversions/"))
-(setq supertag-auto-sync-interval 60)
-
-;; 每 10 次 tick 才做一次全量校验（节省 CPU）
-(setq supertag-sync-maintenance-every-n-ticks 10)
-
-;; 快照保护：如果目录不可用（如网络盘断开），
-;; 不会误判为"文件被删除"而破坏数据库
-(setq supertag-sync-snapshot-guard t)
-
-;; 行内 #tag 不用 SVG 药丸徽章，改为「纯文本 + 加粗 + 柔和灰」显示，
-;; 让标签像元数据一样低调，不抢标题（如 TODO 的红色）的视觉。
-;; 不继承 org-modern-tag：org-modern 干净的圆角 box 效果来自它自己的
-;; prettify 流程（padding + box），supertag 的 font-lock 不会跑那一套，
-;; 只继承 face 只会得到 secondary-selection 的一块高亮底色，很难看。
-;; svg-tag-enable 与 supertag-inline-face 都在 require 之后才存在，且 defface
-;; 已捕获旧属性，所以直接改 face 更可靠。
-(with-eval-after-load 'org-supertag
-  (setq supertag-svg-tag-enable nil)
-  ;; 标签文字颜色跟 [#A] 优先级一致：继承 org-priority（会随主题变化），
-  ;; 只额外加粗、去掉底色/边框；:height 留空，靠下面 prepend 从标题透下来。
-  (set-face-attribute 'supertag-inline-face nil
-                      :inherit 'org-priority
-                      :background 'unspecified
-                      :box nil
-                      :weight 'bold
-                      :foreground 'unspecified)
-  ;; 包里给 #tag 应用 face 时 font-lock override = t，会「替换」掉标题上
-  ;; #tag 处的 heading face，从而丢掉 org-level-N 的 :height 缩放
-  ;; （1.2/1.3），使标签比 TODO 关键字小一号。改用 prepend：我们的灰+粗
-  ;; 仍然覆盖在最上层，但 heading 的高度会透下来，于是与 TODO 同高，
-  ;; 且对任意标题层级都成立。SVG 已关，实际用的就是这份 keywords。
-  (setq supertag-view-helper--font-lock-keywords
-        `((,(concat "#[" supertag-view-helper--valid-tag-chars "]+")
-           (0 (if (supertag-view-helper--valid-inline-tag-match-p)
-                  'supertag-inline-face)
-              prepend)))))
-
-(with-eval-after-load 'org-supertag
-  (supertag-enable-org-capture-integration))
-
 (add-to-list
  'org-capture-templates
  '("i" "Inbox task" entry
    (file "~/org/inbox.org")
-   "* %^{Title} #task\n"
-   :supertag t
-   :supertag-template
-   ((:tag "task" :field "status"   :value "TODO")
-    (:tag "task" :field "priority" :value "C"))))
+   "* TODO [#C] %^{Title} :task:\n"))
 
 (provide 'init-local-org)
 ;;; init-local-org.el ends here
