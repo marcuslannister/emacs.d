@@ -14,7 +14,7 @@
 (anvil-enable)
 (anvil-server-start)
 
-(setq anvil-modules '(worker eval org file host git proc fs emacs text clipboard data net))
+(setq anvil-modules '(worker eval file host git proc fs emacs text clipboard data net))
 
 ;; Enable optional modules
 (setq anvil-optional-modules '(xlsx pdf http cron browser))
