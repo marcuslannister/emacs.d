@@ -12,6 +12,7 @@ continuously, so changes land under "Unreleased".
 - Load the MELPA `ghostel` (dakra) on macOS/Linux instead of the Windows-only kiennq fork. The Windows branch's `use-package :load-path` added the fork's checkout to `load-path` at macro-expansion time — and Emacs expands both arms of the `IS-WINDOWS` `if` when the file loads — so the fork shadowed the MELPA build on macOS/Linux and its native-module download 404'd against dakra's `.dylib`-only release assets. The Windows branch now adds the fork to `load-path` at runtime under `IS-WINDOWS`, which the `if` actually gates.
 - Keep Dired `hjkl` as cursor and row movement in both Hel Normal and Emacs states; Dired still starts in Normal so `SPC` remains available.
 - Set `supertag-data-directory` before `(require 'org-supertag)` in `lisp/init-local-org.el` so `supertag-db-file` derives the synced `~/org/org-supertag/` path at load time; the late setq had let it freeze at the default and load a stale local DB on machines with a leftover `~/.emacs.d/org-supertag/supertag-db.el`.
+- Drop `org` from `anvil-modules` in `lisp/init-local-ai.el`. The Anvil worker pool's org tools (`org-add-todo`, `org-update-todo-state`, etc.) wrote to `~/org` files independently of interactive Emacs buffers on the same files, racing with them and triggering repeated Syncthing sync-conflict storms on `ai.org`, `software.org`, `network.org`, and `refile.org`.
 
 ### Added
 - Copy the current buffer's full file path with `SPC b y`.
