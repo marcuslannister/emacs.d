@@ -15,6 +15,7 @@ continuously, so changes land under "Unreleased".
 - Drop `org` from `anvil-modules` in `lisp/init-local-ai.el`. The Anvil worker pool's org tools (`org-add-todo`, `org-update-todo-state`, etc.) wrote to `~/org` files independently of interactive Emacs buffers on the same files, racing with them and triggering repeated Syncthing sync-conflict storms on `ai.org`, `software.org`, `network.org`, and `refile.org`.
 
 ### Added
+- Install `proofread` (context-aware LLM proofreading) at the pinned `proofread-v0.2.0` tag, with an `english` profile in `lisp/init-local-ai.el` whose LLM checker reaches the sone Gemini endpoint through GNU ELPA `llm`; the API key resolves lazily from `~/.authinfo` at request time.
 - Copy the current buffer's full file path with `SPC b y`.
 - Create or retrieve the current Org heading ID with `C-c o i c` or `SPC o i c`.
 - Paste from the kill ring with `C-v` in Hel Normal, Insert, and Emacs states.
