@@ -36,3 +36,15 @@
 (async-installer-git-add "https://github.com/anuvyklack/hel-leader.git"
                          :commit "32230075e01749ace44ddf2d25fca0ba6aa98fbd"
                          :main "hel-leader.el")
+
+;; Context-aware LLM proofreading.  The repo is a monorepo that tags each
+;; package separately, so the tag is `proofread-v0.2.0', not `v0.2.0' (the
+;; bare `v0.1.0' tag predates the split; `proofread-popup' ships its own
+;; `proofread-popup-v*' tags and is not registered here).
+;; `proofread.el' itself only pulls in built-ins, so it loads fine as-is;
+;; the LLM backend (`proofread-llm.el') additionally needs `llm' >= 0.31.1
+;; from GNU ELPA, which package.el must supply before that backend is used.
+(async-installer-git-add "https://github.com/brsvh/emacs-proofread.git"
+                         :tag "proofread-v0.2.0"
+                         :subdir "lisp/proofread"
+                         :main "proofread.el")
