@@ -78,3 +78,4 @@ external-packages/
 ghostel-module/
 .ccglass/
 /HANDOFF.md
+/lisp/init-local-proofread-config.el

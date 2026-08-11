@@ -29,6 +29,7 @@ continuously, so changes land under "Unreleased".
 - Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.
 
 ### Changed
+- Move the proofread setup out of `lisp/init-local-ai.el` into `lisp/init-local-proofread.el`, reading the endpoint URL, model, and auth-source coordinates from a gitignored `lisp/init-local-proofread-config.el` scaffolded from a committed `.template`; the private endpoint host now stays out of the repository, and the module installs `llm` through `maybe-require-package` only once that config supplies an endpoint, so a checkout without one loads clean.
 - Disable org-supertag startup, synchronization, capture integration, and installation.
 - Swap Hel Normal-state `p` and `P`, making lowercase paste linewise content above the current line.
 - Swap Hel Normal-state `d` and `D`, making delete-without-kill the lowercase default.
