@@ -79,3 +79,5 @@ ghostel-module/
 .ccglass/
 /HANDOFF.md
 /lisp/init-local-proofread-config.el
+.DS_Store
+/projectile-frecency.eld
