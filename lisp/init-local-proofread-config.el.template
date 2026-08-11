@@ -1,0 +1,24 @@
+;;; init-local-proofread-config.el --- Private proofread endpoint -*- lexical-binding: t -*-
+;;; Commentary:
+
+;; Copy this file to `init-local-proofread-config.el' in the same directory and
+;; fill in the endpoint you use.  That copy is gitignored, so the host name and
+;; the model name stay out of the repository.
+;;
+;; The API key itself is never stored here.  Put it in ~/.authinfo instead:
+;;
+;;   machine ENDPOINT-HOST login apikey password YOUR-KEY
+;;
+;; and keep that file at mode 600.
+
+;;; Code:
+
+(setq ml-proofread-endpoint-url "https://ENDPOINT-HOST/v1/")
+(setq ml-proofread-auth-host "ENDPOINT-HOST")
+(setq ml-proofread-auth-user "apikey")
+(setq ml-proofread-chat-model "MODEL-NAME")
+(setq ml-proofread-provider-identity "PROVIDER:MODEL")
+(setq ml-proofread-source-label "MODEL")
+
+(provide 'init-local-proofread-config)
+;;; init-local-proofread-config.el ends here
