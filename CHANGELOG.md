@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Set `diff-hl-dired-extra-indicators` to nil in `lisp/init-dired.el`. The ignored-files pass started a second Git process (`git ls-files -o -i`) whose buffer `diff-hl-dired-update` then killed while the process was still live, so every Dired refresh raised a repeating process-kill confirmation on Emacs 31; only the grey indicators for Git-ignored files are lost.
 - Restore the legacy `SPC c` clock bindings through hel-leader's native Control translation.
 - Keep Magit buffers in Hel Emacs state with mode-local `hjkl` movement, preserving all other Magit commands.
 - Load the MELPA `ghostel` (dakra) on macOS/Linux instead of the Windows-only kiennq fork. The Windows branch's `use-package :load-path` added the fork's checkout to `load-path` at macro-expansion time — and Emacs expands both arms of the `IS-WINDOWS` `if` when the file loads — so the fork shadowed the MELPA build on macOS/Linux and its native-module download 404'd against dakra's `.dylib`-only release assets. The Windows branch now adds the fork to `load-path` at runtime under `IS-WINDOWS`, which the `if` actually gates.
