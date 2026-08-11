@@ -31,6 +31,9 @@
   (define-key dired-mode-map (kbd "p") 'isearch-repeat-backward))
 
 (when (maybe-require-package 'diff-hl)
+  (with-eval-after-load 'diff-hl-dired
+    ;; Avoid recursive process-kill prompts from the ignored-files check on Emacs 31.
+    (setq diff-hl-dired-extra-indicators nil))
   (with-eval-after-load 'dired
     (add-hook 'dired-mode-hook 'diff-hl-dired-mode)))
 
