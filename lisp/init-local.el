@@ -413,15 +413,13 @@ The completion candidates include the Git status of each file."
 (require 'init-local-git)
 
 
-(require 'init-local-ai nil t)
+(require 'init-local-hel)
 
 (require 'init-local-shell)
 
 (require 'blinko)
 
 (require 'init-local-program)
-
-(require 'init-local-hel)
 
 
 (defun ml-update-all-packages ()
@@ -444,6 +442,13 @@ The completion candidates include the Git status of each file."
 
 ;; ;; Load keybinding
 ;; (require 'init-local-keybinding)
+
+;; Loaded last on purpose.  `init-local-ai' hard-requires `anvil', so a missing
+;; `external-packages/anvil.el' clone aborts this file mid-load and silently
+;; skips every `require' after it.  The NOERROR flag does not help: it only
+;; covers a missing feature file, not an error signalled while loading one.
+;; With nothing downstream, a broken Anvil clone costs the AI module alone.
+(require 'init-local-ai nil t)
 
 (provide 'init-local)
 ;;; init-local.el ends here
