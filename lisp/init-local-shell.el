@@ -111,6 +111,22 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
        (when (fboundp 'hel-local-mode)
          (hel-local-mode -1))))))
 
+;; M-1..M-9 select tab-bar tabs globally (see `init-local.el').  Ghostel's
+;; semi-char mode binds every M-<printable> to the terminal, so those keys never
+;; reach Emacs inside a terminal buffer.  Register them as keymap exceptions
+;; rather than binding them in `ghostel-semi-char-mode-map': that map is rebuilt
+;; wholesale from `ghostel-keymap-exceptions', which would drop hand-made
+;; bindings.  `customize-set-variable' (not `setq') is required -- the rebuild
+;; runs from the option's :set function.  Char mode still sends M-<digit> to the
+;; terminal, so a TUI that wants Alt-digit can have it there.
+(with-eval-after-load 'ghostel
+  (let ((keys (mapcar (lambda (n) (format "M-%d" n)) (number-sequence 1 9))))
+    (customize-set-variable
+     'ghostel-keymap-exceptions
+     (append ghostel-keymap-exceptions
+             (seq-remove (lambda (key) (member key ghostel-keymap-exceptions))
+                         keys)))))
+
 (if IS-WINDOWS
     ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
     ;; than the MELPA package -- only the fork ships a working Windows native
