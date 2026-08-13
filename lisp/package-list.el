@@ -26,15 +26,22 @@
                            :subdir "lisp"
                            :main "ghostel.el"))
 
-;; Hel: Helix-style modal editing, pinned to the reviewed commit below.
+;; Hel: Helix-style modal editing.  Pinned to a commit, not a tag: this commit
+;; sits 12 commits ahead of v0.12.0, the newest upstream tag, and those commits
+;; carry real fixes -- multiple-cursors keys lost on a major-mode change, three
+;; scroll fixes, a search variable used out of scope, and a duplicated advice.
+;; Pinning the tag would give them up.  Move to `:tag' once upstream ships a
+;; release that contains this commit.
 ;; Dependencies stay managed by package.el.
 (async-installer-git-add "https://github.com/anuvyklack/hel.git"
                          :commit "93c88d8c67dcad08a7eb85949faf71b115973b5d"
                          :main "hel.el")
 
-;; Native leader translation for Hel, pinned to the reviewed commit below.
+;; Native leader translation for Hel, pinned to the reviewed tag below.  The
+;; two commits between v2.1 and the former commit pin are documentation only,
+;; so the tag is functionally the same code.
 (async-installer-git-add "https://github.com/anuvyklack/hel-leader.git"
-                         :commit "32230075e01749ace44ddf2d25fca0ba6aa98fbd"
+                         :tag "v2.1"
                          :main "hel-leader.el")
 
 ;; Context-aware LLM proofreading.  The repo is a monorepo that tags each
