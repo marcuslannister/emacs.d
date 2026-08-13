@@ -113,7 +113,7 @@
 ;; If we leave Emacs running overnight - reset the appointments one minute after midnight
 (run-at-time "24:01" nil 'bh/org-agenda-to-appt)
 
-;; 20 custom command by ken
+;; 20 custom command
 (defun kk/org-clock-in-switch-task ()
   "Clock in and switch task."
   (interactive)
