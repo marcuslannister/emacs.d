@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Add `M-1`..`M-9` to `ghostel-keymap-exceptions` in `lisp/init-local-shell.el` so the global tab-bar tab-select bindings still reach Emacs from a Ghostel terminal; semi-char mode binds every `M-<printable>` to the terminal, and `ghostel-semi-char-mode-map` is rebuilt wholesale from the exceptions list, so the list — set with `customize-set-variable`, because the rebuild runs from the option's `:set` function — is the only durable place to register them. Char mode still sends `M-<digit>` to the terminal.
 - Set `anvil-modules` and `anvil-optional-modules` before `anvil-enable` in `lisp/init-local-ai.el`, not after it. `anvil-enable` reads both to decide what to load, so it was seeing the defaults: `anvil-modules` defaults to a list that includes `org` (`anvil.el:62`), so the org module loaded despite being left out — 94 `anvil-org-*` functions were live and the org MCP tools were exposed, which is the race with interactive org buffers that the Syncthing sync-conflict entry below was meant to stop. `anvil-optional-modules` defaults to nil, so `xlsx`, `pdf`, `http`, `cron` and `browser` never loaded from this setting either.
 - Set `diff-hl-dired-extra-indicators` to nil in `lisp/init-dired.el`. The ignored-files pass started a second Git process (`git ls-files -o -i`) whose buffer `diff-hl-dired-update` then killed while the process was still live, so every Dired refresh raised a repeating process-kill confirmation on Emacs 31; only the grey indicators for Git-ignored files are lost.
 - Restore the legacy `SPC c` clock bindings through hel-leader's native Control translation.
@@ -17,6 +18,7 @@ continuously, so changes land under "Unreleased".
 - Drop `org` from `anvil-modules` in `lisp/init-local-ai.el`. The Anvil worker pool's org tools (`org-add-todo`, `org-update-todo-state`, etc.) wrote to `~/org` files independently of interactive Emacs buffers on the same files, racing with them and triggering repeated Syncthing sync-conflict storms on `ai.org`, `software.org`, `network.org`, and `refile.org`.
 
 ### Added
+- Open a Ghostel terminal in the current project root with `C-c g p` (`SPC g p`).
 - Install `proofread` (context-aware LLM proofreading) at the pinned `proofread-v0.2.0` tag, with an `english` profile in `lisp/init-local-ai.el` whose LLM checker reaches the sone Gemini endpoint through GNU ELPA `llm`; the API key resolves lazily from `~/.authinfo` at request time.
 - Copy the current buffer's full file path with `SPC b y`.
 - Create or retrieve the current Org heading ID with `C-c o i c` or `SPC o i c`.
@@ -30,6 +32,7 @@ continuously, so changes land under "Unreleased".
 - Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.
 
 ### Changed
+- Move `my/git-push` from `C-c g p` to `C-c g u`, freeing `C-c g p` for `ghostel-project`.
 - Move the proofread setup out of `lisp/init-local-ai.el` into `lisp/init-local-proofread.el`, reading the endpoint URL, model, and auth-source coordinates from a gitignored `lisp/init-local-proofread-config.el` scaffolded from a committed `.template`; the private endpoint host now stays out of the repository, and the module installs `llm` through `maybe-require-package` only once that config supplies an endpoint, so a checkout without one loads clean.
 - Disable org-supertag startup, synchronization, capture integration, and installation.
 - Swap Hel Normal-state `p` and `P`, making lowercase paste linewise content above the current line.
