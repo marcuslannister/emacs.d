@@ -11,15 +11,26 @@
 ;; autoload-cookied, but manual-install (plain add-to-list + require) does
 ;; not generate loaddefs, so we require it explicitly.
 (require 'anvil-server-commands)
-(anvil-enable)
-(anvil-server-start)
 
+;; Both lists must be set *before* `anvil-enable', which reads them to decide
+;; what to load.  When they were set after it, `anvil-enable' saw the defaults
+;; instead: `anvil-modules' defaults to a list that includes `org' (anvil.el:62),
+;; so the org module loaded despite being left out below, and
+;; `anvil-optional-modules' defaults to nil, so none of the optional ones loaded
+;; at all.
+;;
+;; `org' is left out on purpose.  Its tools wrote to ~/org files independently
+;; of the interactive buffers visiting the same files, which raced with them and
+;; caused repeated Syncthing sync-conflict storms.
 (setq anvil-modules '(worker eval file host git proc fs emacs text clipboard data net))
 
 ;; Enable optional modules
 (setq anvil-optional-modules '(xlsx pdf http cron browser))
 
+(anvil-enable)
+(anvil-server-start)
 
+
 (use-package claude-code-ide
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding

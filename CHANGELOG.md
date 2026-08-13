@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Set `anvil-modules` and `anvil-optional-modules` before `anvil-enable` in `lisp/init-local-ai.el`, not after it. `anvil-enable` reads both to decide what to load, so it was seeing the defaults: `anvil-modules` defaults to a list that includes `org` (`anvil.el:62`), so the org module loaded despite being left out — 94 `anvil-org-*` functions were live and the org MCP tools were exposed, which is the race with interactive org buffers that the Syncthing sync-conflict entry below was meant to stop. `anvil-optional-modules` defaults to nil, so `xlsx`, `pdf`, `http`, `cron` and `browser` never loaded from this setting either.
 - Set `diff-hl-dired-extra-indicators` to nil in `lisp/init-dired.el`. The ignored-files pass started a second Git process (`git ls-files -o -i`) whose buffer `diff-hl-dired-update` then killed while the process was still live, so every Dired refresh raised a repeating process-kill confirmation on Emacs 31; only the grey indicators for Git-ignored files are lost.
 - Restore the legacy `SPC c` clock bindings through hel-leader's native Control translation.
 - Keep Magit buffers in Hel Emacs state with mode-local `hjkl` movement, preserving all other Magit commands.
