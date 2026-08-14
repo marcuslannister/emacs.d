@@ -20,6 +20,7 @@ continuously, so changes land under "Unreleased".
 - Drop `org` from `anvil-modules` in `lisp/init-local-ai.el`. The Anvil worker pool's org tools (`org-add-todo`, `org-update-todo-state`, etc.) wrote to `~/org` files independently of interactive Emacs buffers on the same files, racing with them and triggering repeated Syncthing sync-conflict storms on `ai.org`, `software.org`, `network.org`, and `refile.org`.
 
 ### Added
+- Record the org-gtd pipeline plan in `docs/org-gtd-pipeline-spec.md`: the decision-complete specification for adding org-gtd as the capture/clarify/organize/engage layer while the topic files under `~/org/` stay the store, covering the 4.6.1 tag pin, the new `lisp/init-local-gtd.el`, the edits to five existing files, the 20-heading keyword rewrite with its run order and rollback, and the verification plan. Nothing is implemented yet.
 - Open a Ghostel terminal in the current project root with `C-c g p` (`SPC g p`).
 - Install `proofread` (context-aware LLM proofreading) at the pinned `proofread-v0.2.0` tag, with an `english` profile in `lisp/init-local-ai.el` whose LLM checker reaches the sone Gemini endpoint through GNU ELPA `llm`; the API key resolves lazily from `~/.authinfo` at request time.
 - Copy the current buffer's full file path with `SPC b y`.
