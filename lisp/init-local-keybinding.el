@@ -97,8 +97,6 @@ ARGS are additional arguments."
   (kbd "<leader> og") '("Lookup location" . org-goto)
   (kbd "<leader> oih") '("Insert heading" . org-insert-heading)
   (kbd "<leader> ois") '("Insert subheading" . org-insert-subheading)
-  (kbd "<leader> onl") '("Add link to org-now" . org-now-link)
-  (kbd "<leader> ont") '("Toggle org-now side window" . org-now)
   (kbd "<leader> oo") '("Open at point" . org-open-at-point)
 
   ;; clock

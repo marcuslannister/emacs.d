@@ -244,7 +244,7 @@ It takes the five file names literally. It does not scan a directory, so `.stver
 | New: `tests/init-local-gtd-tests.el` | the settings are applied when org-gtd is present; when it is absent, `init-local-gtd-unavailable-reason` is set and no `org-gtd-*` setting is written |
 | Manual end-to-end | capture → clarify → organize as a single action → the Task lands in the chosen topic file → `org-gtd-engage` shows it |
 | Task Table keyword check | every Open Task shows `TODO`, `NEXT` or `WAIT`. Any other state is a missed heading (#18) |
-| Layer 1 counts, before and after | `TODO` 55, `NEXT` 49, `DONE` 245 unchanged; `HOLD` 13 + `WAITING` 1 → `WAIT` 14; `CANCELLED` 6 → `CNCL` 6; **Open Tasks 118 → 118** |
+| Layer 1 counts, before and after | Snapshot at #19/#22: `TODO` 55, `NEXT` 49, `DONE` 245, `WAIT` 0+14, Open Tasks 118. Store at rewrite time: `NEXT` 48, `DONE` 246, two pre-existing `WAIT` headings (`other.org:68`, `software.org:1039`), Open Tasks 119. The rewrite itself was 20/20. |
 | Layer 2 counts, before and after | agenda entries and Task Table Open Tasks identical |
 
 **Tolerance is zero.** Any difference is a fault to investigate, not a variance to accept.

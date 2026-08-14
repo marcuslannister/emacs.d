@@ -62,11 +62,8 @@
         `(("TODO" . (:foreground ,(modus-themes-get-color-value 'green-intense) :weight bold))
           ("NEXT" . (:foreground ,(modus-themes-get-color-value 'blue) :weight bold))
           ("DONE" . (:foreground ,(modus-themes-get-color-value 'fg-dim) :weight bold))
-          ("WAITING" . (:foreground ,(modus-themes-get-color-value 'cyan) :weight bold))
-          ("HOLD" . (:foreground ,(modus-themes-get-color-value 'magenta) :weight bold))
-          ("CANCELLED" . (:foreground ,(modus-themes-get-color-value 'fg-dim) :weight bold))
-          ("PROJECT" . (:foreground ,(modus-themes-get-color-value 'rust) :weight bold))
-          ("DELEGATED" . (:foreground ,(modus-themes-get-color-value 'rust) :weight bold)))))
+          ("WAIT" . (:foreground ,(modus-themes-get-color-value 'cyan) :weight bold))
+          ("CNCL" . (:foreground ,(modus-themes-get-color-value 'fg-dim) :weight bold)))))
 
 
 
