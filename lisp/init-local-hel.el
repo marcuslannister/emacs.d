@@ -138,6 +138,7 @@
     "C-c n p" #'blinko-post-content
 
     ;; Org.
+    "C-c c"   #'init-local-gtd-command-center
     "C-c o a" #'org-agenda
     "C-c o l" #'org-todo-list
     "C-c o m" #'org-tags-view
@@ -150,12 +151,12 @@
     "C-c o p" #'org-priority
     "C-c o g" #'org-goto
     "C-c o o" #'org-open-at-point
+    "C-c o e" #'init-local-gtd-engage
+    "C-c o k" #'init-local-gtd-clarify-item
     "C-c o i c" #'org-id-get-create
     "C-c o i l" #'org-insert-link
     "C-c o i h" #'org-insert-heading
     "C-c o i s" #'org-insert-subheading
-    "C-c o n l" #'org-now-link
-    "C-c o n t" #'org-now
 
     ;; Session.
     "C-c q q" #'save-buffers-kill-terminal
@@ -340,6 +341,7 @@
     "C-c n b" "Post buffer"
     "C-c n r" "Post region"
     "C-c n p" "Post content"
+    "C-c c"     "GTD"
     "C-c o"     "org"
     "C-c o a"   "Agenda"
     "C-c o l"   "Todo list"
@@ -353,13 +355,12 @@
     "C-c o p"   "Change priority"
     "C-c o g"   "Lookup location"
     "C-c o o"   "Open at point"
+    "C-c o e"   "Engage"
+    "C-c o k"   "Clarify at point"
     "C-c o i"   "insert"
     "C-c o i l" "Insert link"
     "C-c o i h" "Insert heading"
     "C-c o i s" "Insert subheading"
-    "C-c o n"   "now"
-    "C-c o n l" "Add link to org-now"
-    "C-c o n t" "Toggle org-now side window"
     "C-c q"   "session"
     "C-c q q" "Quit Emacs"
     "C-c q r" "Restart Emacs"

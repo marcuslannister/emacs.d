@@ -35,6 +35,8 @@ jobs:
       run: ./test-startup.sh
     - name: Check Task Table behavior
       run: emacs -Q --batch -l tests/init-local-vulpea-tests.el -f ert-run-tests-batch-and-exit
+    - name: Check org-gtd module behavior
+      run: emacs -Q --batch -l tests/init-local-gtd-tests.el -f ert-run-tests-batch-and-exit
     - name: Check real Task Table integration when available
       run: tests/run-vulpea-integration.sh
     - name: Benchmark Task Table (advisory)

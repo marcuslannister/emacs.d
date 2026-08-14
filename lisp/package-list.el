@@ -55,3 +55,13 @@
                          :tag "proofread-v0.2.0"
                          :subdir "lisp/proofread"
                          :main "proofread.el")
+
+;; GTD process layer.  Pinned to a tag: `org-gtd-refile-prompt-for-types' is
+;; obsolete from 4.1.0, and on master the type registry migration silently skips
+;; `project-heading' and `project-task', so projects would auto-file into
+;; org-gtd-tasks.org instead of prompting for a topic file.  4.6.1 is the newest
+;; release; move the tag deliberately, and re-test the refile prompt when you do.
+;; Dependencies (org-edna from GNU ELPA, transient) stay with package.el.
+(async-installer-git-add "https://github.com/Trevoke/org-gtd.el.git"
+                         :tag "4.6.1"
+                         :main "org-gtd.el")

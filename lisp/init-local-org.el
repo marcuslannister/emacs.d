@@ -3,12 +3,18 @@
 ;;; Code:
 
 (setq org-directory "~/org/"
-      org-default-notes-file (expand-file-name "inbox.org" org-directory))
+      org-default-notes-file (expand-file-name "gtd/inbox.org" org-directory))
 
-(setq org-agenda-files
-      (seq-filter (lambda(x) (not (string-match "/.stversions/"(file-name-directory x))))
-                  (directory-files-recursively "~/org/" "\\.org$")
-                  ))
+(defun init-local-org-agenda-files ()
+  "Return Org files under `org-directory', minus Syncthing versions and the GTD inbox."
+  (seq-filter
+   (lambda (file)
+     (let ((dir (file-name-directory file)))
+       (not (or (string-match-p "/.stversions/" dir)
+                (string-suffix-p "/gtd/inbox.org" file)))))
+   (directory-files-recursively org-directory "\\.org$")))
+
+(setq org-agenda-files (init-local-org-agenda-files))
 
 (setq org-agenda-clockreport-parameter-plist
       (quote (:maxlevel 5 :fileskip0 t :compact t :narrow 80 :formula % )))
@@ -216,20 +222,18 @@
 (with-eval-after-load 'org
   (let ((cmd '("p" "List priority and schedule tasks"
                ((tags-todo "+PRIORITY=\"A\""
-                           ((org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "PROJECT" "DELEGATED")))
+                           ((org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "WAIT")))
                             (org-agenda-overriding-header "High-priority unfinished tasks:")))
                 (tags-todo "+PRIORITY=\"B\""
                            ((org-agenda-skip-function
-                             '(let ((skip (org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "PROJECT" "DELEGATED"))))
+                             '(let ((skip (org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "WAIT"))))
                                 (or skip
                                     (unless (string-match-p "\\[#B\\]" (org-get-heading nil nil nil nil))
                                       (or (outline-next-heading) (point-max))))))
                             (org-agenda-overriding-header "Medium-priority unfinished tasks:")))
                 (tags-todo "+PRIORITY=\"C\""
-                           ((org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "PROJECT" "DELEGATED")))
+                           ((org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("TODO" "NEXT" "WAIT")))
                             (org-agenda-overriding-header "Low-priority unfinished tasks:")))
-                (tags "+INBOX"
-                      ((org-agenda-overriding-header "Inbox entries:")))
                 (agenda ""))
                ((org-agenda-compact-blocks nil)))))  ; Set compact-blocks to nil only for this view
     (unless (assoc "p" org-agenda-custom-commands)
@@ -249,101 +253,6 @@
 
 (with-eval-after-load 'org
   (global-org-modern-mode))
-
-
-
-;; (use-package svg-tag-mode
-;;   :ensure t)
-
-;; ;; Configure svg-tag-mode for Org mode
-;; (with-eval-after-load 'svg-tag-mode
-;;   (defun svg-progress-percent (value)
-;;     (save-match-data
-;;       (svg-image (svg-lib-concat
-;;                   (svg-lib-progress-bar (/ (string-to-number value) 100.0)
-;;                                         nil :margin 0 :stroke 2 :radius 3 :padding 2 :width 11)
-;;                   (svg-lib-tag (concat value "%")
-;;                                nil :stroke 0 :margin 0)) :ascent 'center)))
-
-;;   (defun svg-progress-count (value)
-;;     (save-match-data
-;;       (let* ((seq (split-string value "/"))
-;;              (count (if (stringp (car seq))
-;;                         (float (string-to-number (car seq)))
-;;                       0))
-;;              (total (if (stringp (cadr seq))
-;;                         (float (string-to-number (cadr seq)))
-;;                       1000)))
-;;         (svg-image (svg-lib-concat
-;;                     (svg-lib-progress-bar (/ count total) nil
-;;                                           :margin 0 :stroke 2 :radius 3 :padding 2 :width 11)
-;;                     (svg-lib-tag value nil
-;;                                  :stroke 0 :margin 0)) :ascent 'center))))
-
-;;   ;; Define svg-tag patterns
-;;   (setq svg-tag-tags
-;;         `(
-;;           ;; Task priority
-;;           ("\\[#[A-Z]\\]" . ( (lambda (tag)
-;;                                 (svg-tag-make tag :face 'org-priority
-;;                                               :beg 2 :end -1 :margin 0))))
-
-;;           ;; TODO keywords (using org-todo-keyword-faces)
-;;           ("TODO" . ((lambda (tag)
-;;                         (svg-tag-make "TODO" :face (modus-themes-get-color-value 'green-intense) :margin 0))))
-;;           ("NEXT" . ((lambda (tag)
-;;                         (svg-tag-make "NEXT" :face (modus-themes-get-color-value 'blue) :margin 0))))
-;;           ("DONE" . ((lambda (tag)
-;;                         (svg-tag-make "DONE" :face (modus-themes-get-color-value 'fg-dim) :margin 0))))
-;;           ("WAITING" . ((lambda (tag)
-;;                            (svg-tag-make "WAITING" :face (modus-themes-get-color-value 'cyan) :margin 0))))
-;;           ("CANCELLED" . ((lambda (tag)
-;;                              (svg-tag-make "CANCELLED" :face (modus-themes-get-color-value 'fg-dim) :margin 0))))
-;;           ("HOLD" . ((lambda (tag)
-;;                         (svg-tag-make "HOLD" :face (modus-themes-get-color-value 'magenta) :margin 0))))
-;;           ("PROJECT" . ((lambda (tag)
-;;                            (svg-tag-make "PROJECT" :face (modus-themes-get-color-value 'rust) :margin 0))))
-;;           ("DELEGATED" . ((lambda (tag)
-;;                              (svg-tag-make "DELEGATED" :face (modus-themes-get-color-value 'rust) :margin 0))))
-
-
-;;           ;; Citation [cite:@Author:year]
-;;           ("\\(\\[cite:@[A-Za-z]+:\\)" . ((lambda (tag)
-;;                                             (svg-tag-make tag :inverse t
-;;                                                           :beg 7 :end -1 :crop-right t))))
-;;           ("\\[cite:@[A-Za-z]+:\\([0-9]+\\]\\)" . ((lambda (tag)
-;;                                                      (svg-tag-make tag :end -1 :crop-left t))))
-
-;;           ;; Progress bars
-;;           ("\\(\\[[0-9]\\{1,3\\}%\\]\\)" . ((lambda (tag)
-;;                                               (svg-progress-percent (substring tag 1 -2)))))
-;;           ("\\(\\[[0-9]+/[0-9]+\\]\\)" . ((lambda (tag)
-;;                                             (svg-progress-count (substring tag 1 -1)))))
-;;           ))
-
-;;   ;; Enable svg-tag-mode in org-mode
-;;   (add-hook 'org-mode-hook #'svg-tag-mode))
-
-;; To do:         TODO DONE
-;; Tags:          :TAG1:TAG2:TAG3:
-;; Priorities:    [#A] [#B] [#C]
-;; Progress:      [1/3]
-;;                [42%]
-;; Active date:   <2021-12-24>
-;;                <2021-12-24 Fri>
-;;                <2021-12-24 14:00>
-;;                <2021-12-24 Fri 14:00>
-;; Inactive date: [2021-12-24]
-;;                [2021-12-24 Fri]
-;;                [2021-12-24 14:00]
-;;                [2021-12-24 Fri 14:00]
-;; Citation:      [cite:@Knuth:1984]
-
-(add-to-list
- 'org-capture-templates
- '("i" "Inbox task" entry
-   (file "~/org/inbox.org")
-   "* TODO [#C] %^{Title} :task:\n"))
 
 (provide 'init-local-org)
 ;;; init-local-org.el ends here

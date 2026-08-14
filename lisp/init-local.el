@@ -414,6 +414,7 @@ The completion candidates include the Git status of each file."
 
 
 (require 'init-local-hel)
+(require 'init-local-gtd nil t)
 
 (require 'init-local-shell)
 
