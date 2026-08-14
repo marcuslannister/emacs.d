@@ -23,6 +23,7 @@ cookies
 site-lisp/package/
 /swank
 /.mc-lists.el
+/hel-multiple-cursors
 /var
 /.sqli_history
 /frame-restore-parameters
