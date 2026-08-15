@@ -10,7 +10,8 @@ Settings live in `lisp/init-local-gtd.el`; the package is pinned by Git tag in
 `lisp/package-list.el`. Global keys live in `lisp/init-local-hel.el` with every
 other global key. The full plan and its decisions are in
 [`org-gtd-pipeline-spec.md`](org-gtd-pipeline-spec.md). org-gtd needs Emacs 29.1
-or newer; when it is absent the module reports the reason and changes nothing.
+or newer. When it is absent, the module keeps the inbox path correct, reports
+the reason, and leaves the optional settings unchanged.
 
 ## The loop
 

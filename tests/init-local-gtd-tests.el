@@ -38,6 +38,13 @@
   (advice-remove 'org-gtd-save-buffers
                  #'init-local-gtd-refresh-agenda-files))
 
+(defun init-local-gtd-test--should-set-directory-only ()
+  "Check that only the GTD directory is set when support is unavailable."
+  (should (equal (expand-file-name "gtd/" org-directory)
+                 org-gtd-directory))
+  (dolist (var (cdr init-local-gtd-test--gtd-vars))
+    (should-not (boundp var))))
+
 (defmacro init-local-gtd-test-without-package (&rest body)
   "Run BODY with `(require 'org-gtd)' failing."
   (declare (indent 0) (debug t))
@@ -49,34 +56,33 @@
                     (funcall orig-require feature filename noerror)))))
        ,@body)))
 
-(ert-deftest init-local-gtd-absent-package-writes-nothing ()
+(ert-deftest init-local-gtd-absent-package-sets-directory-only ()
   (let ((org-agenda-dim-blocked-tasks t)
         (org-capture-after-finalize-hook nil))
     (init-local-gtd-test--clear-gtd-vars)
+    (setq org-gtd-directory "~/gtd/")
     (cl-letf (((symbol-function 'maybe-require-package)
                (lambda (&rest _args) t)))
       (init-local-gtd-test-without-package
         (init-local-gtd--initialize)))
     (should (string-match-p "org-gtd"
                             init-local-gtd-unavailable-reason))
-    (dolist (var init-local-gtd-test--gtd-vars)
-      (should-not (boundp var)))
+    (init-local-gtd-test--should-set-directory-only)
     (should (eq t org-agenda-dim-blocked-tasks))
     (should-not (memq #'init-local-gtd-refresh-agenda-files
                       org-capture-after-finalize-hook))))
 
-(ert-deftest init-local-gtd-old-emacs-writes-nothing ()
+(ert-deftest init-local-gtd-old-emacs-sets-directory-only ()
   (let ((emacs-version "28.2")
         (org-agenda-dim-blocked-tasks t))
     (init-local-gtd-test--clear-gtd-vars)
     (init-local-gtd--initialize)
     (should (string-match-p "29\\.1"
                             init-local-gtd-unavailable-reason))
-    (dolist (var init-local-gtd-test--gtd-vars)
-      (should-not (boundp var)))
+    (init-local-gtd-test--should-set-directory-only)
     (should (eq t org-agenda-dim-blocked-tasks))))
 
-(ert-deftest init-local-gtd-missing-elpa-dependency-writes-nothing ()
+(ert-deftest init-local-gtd-missing-elpa-dependency-sets-directory-only ()
   (let ((org-agenda-dim-blocked-tasks t))
     (init-local-gtd-test--clear-gtd-vars)
     (cl-letf (((symbol-function 'maybe-require-package)
@@ -85,8 +91,7 @@
       (init-local-gtd--initialize))
     (should (string-match-p "\\bf\\b"
                             init-local-gtd-unavailable-reason))
-    (dolist (var init-local-gtd-test--gtd-vars)
-      (should-not (boundp var)))
+    (init-local-gtd-test--should-set-directory-only)
     (should (eq t org-agenda-dim-blocked-tasks))))
 
 (ert-deftest init-local-gtd-applies-settings-when-present ()

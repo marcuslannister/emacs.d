@@ -52,8 +52,8 @@ It owns the `org-gtd-*` settings and two mode-map keys. Nothing else. It can be 
 ;;
 ;; This module owns only `org-gtd-*' settings and its own mode-map keys, so it
 ;; can be deleted in one step.  Global keys live with every other global key, in
-;; `init-local-hel.el'.  When org-gtd is absent the module reports why and
-;; changes nothing.
+;; `init-local-hel.el'.  When org-gtd is absent the module keeps the inbox path
+;; correct, reports why, and leaves the optional settings unchanged.
 ;;; Code:
 
 (require 'org)
@@ -62,7 +62,7 @@ It owns the `org-gtd-*` settings and two mode-map keys. Nothing else. It can be 
   "Why org-gtd support is off, or nil when it is on.")
 
 (defun init-local-gtd--mark-unavailable (reason)
-  "Record REASON and leave the configuration untouched."
+  "Record REASON and leave the optional settings untouched."
   (setq init-local-gtd-unavailable-reason reason)
   (message "init-local-gtd: org-gtd support disabled -- %s" reason))
 
@@ -76,9 +76,8 @@ on the first capture is invisible to every view until a restart."
 
 (defun init-local-gtd--settings ()
   "Apply the org-gtd settings this module owns."
-  (setq org-gtd-directory (expand-file-name "gtd/" org-directory)
-        ;; Acknowledge the installed version, or org-gtd warns on every load.
-        org-gtd-update-ack "4.6.1"
+  ;; Acknowledge the installed version, or org-gtd warns on every load.
+  (setq org-gtd-update-ack "4.6.1"
         ;; Obsolete since 4.0.0, but `org-gtd-refile--should-prompt-p' reads it
         ;; FIRST, and its default t disables every prompt.  Load-bearing.
         org-gtd-refile-to-any-target nil
@@ -114,6 +113,7 @@ The global keys live in `init-local-hel.el' with every other global key."
 
 (defun init-local-gtd--initialize ()
   "Enable org-gtd support, or report why it is off."
+  (setq org-gtd-directory (expand-file-name "gtd/" org-directory))
   (cond
    ((version< emacs-version "29.1")
     (init-local-gtd--mark-unavailable "Emacs 29.1 or newer is required"))
@@ -241,7 +241,7 @@ It takes the five file names literally. It does not scan a directory, so `.stver
 | --- | --- |
 | `./test-startup.sh` | green |
 | ERT under `tests/` | green, unchanged. #18 proved no existing test breaks: every test binds its own workflow, and nothing under `tests/` loads `init-org.el` |
-| New: `tests/init-local-gtd-tests.el` | the settings are applied when org-gtd is present; when it is absent, `init-local-gtd-unavailable-reason` is set and no `org-gtd-*` setting is written |
+| New: `tests/init-local-gtd-tests.el` | the settings are applied when org-gtd is present; when it is absent, `org-gtd-directory` is still set, `init-local-gtd-unavailable-reason` records why, and no optional `org-gtd-*` setting is written |
 | Manual end-to-end | capture → clarify → organize as a single action → the Task lands in the chosen topic file → `org-gtd-engage` shows it |
 | Task Table keyword check | every Open Task shows `TODO`, `NEXT` or `WAIT`. Any other state is a missed heading (#18) |
 | Layer 1 counts, before and after | Snapshot at #19/#22: `TODO` 55, `NEXT` 49, `DONE` 245, `WAIT` 0+14, Open Tasks 118. Store at rewrite time: `NEXT` 48, `DONE` 246, two pre-existing `WAIT` headings (`other.org:68`, `software.org:1039`), Open Tasks 119. The rewrite itself was 20/20. |
