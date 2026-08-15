@@ -7,8 +7,8 @@
 ;;
 ;; This module owns only `org-gtd-*' settings and its own mode-map keys, so it
 ;; can be deleted in one step.  Global keys live with every other global key, in
-;; `init-local-hel.el'.  When org-gtd is absent the module reports why and
-;; changes nothing.
+;; `init-local-hel.el'.  When org-gtd is absent the module keeps the inbox path
+;; correct, reports why, and leaves the optional settings unchanged.
 ;;; Code:
 
 (require 'org)
@@ -38,7 +38,7 @@
   "Why org-gtd support is off, or nil when it is on.")
 
 (defun init-local-gtd--mark-unavailable (reason)
-  "Record REASON and leave the configuration untouched."
+  "Record REASON and leave the optional settings untouched."
   (setq init-local-gtd-unavailable-reason reason)
   (message "init-local-gtd: org-gtd support disabled -- %s" reason))
 
@@ -82,10 +82,9 @@ otherwise swallow engage.  The `g' view is gone; keep that name dead."
 
 (defun init-local-gtd--settings ()
   "Apply the org-gtd settings this module owns."
-  (setq org-gtd-directory (expand-file-name "gtd/" org-directory)
-        ;; Obsolete since 4.0.0, but `org-gtd-refile--should-prompt-p' reads it
-        ;; FIRST, and its default t disables every prompt.  Load-bearing.
-        org-gtd-refile-to-any-target nil
+  ;; Obsolete since 4.0.0, but `org-gtd-refile--should-prompt-p' reads it
+  ;; FIRST, and its default t disables every prompt.  Load-bearing.
+  (setq org-gtd-refile-to-any-target nil
         ;; Symbols, not strings: the test is `memq'.  A string list fails in
         ;; silence and sends every Task into org-gtd-tasks.org (#20).
         org-gtd-refile-prompt-for-types '(single-action project-heading project-task)
@@ -136,6 +135,8 @@ The global keys live in `init-local-hel.el' with every other global key."
 
 (defun init-local-gtd--initialize ()
   "Enable org-gtd support, or report why it is off."
+  ;; Keep the inbox location correct even when package setup cannot finish.
+  (setq org-gtd-directory (expand-file-name "gtd/" org-directory))
   (let ((missing (and (not (version< emacs-version "29.1"))
                       (init-local-gtd--install-elpa-dependencies))))
     (cond
