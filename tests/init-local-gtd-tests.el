@@ -5,6 +5,8 @@
 (require 'org)
 
 (defvar org-gtd-clarify-mode-map)
+(defconst org-gtd-projects "Projects")
+(defvar org-gtd--organize-type)
 (defvar org-gtd-directory)
 (defvar org-gtd-update-ack)
 (defvar org-gtd-refile-to-any-target)
@@ -168,6 +170,19 @@
           (should-not (buffer-live-p stale)))
       (when (buffer-live-p stale)
         (kill-buffer stale)))))
+
+(ert-deftest init-local-gtd-project-refile-restores-project-type ()
+  "Project creation prompts even when org-gtd leaves its local type nil."
+  (let ((org-gtd--organize-type nil)
+        (original (lambda (type _target)
+                    (list (symbol-value 'org-gtd--organize-type) type))))
+    (should (equal '(project-heading "Projects")
+                   (init-local-gtd--refile-project
+                    original org-gtd-projects "* Projects")))
+    (let ((org-gtd--organize-type 'single-action))
+      (should (equal '(single-action "Tasks")
+                     (init-local-gtd--refile-project
+                      original "Tasks" "* Tasks"))))))
 
 (ert-deftest init-local-gtd-wrappers-explain-when-unavailable ()
   (setq init-local-gtd-unavailable-reason "the org-gtd package is not installed")

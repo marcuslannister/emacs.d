@@ -13,6 +13,8 @@
 
 (require 'org)
 
+(defvar org-gtd--organize-type)
+
 ;; org-gtd is registered in lisp/package-list.el, but async-installer only
 ;; extends `load-path' during install postprocess.  A clone that already
 ;; exists is skipped, so the next startup cannot find the library.  Hel,
@@ -67,6 +69,19 @@ on the first capture is invisible to every view until a restart."
   (when (fboundp 'init-local-org-agenda-files)
     (setq org-agenda-files (init-local-org-agenda-files))))
 
+(defun init-local-gtd--refile-project (orig-fun type refile-target)
+  "Prompt for a project destination when ORIG-FUN loses its local type.
+org-gtd's project creation temporarily visits the project tasks and leaves
+`org-gtd--organize-type' nil before calling `org-gtd-refile--do'.  The
+refiler checks that variable instead of TYPE, so restore the project heading
+type for this one call."
+  (if (and (equal type org-gtd-projects)
+           (boundp 'org-gtd--organize-type)
+           (null org-gtd--organize-type))
+      (let ((org-gtd--organize-type 'project-heading))
+        (funcall orig-fun type refile-target))
+    (funcall orig-fun type refile-target)))
+
 (defun init-local-gtd-engage ()
   "Open `org-gtd-engage' in its own buffer.
 `org-agenda-sticky' is still on, so a leftover `*Org Agenda(g)*' would
@@ -85,9 +100,9 @@ otherwise swallow engage.  The `g' view is gone; keep that name dead."
   ;; Obsolete since 4.0.0, but `org-gtd-refile--should-prompt-p' reads it
   ;; FIRST, and its default t disables every prompt.  Load-bearing.
   (setq org-gtd-refile-to-any-target nil
-        ;; Symbols, not strings: the test is `memq'.  A string list fails in
-        ;; silence and sends every Task into org-gtd-tasks.org (#20).
-        org-gtd-refile-prompt-for-types '(single-action project-heading project-task)
+        ;; Prompt for topic-file destinations for actions and projects.
+        org-gtd-refile-prompt-for-types
+        '(single-action project-heading project-task)
         ;; nil restores plain `org-archive-location', which is what keeps
         ;; software.org_archive working (#16).
         org-gtd-archive-location nil
@@ -103,6 +118,9 @@ otherwise swallow engage.  The `g' view is gone; keep that name dead."
   ;; org-gtd-tasks.org).  Both are documented Org / org-gtd seams.
   (add-hook 'org-capture-after-finalize-hook
             #'init-local-gtd-refresh-agenda-files)
+  (when (fboundp 'org-gtd-refile--do)
+    (advice-add 'org-gtd-refile--do :around
+                #'init-local-gtd--refile-project))
   (advice-add 'org-gtd-save-buffers :after
               #'init-local-gtd-refresh-agenda-files))
 
