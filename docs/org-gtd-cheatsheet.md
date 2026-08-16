@@ -129,6 +129,8 @@ so no mapping is set by hand. Org strips the cookies before org-gtd reads them.
 
 `org-gtd-tasks.org` is written before the refile prompt, so it always exists and
 always appears as a candidate. That is correct.
+Project creation also prompts for a destination, so a Project can live under a
+level-1 heading in a topic file such as `~/org/ai.org`.
 
 ## Settings this configuration owns
 
@@ -137,7 +139,7 @@ always appears as a candidate. That is correct.
 | `org-gtd-directory` | `~/org/gtd/` | Holds the inbox and the tasks file only. |
 | `org-gtd-update-ack` | `"4.6.1"` | Set before `require`, or org-gtd warns on each load. |
 | `org-gtd-refile-to-any-target` | `nil` | Obsolete, but read first; its default `t` disables every prompt. |
-| `org-gtd-refile-prompt-for-types` | `(single-action project-heading project-task)` | Symbols, not strings: the test is `memq`. |
+| `org-gtd-refile-prompt-for-types` | `(single-action project-heading project-task)` | Project creation prompts for a topic-file destination. |
 | `org-gtd-archive-location` | `nil` | Keeps the plain `*.org_archive` files working. |
 | `org-gtd-organize-hooks` | `nil` | Removes the tag prompt on each clarify. |
 | `org-agenda-dim-blocked-tasks` | `nil` | org-edna would wake a slow pass over the full `~/org` scan. |
