@@ -39,6 +39,7 @@ continuously, so changes land under "Unreleased".
 - Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.
 
 ### Changed
+- Set `org-modern-progress` to nil in `lisp/init-local-org.el` so statistics cookies stay plain text; the default 12-character bar read as an empty grey banner next to short headings.
 - Prompt when creating an org-gtd Project so it can be refiled into a topic file such as `~/org/ai.org` instead of always using `org-gtd-tasks.org`.
 - Pin `hel-leader` to the `v2.1` tag instead of a raw commit in `lisp/package-list.el`; the two commits between that tag and the former pin are documentation only, so the code is unchanged. `hel` keeps its commit pin, which sits 12 commits ahead of `v0.12.0` and carries fixes a tag pin would give up: multiple-cursors keys lost on a major-mode change, three scroll fixes, a search variable used out of scope, and a duplicated advice.
 - Move `my/git-push` from `C-c g p` to `C-c g u`, freeing `C-c g p` for `ghostel-project`.
