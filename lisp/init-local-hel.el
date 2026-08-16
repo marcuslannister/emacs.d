@@ -144,15 +144,26 @@
     "C-c o m" #'org-tags-view
     "C-c o v" #'org-search-view
     "C-c o t" #'org-todo
-    "C-c o c" #'org-capture
+    "C-c o c" #'org-gtd-capture
     "C-c o d" #'org-deadline
     "C-c o s" #'org-schedule
     "C-c o r" #'org-refile
     "C-c o p" #'org-priority
-    "C-c o g" #'org-goto
+    "C-c o G" #'org-goto
     "C-c o o" #'org-open-at-point
     "C-c o e" #'init-local-gtd-engage
     "C-c o k" #'init-local-gtd-clarify-item
+    ;; Org GTD.  Keep this group discoverable under o g; the single-key
+    ;; `org-goto' binding therefore lives at o G above.
+    "C-c o g c" #'org-gtd-capture
+    "C-c o g e" #'init-local-gtd-engage
+    "C-c o g i" #'org-gtd-process-inbox
+    "C-c o g k" #'init-local-gtd-clarify-item
+    "C-c o g m" #'init-local-gtd-command-center
+    "C-c o g n" #'org-gtd-show-all-next
+    "C-c o g s" #'org-gtd-reflect-stuck-projects
+    "C-c o g o" #'org-gtd-organize
+    "C-c o g a" #'org-gtd-agenda-transient
     "C-c o i c" #'org-id-get-create
     "C-c o i l" #'org-insert-link
     "C-c o i h" #'org-insert-heading
@@ -353,10 +364,20 @@
     "C-c o s"   "Insert schedule"
     "C-c o r"   "Refile"
     "C-c o p"   "Change priority"
-    "C-c o g"   "Lookup location"
+    "C-c o G"   "Lookup location"
     "C-c o o"   "Open at point"
     "C-c o e"   "Engage"
     "C-c o k"   "Clarify at point"
+    "C-c o g"   "org-gtd"
+    "C-c o g c" "Capture to inbox"
+    "C-c o g e" "Engage"
+    "C-c o g i" "Process inbox"
+    "C-c o g k" "Clarify at point"
+    "C-c o g m" "Command centre"
+    "C-c o g n" "All next actions"
+    "C-c o g s" "Stuck projects"
+    "C-c o g o" "Organize clarify task"
+    "C-c o g a" "Agenda task transient"
     "C-c o i"   "insert"
     "C-c o i l" "Insert link"
     "C-c o i h" "Insert heading"
