@@ -28,6 +28,15 @@ the reason, and leaves the optional settings unchanged.
 | Key | Command |
 | --- | --- |
 | `C-c c` | Command centre (`init-local-gtd-command-center`) |
+| `C-c o g c` | Capture to inbox (`org-gtd-capture`) |
+| `C-c o g e` | Engage (`init-local-gtd-engage`) |
+| `C-c o g i` | Process inbox (`org-gtd-process-inbox`) |
+| `C-c o g k` | Clarify at point (`init-local-gtd-clarify-item`) |
+| `C-c o g m` | Command centre (`init-local-gtd-command-center`) |
+| `C-c o g n` | All next actions (`org-gtd-show-all-next`) |
+| `C-c o g s` | Stuck projects (`org-gtd-reflect-stuck-projects`) |
+| `C-c o g o` | Organize clarify task (`org-gtd-organize`) |
+| `C-c o g a` | Agenda task transient (`org-gtd-agenda-transient`) |
 | `C-c o e` | Engage (`init-local-gtd-engage`) |
 | `C-c o k` | Clarify at point (`init-local-gtd-clarify-item`) |
 
@@ -38,13 +47,15 @@ failing with a void-function error.
 
 | Where | Key | Command |
 | --- | --- | --- |
+| Clarify buffer | `C-c c` | Organize the item |
 | Clarify buffer | `C-c C-c` | Organize the item (bound by this configuration) |
 | Clarify buffer | `C-c C-k` | Cancel |
 | Clarify buffer | `C-c d` | Duplicate |
 | Agenda | `C-c c` | Task transient for the entry at point |
+| Agenda | `C-c .` | Task transient for the entry at point |
 
-`C-c c` opens the GTD menu that fits where you are: the command centre
-everywhere, the task menu in the agenda.
+`C-c c` opens the command centre globally, organizes an item in a clarify
+buffer, and opens the task menu in an agenda buffer.
 
 ## Command centre (`C-c c`)
 
