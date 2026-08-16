@@ -161,6 +161,7 @@
     "C-c o g k" #'init-local-gtd-clarify-item
     "C-c o g m" #'init-local-gtd-command-center
     "C-c o g n" #'org-gtd-show-all-next
+    "C-c o g p" #'init-local-gtd-show-all-projects
     "C-c o g s" #'org-gtd-reflect-stuck-projects
     "C-c o g o" #'org-gtd-organize
     "C-c o g a" #'org-gtd-agenda-transient
@@ -375,6 +376,7 @@
     "C-c o g k" "Clarify at point"
     "C-c o g m" "Command centre"
     "C-c o g n" "All next actions"
+    "C-c o g p" "All projects"
     "C-c o g s" "Stuck projects"
     "C-c o g o" "Organize clarify task"
     "C-c o g a" "Agenda task transient"
