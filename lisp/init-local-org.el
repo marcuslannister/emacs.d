@@ -249,6 +249,9 @@
   (setq org-modern-todo nil)
   (setq org-modern-priority nil)
   (setq org-modern-timestamp nil)
+  ;; Statistics cookies stay plain text; the 12-wide bar reads as an empty
+  ;; gray banner next to short headings.
+  (setq org-modern-progress nil)
   (setq org-modern-tag t))  ; Also let svg-tag handle tags if desired
 
 (with-eval-after-load 'org
