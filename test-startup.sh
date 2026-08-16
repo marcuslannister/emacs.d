@@ -42,6 +42,8 @@ ${EMACS:=emacs} -nw --batch \
                                                 (quote org-gtd-process-inbox))
                                             (eq (key-binding (kbd "C-c o g n"))
                                                 (quote org-gtd-show-all-next))
+                                            (eq (key-binding (kbd "C-c o g p"))
+                                                (quote init-local-gtd-show-all-projects))
                                             (eq (key-binding (kbd "C-c o g s"))
                                                 (quote org-gtd-reflect-stuck-projects))
                                             (eq (key-binding (kbd "C-c o g o"))

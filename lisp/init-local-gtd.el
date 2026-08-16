@@ -95,6 +95,18 @@ otherwise swallow engage.  The `g' view is gone; keep that name dead."
   (let ((org-agenda-sticky nil))
     (org-gtd-engage)))
 
+(defun init-local-gtd-show-all-projects ()
+  "Show every Project in an agenda view.
+org-gtd's command centre reaches stuck, completed, and missed Projects
+only; nothing there lists the whole set.  `project' is a plain type in
+org-gtd's view language, so one spec covers it."
+  (interactive)
+  (unless (fboundp 'org-gtd-view-show)
+    (user-error "org-gtd is not available: %s"
+                (or init-local-gtd-unavailable-reason "unknown reason")))
+  (org-gtd-view-show '((name . "All Projects")
+                       (type . project))))
+
 (defun init-local-gtd--settings ()
   "Apply the org-gtd settings this module owns."
   ;; Obsolete since 4.0.0, but `org-gtd-refile--should-prompt-p' reads it

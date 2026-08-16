@@ -34,6 +34,7 @@ the reason, and leaves the optional settings unchanged.
 | `C-c o g k` | Clarify at point (`init-local-gtd-clarify-item`) |
 | `C-c o g m` | Command centre (`init-local-gtd-command-center`) |
 | `C-c o g n` | All next actions (`org-gtd-show-all-next`) |
+| `C-c o g p` | All projects (`init-local-gtd-show-all-projects`) |
 | `C-c o g s` | Stuck projects (`org-gtd-reflect-stuck-projects`) |
 | `C-c o g o` | Organize clarify task (`org-gtd-organize`) |
 | `C-c o g a` | Agenda task transient (`org-gtd-agenda-transient`) |

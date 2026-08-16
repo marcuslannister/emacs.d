@@ -21,6 +21,7 @@ continuously, so changes land under "Unreleased".
 - Drop `org` from `anvil-modules` in `lisp/init-local-ai.el`. The Anvil worker pool's org tools (`org-add-todo`, `org-update-todo-state`, etc.) wrote to `~/org` files independently of interactive Emacs buffers on the same files, racing with them and triggering repeated Syncthing sync-conflict storms on `ai.org`, `software.org`, `network.org`, and `refile.org`.
 
 ### Added
+- List every Project with `C-c o g p` (`SPC o g p`, `init-local-gtd-show-all-projects`); org-gtd's command centre reaches only stuck, completed, and missed Projects.
 - Add Hel Org GTD bindings for capture, inbox processing, review, organize, and agenda task actions under `SPC o g`.
 - Add `docs/org-gtd-cheatsheet.md`: the keys, the command centre and organize menus, the five keywords, the GTD files, the settings this configuration owns, and the cautions to carry into daily use.
 - Add org-gtd 4.6.1 as the capture/clarify/organize/engage process in `lisp/init-local-gtd.el`, pinned by Git tag in `lisp/package-list.el`. Topic files under `~/org/` stay the store; single actions and projects prompt for a heading, and `C-c c` / `C-c o e` / `C-c o k` open the command centre, engage, and clarify. The module installs org-gtd's ELPA dependencies, acknowledges 4.6.1 before load, refreshes `org-agenda-files` after capture and after refile, and degrades with a reason when a dependency is missing. `gtd-keyword-rewrite.el` is the record of the 20-heading `HOLD`/`WAITING`/`CANCELLED` rewrite.
