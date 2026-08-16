@@ -107,16 +107,18 @@ otherwise swallow engage.  The `g' view is gone; keep that name dead."
               #'init-local-gtd-refresh-agenda-files))
 
 (defun init-local-gtd--bind-keys ()
-  "Bind the two keys that belong to org-gtd's own maps.
+  "Bind the keys that belong to org-gtd's own maps.
 The global keys live in `init-local-hel.el' with every other global key."
   ;; org-gtd binds C-c C-k (cancel) and C-c d (duplicate) in the clarify buffer,
   ;; but never binds `org-gtd-organize' -- the command that files the Task, and
-  ;; the one pressed most.  Out of the box it is M-x only.
+  ;; the one pressed most.  Offer both C-c c and C-c C-c for it.
+  (keymap-set org-gtd-clarify-mode-map "C-c c" #'org-gtd-organize)
   (keymap-set org-gtd-clarify-mode-map "C-c C-c" #'org-gtd-organize)
-  ;; The same key as the global one, so C-c c always opens the GTD menu that
-  ;; fits where you are: the command centre everywhere, the Task menu here.
+  ;; C-c c remains the agenda task menu.  C-c . is the org-gtd documented
+  ;; alternative and is useful when C-c c has another local meaning.
   (with-eval-after-load 'org-agenda
-    (keymap-set org-agenda-mode-map "C-c c" #'org-gtd-agenda-transient)))
+    (keymap-set org-agenda-mode-map "C-c c" #'org-gtd-agenda-transient)
+    (keymap-set org-agenda-mode-map "C-c ." #'org-gtd-agenda-transient)))
 
 (defun init-local-gtd--install-elpa-dependencies ()
   "Install org-gtd 4.6.1's ELPA dependencies, or return a reason string."
