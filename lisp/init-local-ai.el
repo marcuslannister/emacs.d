@@ -24,8 +24,23 @@
 ;; caused repeated Syncthing sync-conflict storms.
 (setq anvil-modules '(worker eval file host git proc fs emacs text clipboard data net))
 
-;; Enable optional modules
-(setq anvil-optional-modules '(xlsx pdf http cron browser))
+;; Enable optional modules.
+;;
+;; `state' is listed ahead of `shell-filter' and `context' because both
+;; `(require 'anvil-state)' for their SQLite-backed blob store; loading it
+;; first means its own `anvil-state-enable' has run before they do.
+;; It needs Emacs 29+ with SQLite, which this build has.
+;;
+;; `disclosure' adds the Layer-2 `file-read-snippet' that `file-outline' and
+;; `file-read' already point at in their own descriptions.  Its org-index
+;; handler is referenced only in comments — the module itself requires just
+;; cl-lib, anvil-server, and anvil-uri — so enabling it does NOT pull in the
+;; org module or touch ~/org files.
+;;
+;; `shell-filter' adds shell-run / shell-filter / shell-tee-get / shell-gain;
+;; `context' adds context-compress / -retrieve / -stats.
+(setq anvil-optional-modules
+      '(xlsx pdf http cron browser state shell-filter context disclosure))
 
 (anvil-enable)
 (anvil-server-start)
