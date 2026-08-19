@@ -223,6 +223,12 @@
         "j" #'hel-next-line
         "k" #'hel-previous-line
         "l" #'hel-forward-char))
+    (with-eval-after-load 'org-agenda
+      (hel-keymap-set org-agenda-mode-map :state 'emacs
+        "h" #'hel-backward-char
+        "j" #'hel-next-line
+        "k" #'hel-previous-line
+        "l" #'hel-forward-char))
     (hel-keymap-global-set :state 'normal
       "d" #'hel-delete
       "D" #'hel-cut
