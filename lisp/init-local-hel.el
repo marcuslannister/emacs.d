@@ -211,6 +211,11 @@
     "C-c z t" #'zoxide-travel
     "C-c z d" #'zoxide-cd))
 
+(defun my/hel-delete-to-end-of-line ()
+  "Delete from point to end of line, without touching the `kill-ring'."
+  (interactive "*")
+  (delete-region (point) (hel-end-of-line)))
+
 (defun my/hel--activate ()
   "Load Hel and hel-leader, configure them, and enable Hel globally."
   (when (and (require 'hel nil t)
@@ -231,7 +236,8 @@
         "l" #'hel-forward-char))
     (hel-keymap-global-set :state 'normal
       "d" #'hel-delete
-      "D" #'hel-cut
+      "D" #'my/hel-delete-to-end-of-line
+      "C" #'hel-cut
       "p" #'hel-paste-before
       "P" #'hel-paste-after)
     (hel-keymap-global-set :state '(normal insert emacs)
