@@ -65,6 +65,19 @@ The same clock commands remain available under `SPC a`.
 Use `v` plus motions for a characterwise selection, or `x` for a linewise
 selection. Press `d` to delete the selection or `y` to copy it.
 
+## Line and buffer motions
+
+| Key | Action |
+| --- | --- |
+| `g h` | Beginning of line |
+| `g s` | First non-blank character of line |
+| `g l` | End of line |
+| `g g` | Beginning of buffer |
+| `g e` | End of buffer |
+
+Prefix any of these with `v` to select while moving, e.g. `v g l` selects to
+end of line.
+
 ## Scrolling and paste
 
 | Key | Action |
