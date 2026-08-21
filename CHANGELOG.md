@@ -51,6 +51,7 @@ continuously, so changes land under "Unreleased".
 - Disable org-supertag startup, synchronization, capture integration, and installation.
 - Swap Hel Normal-state `p` and `P`, making lowercase paste linewise content above the current line.
 - Swap Hel Normal-state `d` and `D`, making delete-without-kill the lowercase default.
+- Rebind Hel Normal-state `D` to delete from point to end of line without touching the kill ring, and move the former cut-into-kill-ring behavior to `C`.
 - Remove the org-supertag leader group under `SPC s`.
 - Add pinned `hel-leader` native key translation; keep Git on `SPC g`, move C-M- to `SPC G`, and move the former `SPC c` group to `SPC a`.
 - Replace Meow with Hel, installed at a pinned Git commit through a shared GUI/TUI async-installer bootstrap, while preserving the personal `SPC` leader map in Hel Normal and Emacs states.

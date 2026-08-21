@@ -53,7 +53,8 @@ The same clock commands remain available under `SPC a`.
 | Key | Action |
 | --- | --- |
 | `d` | Delete the selection without changing the kill ring; without a selection, delete forward |
-| `D` | Cut the selection into the kill ring; without a selection, delete backward without changing the kill ring |
+| `D` | Delete from point to end of line, without changing the kill ring |
+| `C` | Cut the selection into the kill ring; without a selection, delete backward |
 | `v` | Toggle selection extension |
 | `x` | Expand or contract the selection linewise downward |
 | `X` | Expand or contract the selection linewise upward |
@@ -62,7 +63,7 @@ The same clock commands remain available under `SPC a`.
 | `P` | Paste after the selection; linewise content goes below the current line |
 
 Use `v` plus motions for a characterwise selection, or `x` for a linewise
-selection. Press `D` to cut the selection or `y` to copy it.
+selection. Press `d` to delete the selection or `y` to copy it.
 
 ## Scrolling and paste
 
