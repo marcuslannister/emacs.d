@@ -80,5 +80,8 @@ ghostel-module/
 .ccglass/
 /HANDOFF.md
 /lisp/init-local-proofread-config.el
+.model-evaluation/
+__pycache__/
+*.py[cod]
 .DS_Store
 /projectile-frecency.eld
