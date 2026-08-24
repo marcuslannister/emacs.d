@@ -234,6 +234,25 @@ writing benchmark measures constraint following, not subjective writing quality
 ([OpenMark writing method](https://openmark.ai/best-ai-for-writing)). Use these
 pages only as secondary evidence about OpenMark's own method.
 
+## Production verification
+
+After the human reviewer selects the English-polishing winner:
+
+1. Update only the gitignored `lisp/init-local-proofread-config.el`: use
+   `https://openrouter.ai/api/v1/` as the endpoint, `openrouter.ai` as the
+   auth-source host, and the selected OpenRouter model ID as the chat model.
+   Set `ml-proofread-provider-identity` to a new non-secret value that includes
+   the selected model ID, and update `ml-proofread-source-label` to name that
+   model. Keep the API key in `auth-source`; never put it in the config file.
+2. Restart Emacs so the checker uses a new provider object and cache identity.
+3. Run the production Proofread checker on the five committed polishing cases.
+   Confirm that the correct case returns no diagnostics, reported ranges select
+   the exact source text, suggestions are usable, and no JSON or schema error
+   occurs.
+4. Record the result in the local Evaluation Run directory. Do not change a
+   committed configuration file and do not select a translation integration as
+   part of this task.
+
 ## Verification limits
 
 No candidate was called during this research. No output quality, schema success
