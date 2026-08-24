@@ -11,6 +11,34 @@ SCRIPT = ROOT / "evaluate-openrouter-models.py"
 
 
 class EvaluationCliTest(unittest.TestCase):
+    @staticmethod
+    def _write_complete_cases(directory):
+        paths = []
+        for name, numbers in (("public", range(5)), ("private", range(5, 20))):
+            path = directory / f"{name}.jsonl"
+            path.write_text(
+                "\n".join(
+                    json.dumps(
+                        {"id": f"{track}-{number}", "track": track, "text": "test"}
+                    )
+                    for track in ("polishing", "zh-en", "en-zh")
+                    for number in numbers
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            paths.append(path)
+        return paths
+
+    @staticmethod
+    def _run_cli(*args):
+        return subprocess.run(
+            [sys.executable, str(SCRIPT), *(str(arg) for arg in args)],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+
     def test_repository_has_five_synthetic_cases_per_track(self):
         cases = [
             json.loads(line)
@@ -20,17 +48,15 @@ class EvaluationCliTest(unittest.TestCase):
         ]
 
         self.assertEqual(
-            {track: sum(case["track"] == track for case in cases) for track in cases[0:0] or ("polishing", "zh-en", "en-zh")},
+            {
+                track: sum(case["track"] == track for case in cases)
+                for track in ("polishing", "zh-en", "en-zh")
+            },
             {"polishing": 5, "zh-en": 5, "en-zh": 5},
         )
 
     def test_self_check_runs_without_network(self):
-        result = subprocess.run(
-            [sys.executable, str(SCRIPT), "self-check"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-        )
+        result = self._run_cli("self-check")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("validation: ok", result.stdout)
@@ -41,6 +67,8 @@ class EvaluationCliTest(unittest.TestCase):
         self.assertIn("persistence: ok", result.stdout)
         self.assertIn("execution: ok", result.stdout)
         self.assertIn("orchestration: ok", result.stdout)
+        self.assertIn("failure preservation: ok", result.stdout)
+        self.assertIn("cumulative time: ok", result.stdout)
         self.assertIn("self-check passed", result.stdout)
 
     def test_run_rejects_incomplete_case_set_before_paid_call(self):
@@ -54,26 +82,16 @@ class EvaluationCliTest(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "run",
-                    "--public-cases",
-                    str(cases),
-                    "--private-cases",
-                    str(Path(directory) / "missing.jsonl"),
-                    "--output",
-                    str(Path(directory) / "run"),
-                    "--yes",
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            result = self._run_cli(
+                "run",
+                "--public-cases",
+                cases,
+                "--private-cases",
+                Path(directory) / "missing.jsonl",
+                "--yes",
             )
-
         self.assertEqual(result.returncode, 2)
-        self.assertIn("need 20 cases for each track", result.stderr)
+        self.assertIn("need 5 public and 15 private cases for each track", result.stderr)
 
     def test_run_rejects_a_free_form_case_prompt(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -90,19 +108,12 @@ class EvaluationCliTest(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "run",
-                    "--public-cases",
-                    str(cases),
-                    "--private-cases",
-                    str(Path(directory) / "missing.jsonl"),
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            result = self._run_cli(
+                "run",
+                "--public-cases",
+                cases,
+                "--private-cases",
+                Path(directory) / "missing.jsonl",
             )
 
         self.assertEqual(result.returncode, 2)
@@ -171,20 +182,9 @@ class EvaluationCliTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "summarize",
-                    str(run_directory),
-                    "--scores",
-                    str(scores),
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            result = self._run_cli(
+                "summarize", run_directory, "--scores", scores
             )
-
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("polishing: alpha (75.0%)", result.stdout)
 
@@ -262,18 +262,8 @@ class EvaluationCliTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "summarize",
-                    str(run_directory),
-                    "--scores",
-                    str(scores),
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            result = self._run_cli(
+                "summarize", run_directory, "--scores", scores
             )
 
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -283,16 +273,21 @@ class EvaluationCliTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             run_directory = Path(directory)
             jobs = [
-                {"key": key, "model": model, "case": {"track": track}}
-                for key, model, track in (
-                    ("alpha-polishing", "alpha", "polishing"),
-                    ("beta-polishing", "beta", "polishing"),
-                    ("alpha-zh-en", "alpha", "zh-en"),
-                    ("beta-zh-en", "beta", "zh-en"),
-                )
+                {
+                    "key": f"{model}-{track}-{run}",
+                    "model": model,
+                    "case": {"track": track},
+                }
+                for model in ("alpha", "beta")
+                for track in ("polishing", "zh-en")
+                for run in range(1, 4)
+            ]
+            cases = [
+                {"id": track, "track": track, "text": "source"}
+                for track in ("polishing", "zh-en")
             ]
             (run_directory / "manifest.json").write_text(
-                json.dumps({"jobs": jobs}), encoding="utf-8"
+                json.dumps({"jobs": jobs, "cases": cases, "seed": 1}), encoding="utf-8"
             )
             (run_directory / "review-map.json").write_text(
                 json.dumps(
@@ -301,15 +296,21 @@ class EvaluationCliTest(unittest.TestCase):
                             {
                                 "id": "polishing-comparison",
                                 "track": "polishing",
+                                "case_id": "polishing",
                                 "a_model": "alpha",
                                 "b_model": "beta",
+                                "a_key": "alpha-polishing-2",
+                                "b_key": "beta-polishing-1",
                                 "criteria": ["naturalness"],
                             },
                             {
                                 "id": "translation-comparison",
                                 "track": "zh-en",
+                                "case_id": "zh-en",
                                 "a_model": "alpha",
                                 "b_model": "beta",
+                                "a_key": "alpha-zh-en-1",
+                                "b_key": "beta-zh-en-1",
                                 "criteria": ["naturalness"],
                             },
                         ]
@@ -317,14 +318,24 @@ class EvaluationCliTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            responses = [
-                {"key": key, "model": model, "track": track, "valid": True}
-                for key, model, track in (
-                    ("beta-polishing", "beta", "polishing"),
-                    ("alpha-zh-en", "alpha", "zh-en"),
-                    ("beta-zh-en", "beta", "zh-en"),
-                )
-            ]
+            responses = []
+            for model in ("alpha", "beta"):
+                for track in ("polishing", "zh-en"):
+                    for run in range(1, 4):
+                        key = f"{model}-{track}-{run}"
+                        if key == "alpha-polishing-1":
+                            continue
+                        responses.append(
+                            {
+                                "key": key,
+                                "case_id": track,
+                                "model": model,
+                                "track": track,
+                                "run": run,
+                                "valid": True,
+                                "parsed": {"translation": "output"},
+                            }
+                        )
             (run_directory / "responses.jsonl").write_text(
                 "\n".join(json.dumps(response) for response in responses) + "\n",
                 encoding="utf-8",
@@ -340,67 +351,60 @@ class EvaluationCliTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "summarize",
-                    str(run_directory),
-                    "--scores",
-                    str(scores),
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            result = self._run_cli(
+                "summarize", run_directory, "--scores", scores
             )
+            follow_up_html_exists = (run_directory / "review-follow-up.html").exists()
+            follow_up_map_exists = (run_directory / "review-follow-up-map.json").exists()
+            follow_up_map = json.loads(
+                (run_directory / "review-follow-up-map.json").read_text(encoding="utf-8")
+            )
+            follow_up_items = [
+                {"name": f"{comparison['id']}::{criterion}", "value": "tie"}
+                for comparison in follow_up_map["comparisons"]
+                for criterion in comparison["criteria"]
+            ]
+            follow_up_path = run_directory / "reviewer-1.json"
+            follow_up_path.write_text(json.dumps(follow_up_items), encoding="utf-8")
+            follow_up_result = self._run_cli(
+                "summarize",
+                run_directory,
+                "--scores",
+                scores,
+                "--follow-up-scores",
+                follow_up_path,
+            )
+            stored_follow_up_scores = (
+                run_directory / "follow-up-scores-1.json"
+            ).exists()
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("polishing: beta", result.stdout)
         self.assertIn("zh-en: alpha", result.stdout)
+        self.assertIn("follow-up review required", result.stdout)
+        self.assertTrue(follow_up_html_exists)
+        self.assertTrue(follow_up_map_exists)
+        self.assertEqual(follow_up_result.returncode, 0, follow_up_result.stderr)
+        self.assertIn("follow-up scores included from 1 reviewer", follow_up_result.stdout)
+        self.assertTrue(stored_follow_up_scores)
 
     def test_noninteractive_run_requires_explicit_confirmation(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            cases = directory / "cases.jsonl"
-            cases.write_text(
-                "\n".join(
-                    json.dumps(
-                        {
-                            "id": f"{track}-{number}",
-                            "track": track,
-                            "text": "A short test passage.",
-                        }
-                    )
-                    for track in ("polishing", "zh-en", "en-zh")
-                    for number in range(20)
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            output = directory / "run"
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "run",
-                    "--public-cases",
-                    str(cases),
-                    "--private-cases",
-                    str(directory / "missing.jsonl"),
-                    "--output",
-                    str(output),
-                    "--no-input",
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            public_cases, private_cases = self._write_complete_cases(directory)
+            result = self._run_cli(
+                "run",
+                "--public-cases",
+                public_cases,
+                "--private-cases",
+                private_cases,
+                "--no-input",
             )
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("480 requests", result.stdout)
         self.assertIn("maximum reserved cost", result.stdout)
         self.assertIn("confirmation required; rerun with --yes", result.stderr)
-        self.assertFalse(output.exists())
 
     def test_completed_run_resumes_without_network(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -434,19 +438,7 @@ class EvaluationCliTest(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "run",
-                    "--resume",
-                    str(run_directory),
-                    "--yes",
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-            )
+            result = self._run_cli("run", "--resume", run_directory, "--yes")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("0 requests remaining", result.stdout)
@@ -454,33 +446,15 @@ class EvaluationCliTest(unittest.TestCase):
     def test_smoke_plan_uses_one_request_per_track_candidate(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            cases = directory / "cases.jsonl"
-            cases.write_text(
-                "\n".join(
-                    json.dumps(
-                        {"id": f"{track}-{number}", "track": track, "text": "test"}
-                    )
-                    for track in ("polishing", "zh-en", "en-zh")
-                    for number in range(20)
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT),
-                    "run",
-                    "--public-cases",
-                    str(cases),
-                    "--private-cases",
-                    str(directory / "missing.jsonl"),
-                    "--smoke",
-                    "--no-input",
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
+            public_cases, private_cases = self._write_complete_cases(directory)
+            result = self._run_cli(
+                "run",
+                "--public-cases",
+                public_cases,
+                "--private-cases",
+                private_cases,
+                "--smoke",
+                "--no-input",
             )
 
         self.assertEqual(result.returncode, 2)

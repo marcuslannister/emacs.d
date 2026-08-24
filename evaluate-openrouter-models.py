@@ -17,7 +17,7 @@ import urllib.request
 from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 
@@ -90,18 +90,33 @@ CRITERIA = {
     "zh-en": ("meaning", "terminology", "naturalness", "register", "format"),
     "en-zh": ("meaning", "terminology", "naturalness", "register", "format"),
 }
-POLISHING_INSTRUCTIONS = """Return proofreading diagnostics that match the requested response schema.  Do not include Markdown, comments, prose, or reasoning outside the structured response.
-The top-level response has a diagnostics array.  Each diagnostic has kind, message, text, range, and suggestions fields.
-Report every independent problem in Text.  Do not stop after the first problem in a sentence; when one sentence has multiple misspellings, grammar issues, or style issues, return one diagnostic per issue.
-Prefer the smallest exact text range that identifies each issue, and keep diagnostics separate unless one correction requires a single combined range.
-For Chinese text, also check adjacent characters that may form one misspelled word; a diagnostic may cover multiple adjacent characters.
-Report diagnostics only for the Text section.  Use context before and context after only to understand the Text; never return ranges or text from context.
-When Target kind is comment or docstring, check only natural-language prose.  Never report comment delimiters, string quotes, indentation, program code, or markup as proofreading problems.
-Use zero-based chunk-relative offsets; range end is exclusive.
-The text field must exactly equal the substring selected by range.
-Use kind values spelling, grammar, style, or other.
-For suggestions, return practical replacement text in best-first order.  Include multiple suggestions when several distinct corrections are useful; one suggestion or an empty suggestions array is acceptable when there is no real alternative.
-Use an empty diagnostics array when there are no diagnostics."""
+POLISHING_INSTRUCTIONS = (
+    "Return proofreading diagnostics that match the requested response schema.  "
+    "Do not include Markdown, comments, prose, or reasoning outside the structured "
+    "response.\n"
+    "The top-level response has a diagnostics array.  Each diagnostic has kind, "
+    "message, text, range, and suggestions fields.\n"
+    "Report every independent problem in Text.  Do not stop after the first problem "
+    "in a sentence; when one sentence has multiple misspellings, grammar issues, or "
+    "style issues, return one diagnostic per issue.\n"
+    "Prefer the smallest exact text range that identifies each issue, and keep "
+    "diagnostics separate unless one correction requires a single combined range.\n"
+    "For Chinese text, also check adjacent characters that may form one misspelled "
+    "word; a diagnostic may cover multiple adjacent characters.\n"
+    "Report diagnostics only for the Text section.  Use context before and context "
+    "after only to understand the Text; never return ranges or text from context.\n"
+    "When Target kind is comment or docstring, check only natural-language prose.  "
+    "Never report comment delimiters, string quotes, indentation, program code, or "
+    "markup as proofreading problems.\n"
+    "Use zero-based chunk-relative offsets; range end is exclusive.\n"
+    "The text field must exactly equal the substring selected by range.\n"
+    "Use kind values spelling, grammar, style, or other.\n"
+    "For suggestions, return practical replacement text in best-first order.  "
+    "Include multiple suggestions when several distinct corrections are useful; one "
+    "suggestion or an empty suggestions array is acceptable when there is no real "
+    "alternative.\n"
+    "Use an empty diagnostics array when there are no diagnostics."
+)
 
 
 def build_prompt(case: dict) -> str:
@@ -124,7 +139,11 @@ Text:
 Context after:
 {case.get('context_after', '')}
 """
-    target = "natural international English with US spelling" if case["track"] == "zh-en" else "Simplified Chinese"
+    target = (
+        "natural international English with US spelling"
+        if case["track"] == "zh-en"
+        else "Simplified Chinese"
+    )
     requirements = case.get("requirements", [])
     requirement_text = "\n".join(f"- {item}" for item in requirements)
     if requirement_text:
@@ -142,16 +161,15 @@ def build_jobs(cases: list[dict]) -> list[dict]:
         prompt = build_prompt(case)
         for model in MODELS_BY_TRACK[case["track"]]:
             for run_number in range(1, RUNS_PER_CASE + 1):
-                jobs.append(
-                    {
-                        "key": f"{case['id']}::{model}::{run_number}",
-                        "case": case,
-                        "model": model,
-                        "run": run_number,
-                        "prompt": prompt,
-                        "reserved_cost": str(reserve_cost(model, prompt)),
-                    }
-                )
+                job = {
+                    "key": f"{case['id']}::{model}::{run_number}",
+                    "case": case,
+                    "model": model,
+                    "run": run_number,
+                    "prompt": prompt,
+                }
+                job["reserved_cost"] = str(reserve_request_cost(job, MODEL_PRICES))
+                jobs.append(job)
     return jobs
 
 
@@ -200,13 +218,19 @@ def append_jsonl(path: Path, value: dict) -> None:
         os.fsync(stream.fileno())
 
 
-def write_json_atomic(path: Path, value: dict) -> None:
+def write_json_atomic(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
         json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     temporary.replace(path)
+
+
+class OpenRouterRequestError(RuntimeError):
+    def __init__(self, message: str, details: dict):
+        super().__init__(message)
+        self.details = details
 
 
 def post_openrouter(request_body: dict, api_key: str) -> dict:
@@ -220,27 +244,66 @@ def post_openrouter(request_body: dict, api_key: str) -> dict:
         },
         method="POST",
     )
+    attempt_failures = []
     for attempt in range(2):
         try:
             with urllib.request.urlopen(request, timeout=120) as response:
-                return json.load(response)
+                body = response.read().decode("utf-8", errors="replace")
+                try:
+                    result = json.loads(body)
+                except json.JSONDecodeError as error:
+                    raise OpenRouterRequestError(
+                        "OpenRouter returned invalid JSON",
+                        {
+                            "attempt_failures": attempt_failures,
+                            "status": response.status,
+                            "body": body,
+                        },
+                    ) from error
+                if not isinstance(result, dict):
+                    raise OpenRouterRequestError(
+                        "OpenRouter returned a non-object response",
+                        {
+                            "attempt_failures": attempt_failures,
+                            "status": response.status,
+                            "body": body,
+                        },
+                    )
+                if attempt_failures:
+                    result["_evaluation_attempt_failures"] = attempt_failures
+                return result
         except urllib.error.HTTPError as error:
+            body = error.read().decode("utf-8", errors="replace")
+            attempt_failures.append(
+                {"attempt": attempt + 1, "status": error.code, "body": body}
+            )
             retryable = error.code in {408, 429} or error.code >= 500
             if retryable and attempt == 0:
                 time.sleep(1)
                 continue
             try:
-                detail = json.loads(error.read().decode("utf-8")).get("error", {}).get("message")
-            except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+                detail = json.loads(body).get("error", {}).get("message")
+            except (json.JSONDecodeError, AttributeError):
                 detail = None
-            raise RuntimeError(
-                f"OpenRouter HTTP {error.code}" + (f": {detail}" if detail else "")
+            message = f"OpenRouter HTTP {error.code}" + (f": {detail}" if detail else "")
+            raise OpenRouterRequestError(
+                message, {"attempt_failures": attempt_failures}
             ) from error
         except (urllib.error.URLError, TimeoutError) as error:
+            attempt_failures.append(
+                {
+                    "attempt": attempt + 1,
+                    "error_type": type(error).__name__,
+                    "error": str(error),
+                }
+            )
             if attempt == 0:
                 time.sleep(1)
                 continue
-            raise RuntimeError("OpenRouter request failed after one retry") from error
+            raise OpenRouterRequestError(
+                "OpenRouter request failed after one retry",
+                {"attempt_failures": attempt_failures},
+            ) from error
     raise AssertionError("unreachable")
 
 
@@ -299,14 +362,35 @@ def execute_job(job: dict, api_key: str, post=post_openrouter) -> dict:
         if not isinstance(content, str):
             raise TypeError("content is not a string")
     except (KeyError, IndexError, TypeError) as error:
-        raise RuntimeError("OpenRouter response has no message content") from error
+        raise OpenRouterRequestError(
+            "OpenRouter response has no message content",
+            {"response": api_response},
+        ) from error
     try:
         parsed = validate_structured_response(job["case"]["track"], content, job["case"]["text"])
         valid, validation_error = True, None
     except ValueError as error:
         parsed, valid, validation_error = None, False, str(error)
-    usage = api_response.get("usage") or {}
-    cost = Decimal(str(usage.get("cost", 0)))
+    usage = api_response.get("usage")
+    if not isinstance(usage, dict):
+        raise OpenRouterRequestError(
+            "OpenRouter response has invalid usage data",
+            {"response": api_response},
+        )
+    try:
+        cost = Decimal(str(usage.get("cost", 0)))
+    except (InvalidOperation, ValueError) as error:
+        raise OpenRouterRequestError(
+            "OpenRouter response has invalid cost data",
+            {"response": api_response},
+        ) from error
+    if not cost.is_finite() or cost < 0:
+        raise OpenRouterRequestError(
+            "OpenRouter response has invalid cost data",
+            {"response": api_response},
+        )
+    failed_attempts = len(api_response.get("_evaluation_attempt_failures", ()))
+    unknown_attempt_cost = Decimal(job["reserved_cost"]) / 2 * failed_attempts
     return {
         "key": job["key"],
         "case_id": job["case"]["id"],
@@ -319,9 +403,11 @@ def execute_job(job: dict, api_key: str, post=post_openrouter) -> dict:
         "parsed": parsed,
         "latency_seconds": round(time.monotonic() - started, 3),
         "cost": str(cost),
+        "budget_cost": str(min(Decimal(job["reserved_cost"]), cost + unknown_attempt_cost)),
         "usage": usage,
         "service_tier": api_response.get("service_tier"),
         "openrouter_metadata": api_response.get("openrouter_metadata"),
+        "attempt_failures": api_response.get("_evaluation_attempt_failures", []),
         "response": api_response,
     }
 
@@ -343,61 +429,105 @@ def run_jobs(
     completed = {item["key"] for item in responses + failures}
     pending = [job for job in jobs if job["key"] not in completed]
     spent = sum((Decimal(item.get("cost", "0")) for item in responses + failures), Decimal())
-    deadline = time.monotonic() + time_limit_seconds
+    budget_used = sum(
+        (
+            Decimal(item.get("budget_cost", item.get("cost", "0")))
+            for item in responses + failures
+        ),
+        Decimal(),
+    )
+    elapsed_before = float(manifest.get("elapsed_seconds", 0))
+    invocation_started = time.monotonic()
+    deadline = invocation_started + max(0, time_limit_seconds - elapsed_before)
     stopped_reason = None
     next_job = 0
     in_flight = {}
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        while next_job < len(pending) or in_flight:
-            while next_job < len(pending) and len(in_flight) < 4:
-                if time.monotonic() >= deadline:
-                    stopped_reason = "time_limit"
-                    next_job = len(pending)
+    interrupted = False
+
+    def record_future(future) -> None:
+        nonlocal spent, budget_used
+        job = in_flight[future]
+        try:
+            result = future.result()
+        except OpenRouterRequestError as error:
+            result = {
+                "key": job["key"],
+                "case_id": job["case"]["id"],
+                "track": job["case"]["track"],
+                "model": job["model"],
+                "provider": MODELS[job["model"]]["provider"],
+                "run": job["run"],
+                "cost": "0",
+                "budget_cost": job["reserved_cost"],
+                "error": str(error),
+                "details": error.details,
+            }
+            append_jsonl(failures_path, result)
+            failures.append(result)
+        else:
+            append_jsonl(responses_path, result)
+            responses.append(result)
+        spent += Decimal(result["cost"])
+        budget_used += Decimal(result["budget_cost"])
+        in_flight.pop(future)
+        manifest.update(
+            {
+                "spent_cost": str(spent),
+                "budget_used": str(budget_used),
+                "completed_requests": len(responses) + len(failures),
+                "stopped_reason": stopped_reason,
+                "elapsed_seconds": elapsed_before
+                + time.monotonic()
+                - invocation_started,
+            }
+        )
+        write_json_atomic(run_directory / "manifest.json", manifest)
+
+    try:
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            while next_job < len(pending) or in_flight:
+                while next_job < len(pending) and len(in_flight) < 4:
+                    if time.monotonic() >= deadline:
+                        stopped_reason = "time_limit"
+                        next_job = len(pending)
+                        break
+                    job = pending[next_job]
+                    reserved_in_flight = sum(
+                        (
+                            Decimal(item["reserved_cost"])
+                            for item in in_flight.values()
+                        ),
+                        Decimal(),
+                    )
+                    if (
+                        budget_used
+                        + reserved_in_flight
+                        + Decimal(job["reserved_cost"])
+                        > cost_limit
+                    ):
+                        stopped_reason = "cost_limit"
+                        next_job = len(pending)
+                        break
+                    in_flight[executor.submit(execute_job, job, api_key, post)] = job
+                    next_job += 1
+                if not in_flight:
                     break
-                job = pending[next_job]
-                reserved_in_flight = sum(
-                    (Decimal(item["reserved_cost"]) for item in in_flight.values()), Decimal()
-                )
-                if spent + reserved_in_flight + Decimal(job["reserved_cost"]) > cost_limit:
-                    stopped_reason = "cost_limit"
-                    next_job = len(pending)
-                    break
-                in_flight[executor.submit(execute_job, job, api_key, post)] = job
-                next_job += 1
-            if not in_flight:
-                break
-            done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
-            for future in done:
-                job = in_flight.pop(future)
-                try:
-                    result = future.result()
-                except RuntimeError as error:
-                    result = {
-                        "key": job["key"],
-                        "case_id": job["case"]["id"],
-                        "track": job["case"]["track"],
-                        "model": job["model"],
-                        "provider": MODELS[job["model"]]["provider"],
-                        "run": job["run"],
-                        "cost": "0",
-                        "error": str(error),
-                    }
-                    append_jsonl(failures_path, result)
-                    failures.append(result)
-                else:
-                    append_jsonl(responses_path, result)
-                    responses.append(result)
-                spent += Decimal(result["cost"])
-                manifest.update(
-                    {
-                        "spent_cost": str(spent),
-                        "completed_requests": len(responses) + len(failures),
-                        "stopped_reason": stopped_reason,
-                    }
-                )
-                write_json_atomic(run_directory / "manifest.json", manifest)
-    manifest["stopped_reason"] = stopped_reason
-    write_json_atomic(run_directory / "manifest.json", manifest)
+                done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
+                for future in done:
+                    record_future(future)
+    except KeyboardInterrupt:
+        interrupted = True
+        stopped_reason = "interrupted"
+        for future in list(in_flight):
+            record_future(future)
+    finally:
+        manifest["stopped_reason"] = stopped_reason
+        manifest["elapsed_seconds"] = (
+            elapsed_before + time.monotonic() - invocation_started
+        )
+        write_json_atomic(run_directory / "manifest.json", manifest)
+    if interrupted:
+        raise KeyboardInterrupt
     return {"responses": responses, "failures": failures, "manifest": manifest}
 
 
@@ -434,6 +564,8 @@ def build_review_data(cases: list[dict], responses: list[dict], seed: int) -> tu
                     "case_id": case["id"],
                     "a_model": first_model,
                     "b_model": second_model,
+                    "a_key": first["key"],
+                    "b_key": second["key"],
                     "criteria": list(CRITERIA[case["track"]]),
                 }
             )
@@ -446,6 +578,78 @@ def build_review_data(cases: list[dict], responses: list[dict], seed: int) -> tu
                     "a": display_output(first),
                     "b": display_output(second),
                     "criteria": list(CRITERIA[case["track"]]),
+                }
+            )
+    return {"seed": seed, "comparisons": private_comparisons}, public_comparisons
+
+
+def build_follow_up_data(
+    cases: list[dict],
+    responses: list[dict],
+    initial_review_map: dict,
+    tracks: set[str],
+    seed: int,
+) -> tuple[dict, list]:
+    cases_by_id = {case["id"]: case for case in cases}
+    by_case_model = {}
+    for response in responses:
+        if response.get("valid"):
+            by_case_model.setdefault((response["case_id"], response["model"]), []).append(
+                response
+            )
+    randomizer = random.Random(seed)
+    private_comparisons = []
+    public_comparisons = []
+    number = 0
+    for initial in initial_review_map["comparisons"]:
+        if initial["track"] not in tracks:
+            continue
+        case = cases_by_id[initial["case_id"]]
+        first_options = [
+            response
+            for response in by_case_model.get(
+                (initial["case_id"], initial["a_model"]), []
+            )
+            if response["key"] != initial["a_key"]
+        ]
+        second_options = [
+            response
+            for response in by_case_model.get(
+                (initial["case_id"], initial["b_model"]), []
+            )
+            if response["key"] != initial["b_key"]
+        ]
+        for first, second in zip(
+            sorted(first_options, key=lambda item: item["run"]),
+            sorted(second_options, key=lambda item: item["run"]),
+        ):
+            number += 1
+            first_model, second_model = initial["a_model"], initial["b_model"]
+            if randomizer.choice((False, True)):
+                first_model, second_model = second_model, first_model
+                first, second = second, first
+            identifier = f"follow-up-{number:04d}"
+            private_comparisons.append(
+                {
+                    "id": identifier,
+                    "track": initial["track"],
+                    "case_id": initial["case_id"],
+                    "a_model": first_model,
+                    "b_model": second_model,
+                    "a_key": first["key"],
+                    "b_key": second["key"],
+                    "criteria": initial["criteria"],
+                }
+            )
+            public_comparisons.append(
+                {
+                    "id": identifier,
+                    "track": initial["track"],
+                    "source": case["text"],
+                    "requirements": case.get("requirements", []),
+                    "a": display_output(first),
+                    "b": display_output(second),
+                    "criteria": initial["criteria"],
                 }
             )
     return {"seed": seed, "comparisons": private_comparisons}, public_comparisons
@@ -500,24 +704,15 @@ def validate_structured_response(track: str, content: str, source: str) -> dict:
     return value
 
 
-def reserve_cost(model: str, prompt: str) -> Decimal:
-    prompt_price, completion_price = MODEL_PRICES[model]
-    prompt_tokens_upper_bound = len(prompt.encode("utf-8"))
-    return prompt_price * prompt_tokens_upper_bound + completion_price * MAX_OUTPUT_TOKENS
-
-
 def reserve_request_cost(job: dict, prices: dict) -> Decimal:
     prompt_price, completion_price = prices[job["model"]]
     request_bytes = len(
         json.dumps(build_request(job), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     )
-    return (
+    one_attempt = (
         prompt_price * request_bytes + completion_price * MAX_OUTPUT_TOKENS
     ) * Decimal("1.10")
-
-
-def pending_job_keys(job_keys: list[str], completed: set[str]) -> list[str]:
-    return [key for key in job_keys if key not in completed]
+    return one_attempt * 2
 
 
 def render_review(comparisons: list[dict], storage_key: str = "model-evaluation-scores") -> str:
@@ -544,6 +739,8 @@ def render_review(comparisons: list[dict], storage_key: str = "model-evaluation-
 <div><h3>B</h3><pre>{output_b}</pre></div></div>{criteria}
 <label><input type="checkbox" name="{identifier}::critical-a">A has a critical error</label>
 <label><input type="checkbox" name="{identifier}::critical-b">B has a critical error</label>
+<label><input type="checkbox" name="{identifier}::unstable-a">Review A for instability</label>
+<label><input type="checkbox" name="{identifier}::unstable-b">Review B for instability</label>
 </section>"""
         )
     return """<!doctype html><meta charset="utf-8"><title>Blind review</title>
@@ -569,12 +766,7 @@ def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 
 
-def summarize_run(run_directory: Path, scores_path: Path) -> dict:
-    manifest = json.loads((run_directory / "manifest.json").read_text(encoding="utf-8"))
-    review_map = json.loads((run_directory / "review-map.json").read_text(encoding="utf-8"))
-    score_items = json.loads(scores_path.read_text(encoding="utf-8"))
-    scores = {item["name"]: item["value"] for item in score_items}
-    responses = read_jsonl(run_directory / "responses.jsonl")
+def score_review_batches(manifest: dict, responses: list[dict], batches: list[tuple]) -> dict:
     expected_by_track_model = {}
     for job in manifest["jobs"]:
         key = (job["case"]["track"], job["model"])
@@ -591,28 +783,33 @@ def summarize_run(run_directory: Path, scores_path: Path) -> dict:
     points = {}
     possible = Counter()
     critical_models = set()
-    for comparison in review_map["comparisons"]:
-        track = comparison["track"]
-        model_a, model_b = comparison["a_model"], comparison["b_model"]
-        for model in (model_a, model_b):
-            points.setdefault(track, Counter())
-            points[track][model] += 0
-            possible[(track, model)] += len(comparison["criteria"])
-        for criterion in comparison["criteria"]:
-            name = f"{comparison['id']}::{criterion}"
-            choice = scores.get(name)
-            if choice not in {"a", "b", "tie"}:
-                raise ValueError(f"missing score for {name}")
-            if choice == "a":
-                points[track][model_a] += 1
-            elif choice == "b":
-                points[track][model_b] += 1
-            else:
-                points[track][model_a] += 0.5
-                points[track][model_b] += 0.5
-        for side, model in (("a", model_a), ("b", model_b)):
-            if scores.get(f"{comparison['id']}::critical-{side}") == "on":
-                critical_models.add((track, model))
+    unstable_models = set()
+    for review_map, score_items in batches:
+        scores = {item["name"]: item["value"] for item in score_items}
+        for comparison in review_map["comparisons"]:
+            track = comparison["track"]
+            model_a, model_b = comparison["a_model"], comparison["b_model"]
+            for model in (model_a, model_b):
+                points.setdefault(track, Counter())
+                points[track][model] += 0
+                possible[(track, model)] += len(comparison["criteria"])
+            for criterion in comparison["criteria"]:
+                name = f"{comparison['id']}::{criterion}"
+                choice = scores.get(name)
+                if choice not in {"a", "b", "tie"}:
+                    raise ValueError(f"missing score for {name}")
+                if choice == "a":
+                    points[track][model_a] += 1
+                elif choice == "b":
+                    points[track][model_b] += 1
+                else:
+                    points[track][model_a] += 0.5
+                    points[track][model_b] += 0.5
+            for side, model in (("a", model_a), ("b", model_b)):
+                if scores.get(f"{comparison['id']}::critical-{side}") == "on":
+                    critical_models.add((track, model))
+                if scores.get(f"{comparison['id']}::unstable-{side}") == "on":
+                    unstable_models.add((track, model))
     summary = {"tracks": {}}
     for track, model_points in points.items():
         ranked = []
@@ -628,6 +825,107 @@ def summarize_run(run_directory: Path, scores_path: Path) -> dict:
         leader = eligible[0] if eligible else None
         close = len(eligible) > 1 and leader["share"] - eligible[1]["share"] <= 0.05
         summary["tracks"][track] = {"leader": leader, "close": close, "models": ranked}
+        summary["tracks"][track]["critical_models"] = sorted(
+            model for critical_track, model in critical_models if critical_track == track
+        )
+        summary["tracks"][track]["unstable_models"] = sorted(
+            model for unstable_track, model in unstable_models if unstable_track == track
+        )
+    return summary
+
+
+def summarize_run(
+    run_directory: Path,
+    scores_path: Path,
+    follow_up_scores_path: Path | None,
+    second_reviewer_scores_path: Path | None,
+) -> dict:
+    manifest = json.loads((run_directory / "manifest.json").read_text(encoding="utf-8"))
+    review_map = json.loads((run_directory / "review-map.json").read_text(encoding="utf-8"))
+    score_items = json.loads(scores_path.read_text(encoding="utf-8"))
+    write_json_atomic(run_directory / "scores.json", score_items)
+    responses = read_jsonl(run_directory / "responses.jsonl")
+    summary = score_review_batches(manifest, responses, [(review_map, score_items)])
+    follow_up_tracks = {
+        track
+        for track, result in summary["tracks"].items()
+        if result["close"] or result["critical_models"] or result["unstable_models"]
+    }
+    close_tracks = {
+        track for track, result in summary["tracks"].items() if result["close"]
+    }
+    summary["follow_up_required"] = sorted(follow_up_tracks)
+    summary["follow_up_reviewers_required"] = {
+        track: 2 if track in close_tracks else 1 for track in sorted(follow_up_tracks)
+    }
+    if follow_up_tracks:
+        follow_up_map, public_comparisons = build_follow_up_data(
+            manifest["cases"],
+            responses,
+            review_map,
+            follow_up_tracks,
+            manifest["seed"] + 1,
+        )
+        write_json_atomic(run_directory / "review-follow-up-map.json", follow_up_map)
+        (run_directory / "review-follow-up.html").write_text(
+            render_review(public_comparisons, f"model-evaluation-follow-up-{manifest['seed']}"),
+            encoding="utf-8",
+        )
+        second_map = None
+        if close_tracks:
+            second_map, second_public = build_follow_up_data(
+                manifest["cases"],
+                responses,
+                review_map,
+                close_tracks,
+                manifest["seed"] + 2,
+            )
+            write_json_atomic(
+                run_directory / "review-follow-up-second-map.json", second_map
+            )
+            (run_directory / "review-follow-up-second.html").write_text(
+                render_review(
+                    second_public,
+                    f"model-evaluation-follow-up-second-{manifest['seed']}",
+                ),
+                encoding="utf-8",
+            )
+        if follow_up_scores_path:
+            if close_tracks and not second_reviewer_scores_path:
+                raise ValueError("close results require --second-reviewer-scores")
+            if not close_tracks and second_reviewer_scores_path:
+                raise ValueError("second-reviewer scores are only valid for close results")
+            batches = [(review_map, score_items)]
+            follow_up_items = json.loads(
+                follow_up_scores_path.read_text(encoding="utf-8")
+            )
+            write_json_atomic(
+                run_directory / "follow-up-scores-1.json", follow_up_items
+            )
+            batches.append((follow_up_map, follow_up_items))
+            if close_tracks:
+                second_items = json.loads(
+                    second_reviewer_scores_path.read_text(encoding="utf-8")
+                )
+                write_json_atomic(
+                    run_directory / "follow-up-scores-2.json", second_items
+                )
+                batches.append((second_map, second_items))
+            summary = score_review_batches(manifest, responses, batches)
+            summary["follow_up_required"] = sorted(follow_up_tracks)
+            summary["follow_up_reviewers_required"] = {
+                track: 2 if track in close_tracks else 1
+                for track in sorted(follow_up_tracks)
+            }
+            summary["follow_up_scores_included"] = {
+                track: 2 if track in close_tracks else 1
+                for track in sorted(follow_up_tracks)
+            }
+        elif second_reviewer_scores_path:
+            raise ValueError("provide --follow-up-scores before second-reviewer scores")
+    elif follow_up_scores_path or second_reviewer_scores_path:
+        raise ValueError("follow-up scores were provided but no follow-up is required")
+    summary["production_verification"] = "pending"
     (run_directory / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -638,10 +936,11 @@ def self_check() -> None:
     validate_structured_response("zh-en", '{"translation":"Hello"}', "你好")
     validate_structured_response("polishing", '{"diagnostics":[]}', "Correct text.")
     print("validation: ok")
-    assert reserve_cost("openai/gpt-5.6-terra", "test") < Decimal("0.02")
+    budget_job = build_jobs(
+        [{"id": "budget", "track": "polishing", "text": "test"}]
+    )[0]
+    assert Decimal(budget_job["reserved_cost"]) < Decimal("0.1")
     print("budget: ok")
-    assert pending_job_keys(["a", "b"], {"a"}) == ["b"]
-    print("resume: ok")
     page = render_review([{"id": "case-1", "a": "First", "b": "Second"}])
     assert "Download scores" in page and "openai/" not in page
     print("review: ok")
@@ -687,13 +986,55 @@ def self_check() -> None:
         run_jobs(directory, manifest, jobs, "hidden", post=fake_post, cost_limit=Decimal("1"))
         run_jobs(directory, manifest, jobs, "hidden", post=fake_post, cost_limit=Decimal("1"))
         assert len(calls) == 2 and len(read_jsonl(directory / "responses.jsonl")) == 2
+    print("resume: ok")
     print("orchestration: ok")
+    with tempfile.TemporaryDirectory() as directory:
+        directory = Path(directory)
+
+        def fail(body, key):
+            raise OpenRouterRequestError(
+                "OpenRouter HTTP 503",
+                {"attempt_failures": [{"status": 503, "body": "unavailable"}]},
+            )
+
+        failure_result = run_jobs(
+            directory,
+            {"spent_cost": "0"},
+            [job],
+            "hidden",
+            post=fail,
+            cost_limit=Decimal("1"),
+        )
+        assert read_jsonl(directory / "failures.jsonl")[0]["details"][
+            "attempt_failures"
+        ][0]["body"] == "unavailable"
+        assert failure_result["manifest"]["budget_used"] == job["reserved_cost"]
+    print("failure preservation: ok")
+    with tempfile.TemporaryDirectory() as directory:
+        calls = []
+        manifest = {"spent_cost": "0", "elapsed_seconds": 1}
+        result = run_jobs(
+            Path(directory),
+            manifest,
+            [job],
+            "hidden",
+            post=lambda body, key: calls.append(body),
+            cost_limit=Decimal("1"),
+            time_limit_seconds=1,
+        )
+        assert not calls and result["manifest"]["stopped_reason"] == "time_limit"
+    print("cumulative time: ok")
 
 
-def load_cases(paths: list[Path]) -> list[dict]:
+def load_cases(
+    public_path: Path, private_path: Path, *, require_full: bool = True
+) -> list[dict]:
     cases = []
-    for path in paths:
+    counts_by_source = {}
+    for source, path in (("public", public_path), ("private", private_path)):
+        source_cases = []
         if not path.exists():
+            counts_by_source[source] = Counter()
             continue
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip():
@@ -732,16 +1073,28 @@ def load_cases(paths: list[Path]) -> list[dict]:
                 for requirement in requirements
             ):
                 raise ValueError(f"{path}:{line_number}: requirements must be non-empty strings")
-            cases.append(case)
+            source_cases.append(case)
+        cases.extend(source_cases)
+        counts_by_source[source] = Counter(case["track"] for case in source_cases)
     if len({case["id"] for case in cases}) != len(cases):
         raise ValueError("case ids must be unique")
-    counts = Counter(case["track"] for case in cases)
-    if any(counts[track] != CASES_PER_TRACK for track in TRACKS):
-        raise ValueError("need 20 cases for each track")
+    if require_full and any(
+        counts_by_source["public"][track] != 5
+        or counts_by_source["private"][track] != 15
+        for track in TRACKS
+    ):
+        raise ValueError("need 5 public and 15 private cases for each track")
+    if not require_full and any(
+        counts_by_source["public"][track] + counts_by_source["private"][track] < 1
+        for track in TRACKS
+    ):
+        raise ValueError("smoke runs need at least one case for each track")
     return cases
 
 
-def write_review_files(run_directory: Path, cases: list[dict], responses: list[dict], seed: int) -> int:
+def write_review_files(
+    run_directory: Path, cases: list[dict], responses: list[dict], seed: int
+) -> int:
     review_map, public_comparisons = build_review_data(cases, responses, seed)
     write_json_atomic(run_directory / "review-map.json", review_map)
     (run_directory / "review.html").write_text(
@@ -782,6 +1135,8 @@ def paid_run(
                 for model, price in prices.items()
             },
             "spent_cost": "0",
+            "budget_used": "0",
+            "elapsed_seconds": 0,
             "completed_requests": 0,
         }
         write_json_atomic(run_directory / "manifest.json", manifest)
@@ -801,6 +1156,7 @@ def paid_run(
         f"and {comparison_count} blind comparisons to {run_directory}"
     )
     print(f"spent: US${Decimal(result['manifest']['spent_cost']):.4f}")
+    print(f"budget used: US${Decimal(result['manifest']['budget_used']):.4f}")
     if result["manifest"].get("stopped_reason"):
         print(f"stopped: {result['manifest']['stopped_reason']}")
     return result
@@ -834,9 +1190,7 @@ def main() -> int:
         default=Path(".model-evaluation/cases.local.jsonl"),
         help="gitignored real JSONL cases (default: %(default)s)",
     )
-    destination = run_parser.add_mutually_exclusive_group()
-    destination.add_argument("--output", type=Path, help="directory for a new run")
-    destination.add_argument("--resume", type=Path, help="existing run directory to resume")
+    run_parser.add_argument("--resume", type=Path, help="existing run directory to resume")
     run_parser.add_argument("--smoke", action="store_true", help="run eight smoke requests")
     run_parser.add_argument(
         "--yes", action="store_true", help="confirm paid requests without prompting"
@@ -850,6 +1204,16 @@ def main() -> int:
     summarize_parser.add_argument("run_directory", type=Path, help="completed run directory")
     summarize_parser.add_argument(
         "--scores", type=Path, required=True, help="scores JSON exported by review.html"
+    )
+    summarize_parser.add_argument(
+        "--follow-up-scores",
+        type=Path,
+        help="follow-up scores for every affected track",
+    )
+    summarize_parser.add_argument(
+        "--second-reviewer-scores",
+        type=Path,
+        help="second reviewer's scores for close tracks",
     )
     args = parser.parse_args()
     if args.command == "self-check":
@@ -878,7 +1242,11 @@ def main() -> int:
             cases = manifest["cases"]
         try:
             if not args.resume:
-                cases = load_cases([args.public_cases, args.private_cases])
+                cases = load_cases(
+                    args.public_cases,
+                    args.private_cases,
+                    require_full=not args.smoke,
+                )
         except ValueError as error:
             parser.error(str(error))
         if not args.resume:
@@ -895,9 +1263,9 @@ def main() -> int:
         if args.resume:
             run_directory = args.resume
         else:
-            run_directory = args.output or Path(".model-evaluation/runs") / datetime.now(
-                UTC
-            ).strftime("%Y%m%dT%H%M%SZ")
+            run_directory = Path(".model-evaluation/runs") / datetime.now(UTC).strftime(
+                "%Y%m%dT%H%M%SZ"
+            )
             manifest = None
         try:
             paid_run(
@@ -910,7 +1278,12 @@ def main() -> int:
             parser.error(str(error))
     elif args.command == "summarize":
         try:
-            summary = summarize_run(args.run_directory, args.scores)
+            summary = summarize_run(
+                args.run_directory,
+                args.scores,
+                args.follow_up_scores,
+                args.second_reviewer_scores,
+            )
         except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
             parser.error(str(error))
         for track, result in summary["tracks"].items():
@@ -920,6 +1293,19 @@ def main() -> int:
                 print(f"{track}: {leader['model']} ({leader['share']:.1%}){suffix}")
             else:
                 print(f"{track}: no eligible model")
+        if summary["follow_up_required"] and not summary.get("follow_up_scores_included"):
+            tracks = ", ".join(summary["follow_up_required"])
+            print(f"follow-up review required: {tracks}")
+        if summary.get("follow_up_scores_included"):
+            counts = set(summary["follow_up_scores_included"].values())
+            description = " and ".join(str(count) for count in sorted(counts))
+            noun = "reviewer" if counts == {1} else "reviewers"
+            print(f"follow-up scores included from {description} {noun}")
+            print("human selection is required; production was not changed")
+        print(
+            "production verification pending: see the research report's "
+            "Production verification section"
+        )
     return 0
 
 
