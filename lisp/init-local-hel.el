@@ -117,9 +117,9 @@
     "C-c g u" #'my/git-push
     "C-c g l" #'magit-log-current
     "C-c g f" #'my/git-pull-ff-only
-    "C-c g P" #'ml-gt-polish-using-llm
+    "C-c g p" #'ml-llm-proof
     "C-c g h" #'ghostel
-    "C-c g p" #'ghostel-project
+    "C-c g o" #'ghostel-project
 
     ;; Highlight.
     "C-c h l" #'pulsar-highlight-permanently-dwim
@@ -350,9 +350,9 @@
     "C-c g u" "Git push"
     "C-c g l" "Git log"
     "C-c g f" "Git pull (ff-only)"
-    "C-c g P" "Polish sentence"
+    "C-c g p" "Polish region"
     "C-c g h" "Ghostel terminal"
-    "C-c g p" "Ghostel project terminal"
+    "C-c g o" "Ghostel project terminal"
     "C-c h"   "highlight"
     "C-c h l" "Permanently highlight line"
     "C-c p"   "project"
