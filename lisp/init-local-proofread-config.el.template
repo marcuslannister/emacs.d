@@ -20,5 +20,11 @@
 (setq ml-proofread-provider-identity "PROVIDER:MODEL")
 (setq ml-proofread-source-label "MODEL")
 
+;; `ml-llm-proof' follows the model above by default.  Uncomment this to
+;; proofread selected text with a different model.  Non-standard parameters,
+;; such as reasoning effort or an OpenRouter route, belong to the model that
+;; needs them: see `ml-proofread--model-request-params'.
+;; (setq ml-llm-proof-model "OTHER-MODEL-NAME")
+
 (provide 'init-local-proofread-config)
 ;;; init-local-proofread-config.el ends here

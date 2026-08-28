@@ -61,6 +61,12 @@
 ;; feature lives in its own module backed by a gitignored config file.
 (require 'init-local-proofread nil t)
 
+;; Selected-text proofreading reuses that endpoint but keeps its own provider
+;; and model, so it can run a different model than the proofread checker.  `llm'
+;; is a feature only once the module above found a private config to talk to.
+(when (featurep 'llm)
+  (require 'init-local-llm-proof nil t))
+
 
 (provide 'init-local-ai)
 ;;; init-local-ai.el ends here
