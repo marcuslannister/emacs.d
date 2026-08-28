@@ -2,6 +2,23 @@
 
 Verified: 2026-08-23 and 2026-08-24
 
+## Operational choice
+
+Selected on 2026-08-25 for the actual Emacs workflow:
+
+- Use `google/gemini-3.7-flash` through OpenRouter for the context-aware
+  Proofread checker and selected-text `ml-llm-proof` command.
+- Do not add an automatic fallback before the main workflow needs one.
+- Keep `tencent/hy-mt2-30b-a3b` for occasional translation. Do not route normal
+  proofreading through the translation model.
+
+This is the user's operational choice, not a benchmark result. Gemini 3.7's
+Google Vertex OpenRouter endpoint supports structured output and requires
+reasoning, but it did not advertise a temperature parameter on the verification
+date. The Emacs configuration therefore uses `low` reasoning and omits
+temperature
+([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/google/gemini-3.7-flash/endpoints)).
+
 ## Result
 
 Treat English-to-English polishing, Chinese-to-English translation, and
@@ -48,7 +65,7 @@ data for the final cost, not this table.
 | OpenRouter model | Structured output on OpenRouter | Strict schema in the current Emacs proofreader | Reasoning control | Lowest listed default-tier price |
 | --- | --- | --- | --- | --- |
 | `openai/gpt-5.6-terra` | Yes on current OpenAI and Azure routes. Some routes do not list it, so require all request parameters. | Yes. The generic GPT-5 metadata match includes `json-response`. | `none`, `low`, `medium` (default), `high`, `xhigh`, `max`. Use `none` as the latency baseline and compare `low` ([OpenAI model page](https://developers.openai.com/api/docs/models/gpt-5.6-terra)). | $2.00 / $12.00 ([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/openai/gpt-5.6-terra/endpoints)) |
-| `google/gemini-3.7-flash` | Yes on all routes listed at verification time. | No. There is no matching installed model entry, so `auto` uses prompt-only JSON. | `low`, `medium` (default), `high`; `minimal` is not supported ([Google model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash)). | $0.375 / $1.875; other default routes list $0.75 / $3.75 ([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/google/gemini-3.7-flash/endpoints)) |
+| `google/gemini-3.7-flash` | Yes on all routes listed at verification time. | Yes after `init-local-proofread.el` registers the missing installed metadata. | `low`, `medium` (default), `high`; `minimal` is not supported ([Google model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash)). | $0.375 / $1.875; other default routes list $0.75 / $3.75 ([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/google/gemini-3.7-flash/endpoints)) |
 | `openai/gpt-5.6-luna` | Yes on current OpenAI and Azure routes. Some routes do not list it, so require all request parameters. | Yes. The generic GPT-5 metadata match includes `json-response`. | `none`, `low`, `medium` (default), `high`, `xhigh`, `max`. Use `none` as the latency baseline ([OpenAI model page](https://developers.openai.com/api/docs/models/gpt-5.6-luna)). | $0.20 / $1.20 ([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/openai/gpt-5.6-luna/endpoints)) |
 | `google/gemini-3.5-flash-lite` | Yes on all routes listed at verification time. | Yes. The installed model entry includes `json-response`. | Thinking is supported. Use `minimal` as the low-latency baseline ([Google model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite)). | $0.30 / $2.50 ([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/google/gemini-3.5-flash-lite/endpoints)) |
 | `tencent/hy-mt2-30b-a3b` | Yes on its one listed FP8 route. | No matching installed model entry; `auto` uses prompt-only JSON. | No reasoning control is listed. | $0.074 / $0.295 ([OpenRouter endpoint API](https://openrouter.ai/api/v1/models/tencent/hy-mt2-30b-a3b/endpoints)) |
@@ -79,7 +96,8 @@ installed model metadata has these results
 
 - Terra and Luna match the generic GPT-5 entry, which has `json-response`.
 - Gemini 3.5 Flash-Lite has a specific entry with `json-response`.
-- Gemini 3.7 Flash has no matching entry.
+- Gemini 3.7 Flash has no installed entry; `init-local-proofread.el` registers
+  its verified capabilities locally.
 - Hy-MT2 has no matching entry.
 - DeepSeek V4 Pro has an entry, but it does not have `json-response`.
 
