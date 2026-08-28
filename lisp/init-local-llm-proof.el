@@ -63,7 +63,11 @@ With prefix argument AGGRESSIVE, polish more freely."
       (goto-char start)
       (insert start-conflict)
       (goto-char (+ end (length start-conflict)))
-      (insert (format "=======\n%s\n>>>>>>> Proofread (%s)\n"
+      ;; The blank line keeps Markdown from reading `=======' as a setext
+      ;; heading underline, which fontifies the last original line as a
+      ;; heading.  `smerge-mode' still parses the conflict, because the
+      ;; separator stays bare.
+      (insert (format "\n=======\n%s\n>>>>>>> Proofread (%s)\n"
                       marker (if aggressive "aggressive" "gentle"))))
     (llm-chat-async
      (ml-proofread--provider ml-llm-proof-model

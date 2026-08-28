@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Write a blank line before the `=======` separator in `ml-llm-proof`, so Markdown stops reading it as a setext heading underline and rendering the last original line as a heading. The separator stays bare, so `smerge-keep-upper` / `smerge-keep-lower` still resolve the block.
 - Limit async-installer native compilation to package source files, so `*-pkg.el` metadata and test helpers are not loaded after a Git clone.
 - Keep Hel's `h`/`j`/`k`/`l` movement in Org Agenda Emacs state instead of letting the agenda map override the global bindings.
 - Keep org-gtd's inbox at `~/org/gtd/inbox.org` when package setup fails instead of falling back to `~/gtd/inbox.org`.
