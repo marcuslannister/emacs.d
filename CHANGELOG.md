@@ -7,6 +7,8 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Fixed
+- Hold the place of an `ml-llm-proof` reply with a pair of Emacs markers around a `…` placeholder, instead of a `{proof:gN}` string that the callback searched for from `point-min`. `gensym` counts from zero again in every session, so a marker left in a buffer by an older session could repeat and take the correction to that older place; markers cannot collide at all, they follow their own text through any edit that lands while the reply is in flight, and a reply for a buffer that has been killed now returns quietly.
+- Close a region that ends mid-line before writing the `=======` separator in `ml-llm-proof`. The blank line was there only when the selection already ended with a newline, so a selection that stopped mid-paragraph still had its last line read as a Markdown heading.
 - Write a blank line before the `=======` separator in `ml-llm-proof`, so Markdown stops reading it as a setext heading underline and rendering the last original line as a heading. The separator stays bare, so `smerge-keep-upper` / `smerge-keep-lower` still resolve the block.
 - Limit async-installer native compilation to package source files, so `*-pkg.el` metadata and test helpers are not loaded after a Git clone.
 - Keep Hel's `h`/`j`/`k`/`l` movement in Org Agenda Emacs state instead of letting the agenda map override the global bindings.
