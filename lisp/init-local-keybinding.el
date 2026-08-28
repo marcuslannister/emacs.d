@@ -177,7 +177,10 @@ ARGS are additional arguments."
 
   ;; gt
   (kbd "<leader> gt") '("translate" . gt-translate)
-  (kbd "<leader> gp") '("polish sentence" . ml-gt-polish-using-llm)
+  (kbd "<leader> gp") '("polish region" . ml-llm-proof)
+  ;; NOTE: this whole `<leader>' block is inert.  It binds through
+  ;; `evil-define-key', and evil is commented out above — Hel owns the leader
+  ;; now, and its bindings live in `my/hel-setup-leader'.
 
   ;; shell
   (kbd "<leader> es") '("start a eshell" . eshell)

@@ -332,28 +332,9 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 ;; Initialize the default translator, let it translate between en and zh via Google Translate,
 ;; and the result will be displayed in the Echo Area.
 
-(defvar ml-gt-llm-engine
-  (gt-chatgpt-engine
-   :host "https://sone.19982002.xyz"
-   :path "/v1/chat/completions"
-   :model "sone-gemini-2.5-flash-think-0"
-   :extra-options '((temperature . 0.2)
-                    (max_tokens . 2048))))
-
-(defun ml-gt-polish-using-llm ()
-  (interactive)
-  (gt-start
-   (gt-translator
-    :engines
-    (clone ml-gt-llm-engine
-           :cache nil
-           :root "You are an English editor"
-           :prompt (lambda (text)
-                     (format
-                      "Polish this English sentence and keep the original meaning:\n\n%s"
-                      text)))
-    :render
-    (gt-insert-render :type 'replace))))
+;; Polishing lives in `ml-llm-proof' (lisp/init-local-llm-proof.el), which
+;; reaches its endpoint through the gitignored proofread config.  `gt' keeps
+;; translation only.
 
 ;; cliboard setting for mouse
 (setq select-active-regions nil)
