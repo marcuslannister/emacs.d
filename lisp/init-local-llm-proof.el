@@ -15,6 +15,7 @@
 
 (require 'llm)
 (require 'llm-openai)
+(require 'smerge-mode)
 (require 'init-local-proofread)
 
 ;; A `defvar' keeps the value the private config already gave this variable, so
@@ -41,11 +42,33 @@ parameters come from `ml-proofread--model-request-params'.")
   "System prompt that asks for a freer rewrite.")
 
 (defun ml-llm-proof-apply-fix (buffer marker correction)
-  "Replace MARKER in BUFFER with CORRECTION."
+  "Replace MARKER in BUFFER with CORRECTION.
+Colour the words that differ between the two halves, so you read the
+change instead of both texts."
   (with-current-buffer buffer
-    (goto-char (point-min))
-    (when (re-search-forward (regexp-quote marker) nil t)
-      (replace-match correction t t))))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward (regexp-quote marker) nil t)
+        (replace-match correction t t)
+        ;; Point sits in the lower half, so the conflict is the one at point.
+        ;; Refinement needs the `diff' program and well-formed markers, and
+        ;; neither failure may cost the correction itself.
+        (ignore-errors (ml-llm-proof--refine))))))
+
+(defun ml-llm-proof--refine ()
+  "Colour the words that differ between the halves of the conflict at point.
+`smerge-refine' paints both halves with `smerge-refined-change' as soon
+as a theme defines that face, which loses the direction of the change,
+so drive the same refinement with the added and removed faces instead."
+  (smerge-match-conflict)
+  (remove-overlays (match-beginning 0) (match-end 0) 'smerge 'refine)
+  (smerge-refine-regions (match-beginning 1) (match-end 1)
+                         (match-beginning 3) (match-end 3)
+                         nil nil
+                         '((smerge . refine)
+                           (font-lock-face . smerge-refined-removed))
+                         '((smerge . refine)
+                           (font-lock-face . smerge-refined-added))))
 
 (defun ml-llm-proof (start end &optional aggressive)
   "Proofread the region between START and END.
