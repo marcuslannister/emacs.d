@@ -63,5 +63,16 @@
     (ml-llm-proof-apply-fix (current-buffer) "{proof:g1}" "corrected")
     (should (equal (buffer-string) "before corrected after"))))
 
+(ert-deftest init-local-llm-proof-colours-what-changed ()
+  "The words that differ carry a smerge refinement face."
+  (with-temp-buffer
+    (insert "<<<<<<< Original\nI have discussed the plan.\n"
+            "\n=======\n{proof:g1}\n>>>>>>> Proofread (gentle)\n")
+    (ml-llm-proof-apply-fix (current-buffer) "{proof:g1}"
+                            "I discussed the plan.")
+    (should (member 'smerge-refined-removed
+                    (mapcar (lambda (o) (overlay-get o 'font-lock-face))
+                            (overlays-in (point-min) (point-max)))))))
+
 (provide 'init-local-llm-proof-tests)
 ;;; init-local-llm-proof-tests.el ends here
