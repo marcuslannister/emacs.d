@@ -115,7 +115,11 @@ PARAMS is an alist of non-standard chat parameters, as returned by
           `((english . ( :language "en"
                          :display-language "English"
                          :checkers (,(ml-proofread--checker))))))
-    (setq proofread-profile 'english)))
+    (setq proofread-profile 'english))
+
+  ;; C-c g p (ml-llm-proof) exists only when llm loaded.
+  (unless (featurep 'llm)
+    (display-warning 'init-local-proofread "llm missing: C-c g p is dead")))
 
 (provide 'init-local-proofread)
 ;;; init-local-proofread.el ends here
