@@ -220,6 +220,17 @@
   "Load Hel and hel-leader, configure them, and enable Hel globally."
   (when (and (require 'hel nil t)
              (require 'hel-leader nil t))
+    (hel-define-command my/hel-search-word-at-point (count)
+      "Search for the word under point, like Vim's `*'.
+Selects the word first when nothing is already selected, so an existing
+manual selection is searched as-is instead of being replaced."
+      :multiple-cursors nil
+      (interactive "p")
+      (hel-with-each-cursor
+        (unless (use-region-p)
+          (hel-mark-inner-word 1)))
+      (hel-construct-search-pattern)
+      (hel-search-next count))
     (hel-set-initial-state 'dired-mode 'normal)
     (hel-set-initial-state 'magit-mode 'emacs)
     (with-eval-after-load 'magit
@@ -239,7 +250,8 @@
       "D" #'my/hel-delete-to-end-of-line
       "C" #'hel-cut
       "p" #'hel-paste-before
-      "P" #'hel-paste-after)
+      "P" #'hel-paste-after
+      "*" #'my/hel-search-word-at-point)
     (hel-keymap-global-set :state '(normal insert emacs)
       "C-v" #'yank)
     (my/hel-setup-leader)
