@@ -107,6 +107,7 @@
     "C-c d c" #'ai/cd-to-current-buffer
     "C-c d i" #'dired
     "C-c d p" #'pwd
+    "C-c d j" #'ekp-justify-buffer
 
     ;; Git / translate / Ghostel.
     "C-c g s" #'magit-status
