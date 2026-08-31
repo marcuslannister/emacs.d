@@ -399,6 +399,8 @@ The completion candidates include the Git status of each file."
 
 (require 'init-local-shell)
 
+(require 'init-local-kp)
+
 (require 'blinko)
 
 (require 'init-local-program)
