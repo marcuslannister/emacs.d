@@ -65,3 +65,9 @@
 (async-installer-git-add "https://github.com/Trevoke/org-gtd.el.git"
                          :tag "4.6.1"
                          :main "org-gtd.el")
+
+;; Knuth-Plass line breaking (CJK+Latin justification). No tags upstream yet,
+;; so pinned to the current HEAD commit.
+(async-installer-git-add "https://github.com/Kinneyzhang/emacs-kp.git"
+                         :commit "888a4019f4ad44ea2a3f6bfe36bdfe5cb33e3a90"
+                         :main "ekp.el")
