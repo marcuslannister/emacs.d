@@ -2,7 +2,7 @@
 ;;; Commentary:
 
 ;; Proofread selected text with the `llm' package, over the same private
-;; OpenRouter endpoint as `init-local-proofread'.
+;; OpenAI-compatible endpoint as `init-local-proofread'.
 ;;
 ;; The model comes from the gitignored `init-local-proofread-config.el': it
 ;; follows `ml-proofread-chat-model' unless that file sets `ml-llm-proof-model'

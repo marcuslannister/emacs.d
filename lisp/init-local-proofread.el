@@ -13,7 +13,7 @@
 
 (require 'auth-source)
 
-(defvar ml-proofread-checker-name 'openrouter
+(defvar ml-proofread-checker-name 'default
   "Symbol that identifies the checker inside proofread.")
 
 (defvar ml-proofread-endpoint-url nil
@@ -58,7 +58,7 @@ leave nil when the model is already registered upstream.")
   "Build an `llm' provider that reaches MODEL over the private endpoint.
 PARAMS is an alist of non-standard chat parameters; see
 `ml-proofread-chat-params'."
-  (make-llm-openrouter
+  (make-llm-openai-compatible
    :url ml-proofread-endpoint-url
    ;; llm resolves a function-valued `:key' at request time, so ~/.authinfo is
    ;; read on first check and the secret never lands in the provider struct.

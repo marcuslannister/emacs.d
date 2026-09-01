@@ -3,9 +3,8 @@
 (require 'ert)
 (require 'cl-lib)
 
-;; Stand in for the module's dependencies: `llm' supplies the provider struct
-;; and the async call, and the gitignored private config names the model.
-(cl-defstruct (llm-openrouter (:constructor make-llm-openrouter)))
+;; Stand in for the module's dependencies: `llm' supplies the async call, and
+;; the gitignored private config names the model.
 (cl-defun llm-make-chat-prompt (content &key context &allow-other-keys)
   (list 'prompt content context))
 (defun llm-chat-async (&rest _args))
@@ -15,7 +14,7 @@
 (defvar ml-proofread-chat-model "google/gemini-3.7-flash")
 (defvar ml-proofread-chat-params '((provider . ((order . ["a-route"])))))
 (defun ml-proofread--provider (model params)
-  (list 'openrouter-provider model params))
+  (list 'provider model params))
 (provide 'init-local-proofread)
 
 (load-file
@@ -39,8 +38,8 @@
 (ert-deftest init-local-llm-proof-uses-the-private-provider ()
   (let ((request (init-local-llm-proof-tests--request)))
     (should (equal (nth 0 request)
-                   '(openrouter-provider "google/gemini-3.7-flash"
-                                         ((provider . ((order . ["a-route"])))))))
+                   '(provider "google/gemini-3.7-flash"
+                              ((provider . ((order . ["a-route"])))))))
     (should (equal (nth 1 request)
                    (list 'prompt "Please improve this sentence."
                          ml-llm-proof-gentle-prompt)))))
@@ -50,8 +49,8 @@
   (let* ((ml-llm-proof-model "other/model")
          (request (init-local-llm-proof-tests--request)))
     (should (equal (nth 0 request)
-                   '(openrouter-provider "other/model"
-                                         ((provider . ((order . ["a-route"])))))))))
+                   '(provider "other/model"
+                              ((provider . ((order . ["a-route"])))))))))
 
 (ert-deftest init-local-llm-proof-keeps-a-blank-line-above-the-separator ()
   "Markdown reads `=======' under text as a heading, so it never sits there."
