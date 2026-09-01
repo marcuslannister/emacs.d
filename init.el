@@ -14,6 +14,7 @@
 
 (unless (sanityinc/tui-session-p)
   (use-package compile-angel
+    :ensure t
     :demand t
     :config
     ;; Set `compile-angel-verbose' to nil to disable compile-angel messages.
