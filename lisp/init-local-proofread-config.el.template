@@ -20,10 +20,25 @@
 (setq ml-proofread-provider-identity "PROVIDER:MODEL")
 (setq ml-proofread-source-label "MODEL")
 
-;; `ml-llm-proof' follows the model above by default.  Uncomment this to
-;; proofread selected text with a different model.  Non-standard parameters,
-;; such as reasoning effort or an OpenRouter route, belong to the model that
-;; needs them: see `ml-proofread--model-request-params'.
+;; Uncomment and fill in only when MODEL-NAME needs non-standard chat
+;; parameters, such as a reasoning effort or a pinned OpenRouter route.
+;; (setq ml-proofread-chat-params
+;;       '((reasoning . ((effort . "low")))))
+
+;; Uncomment and fill in only when `llm' does not already know MODEL-NAME.
+;; See `llm-models-add' for the full argument list.  `llm-models-match'
+;; downcases the requested model before testing :regex against it, so
+;; write the regex against the lowercase form of MODEL-NAME.
+;; (setq ml-proofread-model-metadata
+;;       (list :name "MODEL-NAME"
+;;             :symbol 'my-model
+;;             :capabilities '(generation json-response)
+;;             :context-length 128000
+;;             :regex "model-name\\'"))
+
+;; `ml-llm-proof' follows the model above by default and still sends
+;; `ml-proofread-chat-params' with every request.  Uncomment this to
+;; proofread selected text with a different model.
 ;; (setq ml-llm-proof-model "OTHER-MODEL-NAME")
 
 (provide 'init-local-proofread-config)
