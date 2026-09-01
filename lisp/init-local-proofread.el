@@ -36,38 +36,28 @@ use \"https://example.test/v1/\", not \".../v1/chat/completions\".")
 (defvar ml-proofread-source-label nil
   "Human-readable label shown for results from this checker.")
 
+(defvar ml-proofread-chat-params nil
+  "Alist of non-standard chat parameters to send with every request.
+Only a model that needs a special route or reasoning effort sets this;
+leave nil for a model that takes the standard chat parameters.")
+
+(defvar ml-proofread-model-metadata nil
+  "Plist of `llm-models-add' arguments to register the configured model.
+Set this only when `llm' does not already know `ml-proofread-chat-model';
+leave nil when the model is already registered upstream.")
+
 (require 'init-local-proofread-config nil t)
 
-(defun ml-proofread--model-request-params (model)
-  "Return the non-standard chat parameters that MODEL needs, if any.
-Only Gemini 3.7 Flash gets any: it names a route that serves that model
-alone, so every other model starts clean.  A model that needs parameters
-of its own takes a clause here."
-  (and (equal model "google/gemini-3.7-flash")
-       '((reasoning . ((effort . "low")
-                       (exclude . t)))
-         (provider . ((order . ["google-vertex/global"])
-                      (allow_fallbacks . :false)
-                      (require_parameters . t))))))
-
-(defun ml-proofread--ensure-gemini-3-7-flash-metadata ()
-  "Register Gemini 3.7 Flash capabilities when `llm' does not know them."
-  (when (and (equal ml-proofread-chat-model "google/gemini-3.7-flash")
+(defun ml-proofread--ensure-model-metadata ()
+  "Register `ml-proofread-model-metadata' when `llm' does not know the model."
+  (when (and ml-proofread-model-metadata
              (not (llm-models-match ml-proofread-chat-model)))
-    (llm-models-add
-     :name "Gemini 3.7 Flash"
-     :symbol 'gemini-3-7-flash
-     ;; Only what proofreading asks of it: `proofread-llm' picks provider JSON
-     ;; over prompt-only JSON on `json-response', and the checker sends a
-     ;; reasoning effort.
-     :capabilities '(generation json-response reasoning)
-     :context-length 1048576
-     :regex "gemini-3\\.7-flash\\'")))
+    (apply #'llm-models-add ml-proofread-model-metadata)))
 
 (defun ml-proofread--provider (model params)
   "Build an `llm' provider that reaches MODEL over the private endpoint.
-PARAMS is an alist of non-standard chat parameters, as returned by
-`ml-proofread--model-request-params'."
+PARAMS is an alist of non-standard chat parameters; see
+`ml-proofread-chat-params'."
   (make-llm-openrouter
    :url ml-proofread-endpoint-url
    ;; llm resolves a function-valued `:key' at request time, so ~/.authinfo is
@@ -85,8 +75,7 @@ PARAMS is an alist of non-standard chat parameters, as returned by
      :backend llm
      :options ( :provider ,(ml-proofread--provider
                             ml-proofread-chat-model
-                            (ml-proofread--model-request-params
-                             ml-proofread-chat-model))
+                            ml-proofread-chat-params)
                 :provider-identity ,ml-proofread-provider-identity
                 :source-label ,ml-proofread-source-label
                 :response-strategy auto
@@ -110,7 +99,7 @@ PARAMS is an alist of non-standard chat parameters, as returned by
   (when (and (maybe-require-package 'llm)
              (require 'llm-openai nil t)
              (require 'proofread nil t))
-    (ml-proofread--ensure-gemini-3-7-flash-metadata)
+    (ml-proofread--ensure-model-metadata)
     (setq proofread-profiles
           `((english . ( :language "en"
                          :display-language "English"

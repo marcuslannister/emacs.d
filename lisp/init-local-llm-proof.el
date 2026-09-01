@@ -23,8 +23,8 @@
 (defvar ml-llm-proof-model ml-proofread-chat-model
   "Name of the model used by `ml-llm-proof'.
 Set in `init-local-proofread-config.el' to proofread selected text
-with a model other than `ml-proofread-chat-model'.  Its request
-parameters come from `ml-proofread--model-request-params'.")
+with a model other than `ml-proofread-chat-model'.  It still sends
+`ml-proofread-chat-params' with every request.")
 
 (defvar ml-llm-proof-gentle-prompt
   (concat "Proofread the following text for spelling, punctuation, grammar, "
@@ -111,9 +111,7 @@ With prefix argument AGGRESSIVE, polish more freely."
       (insert (format "\n>>>>>>> Proofread (%s)\n"
                       (if aggressive "aggressive" "gentle"))))
     (llm-chat-async
-     (ml-proofread--provider ml-llm-proof-model
-                             (ml-proofread--model-request-params
-                              ml-llm-proof-model))
+     (ml-proofread--provider ml-llm-proof-model ml-proofread-chat-params)
      (llm-make-chat-prompt input
                            :context (if aggressive
                                         ml-llm-proof-aggressive-prompt

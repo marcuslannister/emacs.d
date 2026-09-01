@@ -13,9 +13,7 @@
 (provide 'llm-openai)
 
 (defvar ml-proofread-chat-model "google/gemini-3.7-flash")
-(defun ml-proofread--model-request-params (model)
-  (and (equal model "google/gemini-3.7-flash")
-       '((provider . ((order . ["a-route"]))))))
+(defvar ml-proofread-chat-params '((provider . ((order . ["a-route"])))))
 (defun ml-proofread--provider (model params)
   (list 'openrouter-provider model params))
 (provide 'init-local-proofread)
@@ -47,11 +45,13 @@
                    (list 'prompt "Please improve this sentence."
                          ml-llm-proof-gentle-prompt)))))
 
-(ert-deftest init-local-llm-proof-drops-a-route-the-model-does-not-share ()
-  "A config model other than the proofread one starts with no parameters."
+(ert-deftest init-local-llm-proof-keeps-the-shared-params-for-another-model ()
+  "A different config model still sends `ml-proofread-chat-params'."
   (let* ((ml-llm-proof-model "other/model")
          (request (init-local-llm-proof-tests--request)))
-    (should (equal (nth 0 request) '(openrouter-provider "other/model" nil)))))
+    (should (equal (nth 0 request)
+                   '(openrouter-provider "other/model"
+                                         ((provider . ((order . ["a-route"])))))))))
 
 (ert-deftest init-local-llm-proof-keeps-a-blank-line-above-the-separator ()
   "Markdown reads `=======' under text as a heading, so it never sits there."
