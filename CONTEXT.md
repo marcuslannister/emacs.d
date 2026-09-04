@@ -8,12 +8,6 @@ This context defines the task concepts used by the Emacs configuration.
 An Org heading representing actionable work, with a stable ID and a TODO state.
 _Avoid_: Item, record
 
-**Task Table**:
-An interactive collection view of Tasks showing their TODO state, Priority,
-and heading text. Every Task in the collection participates in sorting and
-filtering even when only a viewport is visible.
-_Avoid_: Task list, spreadsheet
-
 **Priority**:
 A Task's urgency rank: A, B, or C.
 _Avoid_: Importance, severity

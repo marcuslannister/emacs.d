@@ -30,7 +30,7 @@ Emacs 29.1 or newer; older Emacs versions start without it.
 | `SPC o i c` / `C-c o i c` | Create or retrieve the current Org heading ID |
 | `SPC s` | Search commands |
 | `SPC s b` | Open the scratch buffer |
-| `SPC v` | Vulpea commands (`t` opens the Task Table) |
+| `SPC v` | Find, link, tag, and rescan Vulpea notes |
 | `SPC w` | Window commands |
 
 ## Clock keys

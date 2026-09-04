@@ -140,7 +140,7 @@ The global keys live in `init-local-hel.el' with every other global key."
 
 Do **not** use `with-org-gtd-context`: it is a dead macro in 4.x that warns when called.
 
-**IDs**: org-gtd mints its own — a slug of the heading plus an ISO stamp, `Buy-a-new-coffee-grinder-2026-08-13-23-00-44`, not a UUID — and writes them into its `TRIGGER`, `ORG_GTD_DEPENDS_ON` and `ORG_GTD_BLOCKS` properties. Accepted. The Task Table reads an ID as text.
+**IDs**: org-gtd mints its own — a slug of the heading plus an ISO stamp, `Buy-a-new-coffee-grinder-2026-08-13-23-00-44`, not a UUID — and writes them into its `TRIGGER`, `ORG_GTD_DEPENDS_ON` and `ORG_GTD_BLOCKS` properties. Accepted.
 
 ---
 
@@ -160,7 +160,7 @@ Org (140), Vulpea (141) and Hel (416) all exist by then, and a failure inside th
 
 | Line | Change |
 | --- | --- |
-| 165-169 | Replace the three sequences with one: `(setq org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|" "DONE(d!/!)" "CNCL(c@/!)")))`. Write the `sequence` symbol: a bare list loses its first keyword in the Task Table's parsing (#18). Keep the cookies: Org strips them to bare keywords, and org-gtd reads its own `org-gtd-keyword-mapping`, so they are invisible to it (#19). |
+| 165-169 | Replace the three sequences with one: `(setq org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|" "DONE(d!/!)" "CNCL(c@/!)")))`. Keep the cookies: Org strips them to bare keywords, and org-gtd reads its own `org-gtd-keyword-mapping`, so they are invisible to it (#19). |
 | 171 | **Delete** the `org-todo-keyword-faces` form. `init-local-themes.el:60` re-sets the whole variable after modus-themes loads, so this one never takes effect. One place only, and it is the theme file. |
 | 182 | **Delete** `org-stuck-projects`. It matches `PROJECT`, which has zero Tasks now and stops existing. org-gtd finds stuck projects through the `ORG_GTD` property. |
 | 191-260 | **Delete** the `g` GTD view. Keep `N`. Leave the `g` key free. |
@@ -243,9 +243,7 @@ It takes the five file names literally. It does not scan a directory, so `.stver
 | ERT under `tests/` | green, unchanged. #18 proved no existing test breaks: every test binds its own workflow, and nothing under `tests/` loads `init-org.el` |
 | New: `tests/init-local-gtd-tests.el` | the settings are applied when org-gtd is present; when it is absent, `org-gtd-directory` is still set, `init-local-gtd-unavailable-reason` records why, and no optional `org-gtd-*` setting is written |
 | Manual end-to-end | capture → clarify → organize as a single action → the Task lands in the chosen topic file → `org-gtd-engage` shows it |
-| Task Table keyword check | every Open Task shows `TODO`, `NEXT` or `WAIT`. Any other state is a missed heading (#18) |
 | Layer 1 counts, before and after | Snapshot at #19/#22: `TODO` 55, `NEXT` 49, `DONE` 245, `WAIT` 0+14, Open Tasks 118. Store at rewrite time: `NEXT` 48, `DONE` 246, two pre-existing `WAIT` headings (`other.org:68`, `software.org:1039`), Open Tasks 119. The rewrite itself was 20/20. |
-| Layer 2 counts, before and after | agenda entries and Task Table Open Tasks identical |
 
 **Tolerance is zero.** Any difference is a fault to investigate, not a variance to accept.
 
