@@ -34,8 +34,8 @@ ${EMACS:=emacs} -nw --batch \
                                                 (quote hel-leader))
                                             (eq (key-binding (kbd "C-c b n"))
                                                 (quote next-buffer))
-                                            (eq (key-binding (kbd "C-c v t"))
-                                                (quote my/vulpea-task-table))
+                                            (eq (key-binding (kbd "C-c v f"))
+                                                (quote vulpea-find))
                                             (eq (key-binding (kbd "C-c o g c"))
                                                 (quote org-gtd-capture))
                                             (eq (key-binding (kbd "C-c o g i"))
@@ -82,11 +82,11 @@ ${EMACS:=emacs} -nw --batch \
                                      (hel-leader--pending-modifier nil)
                                      (hel-leader--command nil))
                                  (hel-leader--handle-input-event ?v)
-                                 (unless (and (eq (hel-leader--handle-input-event ?t)
+                                 (unless (and (eq (hel-leader--handle-input-event ?f)
                                                   :quit)
                                               (eq hel-leader--command
-                                                  (quote my/vulpea-task-table)))
-                                   (error "SPC v t translation failed: %S"
+                                                  (quote vulpea-find)))
+                                   (error "SPC v f translation failed: %S"
                                           hel-leader--command))))
                              (let ((my/hel--installing nil)
                                    (inhibit-message t)

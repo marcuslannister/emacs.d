@@ -46,12 +46,7 @@ continuously, so changes land under "Unreleased".
 - Create or retrieve the current Org heading ID with `C-c o i c` or `SPC o i c`.
 - Paste from the kill ring with `C-v` in Hel Normal, Insert, and Emacs states.
 - Open the scratch buffer with `SPC s b`.
-- Add the Vulpea leader group under `SPC v`, with `SPC v t` opening the Task Table.
-- Keep the complete Task Table usable during asynchronous synchronization, warn actionably on worker failures, and add an advisory end-to-end 5,000-Task benchmark with deterministic query-count checks.
-- Edit Task Table TODO state and Priority with `e`, writing through Org commands inside Vulpea's public note-sync helper and refreshing Open Tasks immediately.
-- Preserve Task Table filters, native sort, launch scope, and Task-ID selection across manual and worker refreshes, with nearest-row/header fallbacks and atomic failure recovery.
-- Navigate from Task Table rows by stable Org ID, refreshing and failing safely when a Task disappeared.
-- Add guarded Vulpea/Vulpea UI indexing and the read-only `my/vulpea-task-table` Collection View for ID-bearing Open Tasks, with combinable ephemeral TODO, Priority, text, Source, and Org-launch filters.
+- Add guarded Vulpea indexing and `SPC v` commands for finding, linking, tagging, backlinks, and full rescans; Emacs saves update the database and external folder monitoring stays off.
 
 ### Changed
 - Build the proofread and `ml-llm-proof` provider with `make-llm-openai-compatible` instead of `make-llm-openrouter` in `lisp/init-local-proofread.el`, since the module's endpoint was already documented as OpenAI-compatible and never depended on anything OpenRouter-specific; `ml-proofread-checker-name` now defaults to `'default` instead of `'openrouter`. The private, gitignored `init-local-proofread-config.el` still points at `https://openrouter.ai/api/v1/`, unaffected. `tests/init-local-llm-proof-tests.el` drops its unused `llm-openrouter` stub struct and renames the `openrouter-provider` stand-in tag to `provider`.

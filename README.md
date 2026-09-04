@@ -39,12 +39,12 @@ LSP support is provided using `eglot`.
 Various popular Emacs tools are included and configured here, such as
 `magit`, `docker.el`, `projectile`, `org-mode` etc., but the focus is moderate
 
-## Task Table
+## Vulpea
 
-On Emacs 29.1 or newer, `M-x my/vulpea-task-table` opens the optional Vulpea
-Task Table. See [Task Table operations and verification](docs/task-table.md)
-for synchronization boundaries, controls, failure recovery, tests, and the
-5,000-Task benchmark.
+On Emacs 27.2 or newer, `M-x vulpea-find` finds indexed Org notes and
+`M-x vulpea-insert` inserts stable ID links. Vulpea indexes `org-directory`
+at startup and after Emacs saves, but it does not watch for external changes.
+After Syncthing updates files, run `SPC v u` or restart Emacs.
 
 ## Supported Emacs versions
 
