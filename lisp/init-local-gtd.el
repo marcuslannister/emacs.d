@@ -82,6 +82,13 @@ type for this one call."
         (funcall orig-fun type refile-target))
     (funcall orig-fun type refile-target)))
 
+(defun init-local-gtd--organize-newest-first (orig-fun func)
+  "Run ORIG-FUN on FUNC, filing the item as the FIRST child of its target.
+`org-reverse-note-order' is the knob `org-refile' reads; org-gtd refiles from
+two call sites, and this is the one point both pass through."
+  (let ((org-reverse-note-order t))
+    (funcall orig-fun func)))
+
 (defun init-local-gtd-engage ()
   "Open `org-gtd-engage' in its own buffer.
 `org-agenda-sticky' is still on, so a leftover `*Org Agenda(g)*' would
@@ -133,6 +140,8 @@ org-gtd's view language, so one spec covers it."
   (when (fboundp 'org-gtd-refile--do)
     (advice-add 'org-gtd-refile--do :around
                 #'init-local-gtd--refile-project))
+  (advice-add 'org-gtd-organize--call :around
+              #'init-local-gtd--organize-newest-first)
   (advice-add 'org-gtd-save-buffers :after
               #'init-local-gtd-refresh-agenda-files))
 
