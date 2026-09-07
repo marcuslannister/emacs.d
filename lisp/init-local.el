@@ -460,6 +460,15 @@ the breakage."
 
 
 
+;; Re-arm the confirmation prompt that `init-editing-utils' removes.  `C-x C-u'
+;; is `C-x u' (undo) with the control key held one stroke too long, and an
+;; unguarded `upcase-region' rewrites everything between mark and point with no
+;; prompt and no message.  It cost ~/org/ai.org 97 lines: the ORG_GTD property
+;; values and an ID cross-reference were upcased, which hid two projects from
+;; org-gtd's case-sensitive `+ORG_GTD="Projects"' query.
+(put 'upcase-region 'disabled t)
+(put 'downcase-region 'disabled t)
+
 ;; ;; Load keybinding
 ;; (require 'init-local-keybinding)
 
