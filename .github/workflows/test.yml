@@ -37,3 +37,5 @@ jobs:
       run: emacs -Q --batch -l tests/init-local-vulpea-tests.el -f ert-run-tests-batch-and-exit
     - name: Check org-gtd module behavior
       run: emacs -Q --batch -l tests/init-local-gtd-tests.el -f ert-run-tests-batch-and-exit
+    - name: Check Dired diff-hl advice
+      run: emacs -Q --batch -l tests/init-dired-tests.el -f ert-run-tests-batch-and-exit
