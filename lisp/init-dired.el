@@ -30,16 +30,14 @@
   (define-key dired-mode-map (kbd "n") 'isearch-repeat-forward)
   (define-key dired-mode-map (kbd "p") 'isearch-repeat-backward))
 
-(defun sanityinc/diff-hl-dired-status-files-no-query (original &rest args)
-  "Call ORIGINAL with ARGS, killing its temp status buffer without a prompt.
-On Emacs 31 the ignored-files check leaves a live process behind when
-`diff-hl-dired-update' kills the buffer, which asks to confirm the kill
-from inside a Dired refresh."
-  (let ((update-function (car (last args))))
-    (apply original (append (butlast args)
-                            (list (lambda (entries &optional more-to-come)
-                                    (let ((kill-buffer-query-functions nil))
-                                      (funcall update-function entries more-to-come))))))))
+(defun sanityinc/diff-hl-dired-status-files-no-query (original backend dir files update-function)
+  "Call ORIGINAL with BACKEND, DIR and FILES, killing its buffer silently.
+ORIGINAL kills its temp status buffer from inside UPDATE-FUNCTION, so bind
+the kill query hook around that call."
+  (funcall original backend dir files
+           (lambda (entries &optional more-to-come)
+             (let ((kill-buffer-query-functions nil))
+               (funcall update-function entries more-to-come)))))
 
 (when (maybe-require-package 'diff-hl)
   (with-eval-after-load 'diff-hl-dired
