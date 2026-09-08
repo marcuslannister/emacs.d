@@ -7,6 +7,7 @@
 
 (defvar vulpea-db-location)
 (defvar vulpea-db-sync-external-method nil)
+(defvar vulpea-db-async-extraction nil)
 
 (declare-function maybe-require-package "init-elpa"
                   (package &optional min-version no-refresh))
@@ -14,7 +15,9 @@
 
 (setq vulpea-db-location
       (expand-file-name "var/vulpea/vulpea.db" user-emacs-directory)
-      vulpea-db-sync-external-method nil)
+      vulpea-db-sync-external-method nil
+      ;; Extract in a worker: keeps save-time parsing off the main thread.
+      vulpea-db-async-extraction 'full)
 
 (when (maybe-require-package 'vulpea "2.6.0")
   (condition-case err
