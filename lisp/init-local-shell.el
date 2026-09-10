@@ -109,7 +109,9 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
       (_
        (ml/ghostel-copy-vi-mode -1)
        (when (fboundp 'hel-local-mode)
-         (hel-local-mode -1))))))
+         (hel-local-mode -1))))
+    ;; Mode changes can replace the cursor without changing windows.
+    (init-ghostel-cursor-sync)))
 
 ;; M-1..M-9 select tab-bar tabs globally (see `init-local.el').  Ghostel's
 ;; semi-char mode binds every M-<printable> to the terminal, so those keys never
