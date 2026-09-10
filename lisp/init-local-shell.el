@@ -151,11 +151,11 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
                  ghostel-reload-module)
       :hook (ghostel-mode . ml/ghostel-sync-hel)
       :bind (:map ghostel-semi-char-mode-map
-                  ("M-v" . ghostel-copy-mode)
+                  ("M-c" . ghostel-copy-mode)
                   ("M-e" . ghostel-emacs-mode)
                   ("M-t" . ml/ghostel-split-new)
                   :map ghostel-mode-map
-                  ("M-v" . ghostel-copy-mode)
+                  ("M-c" . ghostel-copy-mode)
                   ("M-e" . ghostel-emacs-mode)
                   ("M-t" . ml/ghostel-split-new))
       :init
@@ -263,11 +263,11 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
     :ensure t
     :hook (ghostel-mode . ml/ghostel-sync-hel)
     :bind (:map ghostel-semi-char-mode-map
-                ("M-v" . ghostel-copy-mode)
+                ("M-c" . ghostel-copy-mode)
                 ("M-e" . ghostel-emacs-mode)
                 ("M-t" . ml/ghostel-split-new)
                 :map ghostel-mode-map
-                ("M-v" . ghostel-copy-mode)
+                ("M-c" . ghostel-copy-mode)
                 ("M-e" . ghostel-emacs-mode)
                 ("M-t" . ml/ghostel-split-new))
     :config

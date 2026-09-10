@@ -20,7 +20,7 @@ sync with whichever mode is active (see `ml/ghostel-sync-hel`).
 | Key | Switches to | Notes |
 | --- | --- | --- |
 | `M-e` | Emacs mode | Buffer is read-only; ordinary Emacs/Hel keys work |
-| `M-v` | Copy mode | Freezes the display; `ml/ghostel-copy-vi-mode` takes over |
+| `M-c` | Copy mode | Freezes the display; `ml/ghostel-copy-vi-mode` takes over |
 | (default) | Semi-char mode | Most keys go straight to the shell |
 
 ## Copy mode (tmux-style vi selection)
