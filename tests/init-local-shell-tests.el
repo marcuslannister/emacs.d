@@ -41,6 +41,29 @@
           (should blink-cursor-mode)
           (should (eq cursor-type 'bar)))))))
 
+(ert-deftest init-ghostel-no-nobreak-space-highlight ()
+  "Terminal nonbreaking spaces must not acquire an editor-drawn underline."
+  (let ((blink-cursor-mode nil)
+        (default-display (default-value 'nobreak-char-display)))
+    (cl-letf (((symbol-function 'hel-local-mode) #'ignore)
+              ((symbol-function 'ml/ghostel-copy-vi-mode) #'ignore)
+              ((symbol-function 'ghostel--cursor-blink-stop) #'ignore))
+      (save-window-excursion
+        (with-temp-buffer
+          (setq-local nobreak-char-display t)
+          (with-temp-buffer
+            (setq major-mode 'ghostel-mode)
+            (setq-local ghostel--input-mode 'semi-char)
+            (setq-local nobreak-char-display t)
+            (insert ">\u00a0 ")
+            (set-window-buffer (selected-window) (current-buffer))
+            (ml/ghostel-sync-hel)
+            (should-not nobreak-char-display)
+            (should (eq cursor-type 'box))
+            (should-not blink-cursor-mode))
+          (should nobreak-char-display)))
+      (should (eq (default-value 'nobreak-char-display) default-display)))))
+
 (ert-deftest init-ghostel-steady-cursor-after-editing-mode-change ()
   "Mode synchronization must restore the block after Hel changes its shape."
   (let ((blink-cursor-mode nil))

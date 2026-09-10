@@ -97,6 +97,8 @@ terminal misses keys -- disable it.  In emacs mode the buffer is
 read-only, so Hel's space leader is what we want when available.  In copy mode use
 `ml/ghostel-copy-vi-mode' (tmux-style hjkl select) instead of Hel."
   (when (derived-mode-p 'ghostel-mode)
+    ;; Do not add Emacs's red underline to terminal nonbreaking spaces.
+    (setq-local nobreak-char-display nil)
     (pcase ghostel--input-mode
       ('emacs
        (ml/ghostel-copy-vi-mode -1)
