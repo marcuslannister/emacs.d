@@ -16,22 +16,13 @@
   (set-face-attribute 'default nil :font DEFAULT-FONT :weight 'normal)
   (set-face-like-default 'fixed-pitch-serif)
   (set-face-like-default 'variable-pitch)
+  (setq use-default-font-for-symbols nil)
 
   ;; https://www.wfonts.com/font/symbola
   (cl-loop for font in SYMBOL-FONT
            when (find-font (font-spec :name font))
            return (set-fontset-font t 'symbol (font-spec :family font) nil 'prepend))
 
-  ;; "Emacs 28 now has 'emoji . before, emoji is part of 'symbol"
-  ;; 根据上面这句话应该写成 'emoji 就可以了，但是由于 Emoji 本身
-  ;; 分布比较散，所以还是先设置 'unicode 后再设置 CJK 比较靠谱。
-  ;; 特例：'emoji 就会导致 ⛈️ fallback 到 ⛈
-  ;; https://emacs-china.org/t/emacs/15676/34
-  ;;
-  ;; 另外 emoji 的尺寸会导致 corfu candidates 显示不全，因此要缩小。
-  (cl-loop for font in EMOJI-FONTS
-           when (find-font (font-spec :name font))
-           return (set-fontset-font t 'emoji (font-spec :family font :size (* FONT-SIZE 0.85)) nil 'prepend))
   ;; Set Chinese font
   ;; Do not use 'unicode charset, it will cause the English font setting invalid
   (dolist (charset '(kana han symbol cjk-misc bopomofo))
@@ -70,12 +61,22 @@
                   (#xF0001 . #xF1AF0)  ;; Material Design Icons
                   (#xE300 . #xE3E3)    ;; Weather
                   (#xF400 . #xF533)    ;; Octicons
-                  (#x2665 . #x2665)    ;; Octicons
-                  (#x26A1 . #x26A1)    ;; Octicons
                   (#xE000 . #xE00A)    ;; Pomicons
                   (#xEA60 . #xEC1E)))) ;; Codicons
     (dolist (range ranges)
-      (set-fontset-font t range NERD-ICONS-FONT))))
+      (set-fontset-font t range NERD-ICONS-FONT)))
+  ;; Last so CJK 'symbol and nerd ranges do not steal U+2600-U+26FF.
+  (cl-loop for font in EMOJI-FONTS
+           when (find-font (font-spec :name font))
+           return (let ((spec (font-spec :family font :size FONT-SIZE))
+                        (sets (delete nil (delete-dups (list t (frame-parameter nil 'font))))))
+                    (dolist (fs sets)
+                      (set-fontset-font fs 'emoji spec nil 'prepend)
+                      (dolist (range '(#x200D #xFE0F
+                                       (#x2600 . #x26FF)
+                                       (#x1F000 . #x1F4AB)
+                                       (#x1F4AE . #x1FAFF)))
+                        (set-fontset-font fs range spec nil 'prepend))))))
 
 (defun +suggest-other-faces (func &rest args)
   "Temporarily disable `global-hl-line-mode' while executing FUNC with ARGS."
