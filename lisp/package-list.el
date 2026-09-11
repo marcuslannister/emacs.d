@@ -22,19 +22,17 @@
 ;; external-packages/ is gitignored and not committed.
 (when (eq system-type 'windows-nt)
   (async-installer-git-add "https://github.com/kiennq/ghostel.git"
-                           :tag "v0.31.0.79.a7b0c9"
+                           :tag "v0.53.0.153.ac7349"
                            :subdir "lisp"
                            :main "ghostel.el"))
 
-;; Hel: Helix-style modal editing.  Pinned to a commit, not a tag: this commit
-;; sits 12 commits ahead of v0.12.0, the newest upstream tag, and those commits
-;; carry real fixes -- multiple-cursors keys lost on a major-mode change, three
-;; scroll fixes, a search variable used out of scope, and a duplicated advice.
-;; Pinning the tag would give them up.  Move to `:tag' once upstream ships a
-;; release that contains this commit.
+;; Hel: Helix-style modal editing.  v0.13.0 now contains the fixes this was
+;; pinned to a commit for (multiple-cursors keys lost on a major-mode change,
+;; three scroll fixes, a search variable used out of scope, a duplicated
+;; advice), so it moved from `:commit' to the tag.
 ;; Dependencies stay managed by package.el.
 (async-installer-git-add "https://github.com/anuvyklack/hel.git"
-                         :commit "93c88d8c67dcad08a7eb85949faf71b115973b5d"
+                         :tag "v0.13.0"
                          :main "hel.el")
 
 ;; Native leader translation for Hel, pinned to the reviewed tag below.  The
@@ -69,5 +67,5 @@
 ;; Knuth-Plass line breaking (CJK+Latin justification). No tags upstream yet,
 ;; so pinned to the current HEAD commit.
 (async-installer-git-add "https://github.com/Kinneyzhang/emacs-kp.git"
-                         :commit "888a4019f4ad44ea2a3f6bfe36bdfe5cb33e3a90"
+                         :commit "578540549511e352696c430338afb0c98522cd2f"
                          :main "ekp.el")
