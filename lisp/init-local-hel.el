@@ -206,7 +206,14 @@
     ;; Zoxide.
     "C-c z f" #'zoxide-find-file
     "C-c z t" #'zoxide-travel
-    "C-c z d" #'zoxide-cd))
+    "C-c z d" #'zoxide-cd)
+  ;; Drop Hel's one-key case commands.  They rewrite the whole live selection,
+  ;; and `hel-upcase' calls `upcase-region' as a plain function, so the
+  ;; `disabled' guard in `init-local' never fires.  "`" sits under Escape and
+  ;; "~" is Shift-"`", so a mis-hit is cheap to make and expensive to find:
+  ;; ~/org/ai.org still carries upcased org-gtd IDs and LOGBOOK lines from one.
+  (hel-keymap-global-set :state 'normal
+    "`" nil "M-`" nil "~" nil "g u" nil "g U" nil))
 
 (defun my/hel-delete-to-end-of-line ()
   "Delete from point to end of line, without touching the `kill-ring'."
