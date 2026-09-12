@@ -139,9 +139,6 @@ ARGS are additional arguments."
   (kbd "<leader> tn") '("Create new tab" . tab-new)
   (kbd "<leader> tc") '("Close tab" . tab-close)
 
-  ;; vterm
-  (kbd "<leader> vt") '("Create new vterm" . multi-vterm)
-
   ;; git
   (kbd "<leader> gs") '("Show status" . magit-status)
   (kbd "<leader> gb") '("Switch git status buffer" . emacs-solo/switch-git-status-buffer)
