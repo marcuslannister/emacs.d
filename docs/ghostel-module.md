@@ -14,6 +14,7 @@ an empty Pi caret then steals the caret cell.
 - Lisp: MELPA `ghostel` 20260902.1753 (dakra/ghostel `2bea18f3b52bf97d8222fea706da6fabdfc2cbb8`, tag `v0.53.0`)
 - Module: patched `ghostel-module` 0.53.0 in `ghostel-module/` (gitignored)
 - Patch: `patches/ghostel-v0.53.0-protect-cursor-spaces.patch`
+- Upstream: [dakra/ghostel#678](https://github.com/dakra/ghostel/pull/678)
 
 ## Build
 
@@ -47,6 +48,8 @@ module is used. Restart Emacs.
 
 ## Remove when upstream replaces it
 
-When dakra/ghostel ships the same protection, delete the patch, the
-module directory contents, and the `ghostel-module-directory` block.
-Re-run the glyph tests before you remove them.
+Watch [dakra/ghostel#678](https://github.com/dakra/ghostel/pull/678).
+When it merges, or upstream ships the same protection another way,
+delete the patch, the module directory contents, and the
+`ghostel-module-directory` block. Re-run the glyph tests before you
+remove them.
