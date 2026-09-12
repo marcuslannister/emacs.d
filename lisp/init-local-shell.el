@@ -287,6 +287,27 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
       (when (file-readable-p script)
         (setenv "GHOSTEL_SH_INTEGRATION" script)))))
 
+;; Give `shell-mode' Ghostel's libghostty VT parser instead of comint's
+;; `ansi-color-process-output' regex; see ghostel-comint.el for what that buys.
+;;
+;; Deliberately NOT `ghostel-comint-global-mode': that sweeps every
+;; comint-derived buffer, including ielm, js-comint, and the SQL and Python
+;; REPLs, where font-lock is the point and ANSI colour is nearly absent.
+;;
+;; `require': the Windows kiennq checkout comes from async-installer rather
+;; than package.el, so it has no generated autoload for `ghostel-comint-mode'.
+;;
+;; `fboundp': the module is downloaded on demand, so a fresh elpa dir has the
+;; Lisp and no module.  `ghostel-comint-filter' calls the native entry point
+;; anyway (void-function) on first output, in a preoutput filter.
+(defun ml/shell-enable-ghostel-comint ()
+  "Enable `ghostel-comint-mode' when ghostel-comint and its native module load."
+  (when (and (require 'ghostel-comint nil t)
+             (fboundp 'ghostel--comint-make-state))
+    (ghostel-comint-mode 1)))
+
+(add-hook 'shell-mode-hook #'ml/shell-enable-ghostel-comint)
+
 ;; claude-code-ide spawns `claude' from Emacs, whose env never ran scm_breeze.
 ;; Claude Code's Bash tool then sources a shell snapshot that replays
 ;; scm_breeze's `git' wrapper (which execs "$_git_cmd") without the var, so

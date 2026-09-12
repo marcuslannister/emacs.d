@@ -8,7 +8,8 @@
   (insert-file-contents
    (expand-file-name "../lisp/init-local-shell.el"
                      (file-name-directory load-file-name)))
-  (dolist (name '(init-ghostel-cursor-sync ml/ghostel-sync-hel))
+  (dolist (name '(init-ghostel-cursor-sync ml/ghostel-sync-hel
+                  ml/shell-enable-ghostel-comint))
     (goto-char (point-min))
     (search-forward (format "(defun %s " name))
     (beginning-of-line)
@@ -80,3 +81,17 @@
             (ml/ghostel-sync-hel)
             (should (eq cursor-type 'box))
             (should-not blink-cursor-mode)))))))
+
+(ert-deftest init-shell-ghostel-comint-needs-lisp-and-native-module ()
+  "Enable the VT filter only when both the Lisp and the native module load.
+Lisp present with no module is the regression: it breaks shell output."
+  (pcase-dolist (`(,lisp ,module ,expected)
+                 '((nil nil nil) (t nil nil) (t t t)))
+    (let (enabled)
+      (cl-letf (((symbol-function 'require) (lambda (&rest _) lisp))
+                ((symbol-function 'ghostel--comint-make-state)
+                 (and module #'ignore))
+                ((symbol-function 'ghostel-comint-mode)
+                 (lambda (arg) (setq enabled (> arg 0)))))
+        (ml/shell-enable-ghostel-comint))
+      (should (eq enabled expected)))))
