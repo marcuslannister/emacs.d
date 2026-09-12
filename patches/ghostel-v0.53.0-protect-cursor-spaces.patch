@@ -1,0 +1,75 @@
+diff --git a/src/Renderer.zig b/src/Renderer.zig
+index c5dea25..801dc32 100644
+--- a/src/Renderer.zig
++++ b/src/Renderer.zig
+@@ -477,6 +477,19 @@ pub const SpanContent = struct {
+             return if (self.text_end < buf.len - 1) buf[self.text_end] else null;
+         }
+ 
++        fn followingCellProtected(self: *const @This(), span: *const SpanContent) bool {
++            const pos = self.char_end;
++            if (span.cursor_char_pos) |cursor_pos| {
++                if (cursor_pos == pos) return true;
++            }
++            for (span.runs.items) |run| {
++                if (pos >= run.start_char and pos < run.end_char) {
++                    return run.key != null;
++                }
++            }
++            return false;
++        }
++
+         fn metricsKey(self: *const @This(), buf: []const u8) GlyphMetricsCache.Key {
+             return .{
+                 .page_serial = self.page_serial,
+@@ -756,6 +769,7 @@ fn adjustWidth(
+     const empty_before = preceding == null or preceding.? == ' ' or preceding.? == '\n';
+     const empty_after = following == null or following.? == ' ' or following.? == '\n';
+     if (!empty_before or !empty_after) return 1;
++    if (cell.followingCellProtected(&self.span)) return 1;
+ 
+     // We can claim the space after, but if it's a space, we must first hide it.
+     if (following) |c| {
+diff --git a/test/ghostel-glyph-test.el b/test/ghostel-glyph-test.el
+index 07c764c..2cd9c55 100644
+--- a/test/ghostel-glyph-test.el
++++ b/test/ghostel-glyph-test.el
+@@ -427,7 +427,8 @@ request floor(12 * 10/13) / 12 = 0.75 instead."
+ (ert-deftest ghostel-test-glyph-adjust-standalone-icon-claims-trailing-cell ()
+   "A standalone icon can claim the implicit trailing blank cell."
+   :tags '(native)
+-  (ghostel-test--with-oversized-icon-rendered "⏵"
++  ;; Park the cursor on the next row so the trailing cell is unused.
++  (ghostel-test--with-oversized-icon-rendered "⏵\e[2;1H"
+     (should (equal (char-after) ?⏵))
+     (should (equal (ghostel-test--display-min-width-at-point) '(2)))))
+ 
+@@ -454,6 +455,28 @@ request floor(12 * 10/13) / 12 = 0.75 instead."
+     (should (equal (char-after) ?\s))
+     (should-not (get-text-property (point) 'display))))
+ 
++(ert-deftest ghostel-test-glyph-adjust-standalone-icon-does-not-claim-cursor-space ()
++  "A standalone icon does not hide the following cursor cell."
++  :tags '(native)
++  (ghostel-test--with-oversized-icon-rendered "⏵ \e[D"
++    (should (equal (char-after) ?⏵))
++    (should (equal (ghostel-test--display-min-width-at-point) '(1)))
++    (forward-char 1)
++    (should (equal (char-after) ?\s))
++    (should-not (get-text-property (point) 'display))
++    (should (equal ghostel--cursor-char-pos (point)))))
++
++(ert-deftest ghostel-test-glyph-adjust-standalone-icon-does-not-claim-styled-space ()
++  "A standalone icon does not hide a visibly styled following space."
++  :tags '(native)
++  (ghostel-test--with-oversized-icon-rendered "⏵\e[7m \e[0mx"
++    (should (equal (char-after) ?⏵))
++    (should (equal (ghostel-test--display-min-width-at-point) '(1)))
++    (forward-char 1)
++    (should (equal (char-after) ?\s))
++    (should-not (equal (get-text-property (point) 'display) '(space :width 0)))
++    (should (get-text-property (point) 'face))))
++
+ (ert-deftest ghostel-test-glyph-adjust-last-column-no-claim ()
+   "A glyph at the last column does not claim out-of-bounds space."
+   :tags '(native)
