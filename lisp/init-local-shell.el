@@ -262,9 +262,16 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
                     ghostel-copy-mode
                     ghostel-readonly-exit))
         (advice-add fn :after #'ml/ghostel-sync-hel)))
-  ;; Mac/Linux: MELPA ghostel (dakra).  Unchanged.
+  ;; Mac/Linux: MELPA ghostel (dakra).  Load a patched native module from
+  ;; `ghostel-module/' when present; see docs/ghostel-module.md.
   (use-package ghostel
     :ensure t
+    :init
+    (let ((dir (expand-file-name "ghostel-module/" user-emacs-directory)))
+      (when (file-exists-p (expand-file-name
+                            (concat "ghostel-module" module-file-suffix)
+                            dir))
+        (setq ghostel-module-directory dir)))
     :hook (ghostel-mode . ml/ghostel-sync-hel)
     :bind (:map ghostel-semi-char-mode-map
                 ("M-c" . ghostel-copy-mode)
