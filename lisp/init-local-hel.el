@@ -260,6 +260,9 @@ manual selection is searched as-is instead of being replaced."
       "C-v" #'yank)
     (my/hel-setup-leader)
     (hel-mode 1)
+    ;; Mouse selection must not open a recursive prompt during a drag.
+    ;; Apply after Hel loads saved cursor-command choices.
+    (hel-set-single-cursor-command 'mouse-set-region)
     t))
 
 (defun my/hel--missing-package ()
