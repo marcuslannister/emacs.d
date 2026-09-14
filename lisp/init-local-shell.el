@@ -137,7 +137,7 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
     ;; runtime (dyn-loader-module + conpty-module).  Cloned + pinned via
     ;; async-installer:
     ;;   (async-installer-git-add "https://github.com/kiennq/ghostel.git"
-    ;;     :tag "v0.31.0.79.a7b0c9" :subdir "lisp" :main "ghostel.el")
+    ;;     :tag "v0.53.0.153.ac7349" :subdir "lisp" :main "ghostel.el")
     ;;   M-x async-installer-git-install-all-interactive  ; clones to external-packages/
     (use-package ghostel
       :ensure nil
@@ -200,7 +200,7 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
               (ghostel))
           (user-error "bash not found on $PATH -- add Git Bash's usr/bin to $PATH")))
       :config
-      (defconst ml/ghostel-windows-release-version "0.31.0.79.a7b0c9"
+      (defconst ml/ghostel-windows-release-version "0.53.0.153.ac7349"
         "Kiennq release tag that matches the pinned Windows Ghostel runtime.")
 
       (defun ml/ghostel-module-download-url (orig &optional version)
