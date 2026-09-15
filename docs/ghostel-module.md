@@ -11,17 +11,22 @@ an empty Pi caret then steals the caret cell.
 
 ## Pair
 
-- Lisp: MELPA `ghostel` 20260902.1753 (dakra/ghostel `2bea18f3b52bf97d8222fea706da6fabdfc2cbb8`, tag `v0.53.0`)
-- Module: patched `ghostel-module` 0.53.0 in `ghostel-module/` (gitignored)
-- Patch: `patches/ghostel-v0.53.0-protect-cursor-spaces.patch`
+- Lisp: MELPA `ghostel` 20260915.554 (dakra/ghostel `f1b03e52c4c48bd66772317ebedfa374a4083afe`, tag `v0.54.0`)
+- Module: patched `ghostel-module` 0.54.0 in `ghostel-module/` (gitignored)
+- Patch: `patches/ghostel-v0.53.0-protect-cursor-spaces.patch` (still applies cleanly on `v0.54.0`)
 - Upstream: [dakra/ghostel#678](https://github.com/dakra/ghostel/pull/678)
+
+`v0.54.0` also carries the [#686](https://github.com/dakra/ghostel/pull/686)
+fix for [#677](https://github.com/dakra/ghostel/issues/677): the native PTY
+backend now fills `ws_xpixel`/`ws_ypixel` in `TIOCSWINSZ`, so `kitten icat`
+and other pixel-size readers work.
 
 ## Build
 
 Need Zig 0.16.0 exactly. Use a temporary toolchain. Do not keep it on PATH.
 
 ```sh
-git clone --branch v0.53.0 --depth 1 https://github.com/dakra/ghostel.git
+git clone --branch v0.54.0 --depth 1 https://github.com/dakra/ghostel.git
 cd ghostel
 git apply /path/to/emacs.d/patches/ghostel-v0.53.0-protect-cursor-spaces.patch
 zig build --prefix . -Doptimize=ReleaseFast -Dcpu=baseline
