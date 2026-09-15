@@ -13,6 +13,12 @@ ${EMACS:=emacs} -nw --batch \
                            (load-file early-init-file)
                            (load-file user-init-file)
                            (run-hooks (quote after-init-hook))
+                           ;; C-x C-u must stay unbound.  It is one slip from
+                           ;; C-x u (undo) and upcase-region rewrites
+                           ;; mark-to-point with no prompt and no message.
+                           (when (key-binding (kbd "C-x C-u"))
+                             (error "C-x C-u should be unbound, got %S"
+                                    (key-binding (kbd "C-x C-u"))))
                            (require (quote eshell))
                            (let ((buf (eshell t)))
                              (unwind-protect

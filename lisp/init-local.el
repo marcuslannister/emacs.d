@@ -461,14 +461,13 @@ the breakage."
 
 
 
-;; Re-arm the confirmation prompt that `init-editing-utils' removes.  `C-x C-u'
-;; is `C-x u' (undo) with the control key held one stroke too long, and an
-;; unguarded `upcase-region' rewrites everything between mark and point with no
-;; prompt and no message.  It cost ~/org/ai.org 97 lines: the ORG_GTD property
-;; values and an ID cross-reference were upcased, which hid two projects from
-;; org-gtd's case-sensitive `+ORG_GTD="Projects"' query.
-(put 'upcase-region 'disabled t)
-(put 'downcase-region 'disabled t)
+;; `C-x C-u' is `C-x u' (undo) with the control key held one stroke too long, and
+;; `upcase-region' then rewrites mark-to-point in silence.  The head of
+;; ~/org/hardware.org went that way: upcased ORG_GTD values and ID references hid
+;; the project from org-gtd's case-sensitive `+ORG_GTD="Projects"' query.  The
+;; `disabled' guard that `init-editing-utils' clears is no help here -- its
+;; prompt takes SPC, the Hel leader key, as "run it".  `M-x' runs it unprompted.
+(global-unset-key (kbd "C-x C-u"))
 
 ;; ;; Load keybinding
 ;; (require 'init-local-keybinding)
