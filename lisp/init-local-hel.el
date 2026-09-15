@@ -208,10 +208,11 @@
     "C-c z t" #'zoxide-travel
     "C-c z d" #'zoxide-cd)
   ;; Drop Hel's one-key case commands.  They rewrite the whole live selection,
-  ;; and `hel-upcase' calls `upcase-region' as a plain function, so the
-  ;; `disabled' guard in `init-local' never fires.  "`" sits under Escape and
-  ;; "~" is Shift-"`", so a mis-hit is cheap to make and expensive to find:
-  ;; ~/org/ai.org still carries upcased org-gtd IDs and LOGBOOK lines from one.
+  ;; and `hel-upcase' calls `upcase-region' as a plain function, so no `disabled'
+  ;; property can stop it: that flag is checked for interactive calls only.
+  ;; Unbinding is the only layer that works here.  "`" sits under Escape and "~"
+  ;; is Shift-"`", so a mis-hit is cheap to make and expensive to find: one cost
+  ;; ~/org/ai.org 97 lines of upcased org-gtd metadata, repaired since.
   (hel-keymap-global-set :state 'normal
     "`" nil "M-`" nil "~" nil "g u" nil "g U" nil))
 
