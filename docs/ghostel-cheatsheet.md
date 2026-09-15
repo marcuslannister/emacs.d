@@ -11,6 +11,7 @@ Ghostel is the built-in terminal emulator package (`M-x ghostel`, `SPC g h` /
 | `SPC g h` / `C-c g h` | Start a Ghostel terminal buffer |
 | `SPC g o` / `C-c g o` | Start a Ghostel terminal for the current project |
 | `M-t` | Split right and open a fresh, auto-numbered Ghostel terminal there |
+| `C-u 3 M-x ghostel` | Switch to `*ghostel*<3>`, creating it first if needed (any number works) |
 
 ## Input modes
 
