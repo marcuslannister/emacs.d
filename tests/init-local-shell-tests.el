@@ -8,8 +8,8 @@
   (insert-file-contents
    (expand-file-name "../lisp/init-local-shell.el"
                      (file-name-directory load-file-name)))
-  (dolist (name '(init-ghostel-cursor-sync ml/ghostel-sync-hel
-                  ml/shell-enable-ghostel-comint))
+  (dolist (name '(init-ghostel-cursor-sync init-ghostel-speed-up
+                  ml/ghostel-sync-hel ml/shell-enable-ghostel-comint))
     (goto-char (point-min))
     (search-forward (format "(defun %s " name))
     (beginning-of-line)
@@ -81,6 +81,16 @@
             (ml/ghostel-sync-hel)
             (should (eq cursor-type 'box))
             (should-not blink-cursor-mode)))))))
+
+(ert-deftest init-ghostel-speed-up-skips-bidi ()
+  "Ghostel buffers skip bidi scanning."
+  (with-temp-buffer
+    (setq major-mode 'ghostel-mode)
+    (setq-local scroll-conservatively 101)
+    (init-ghostel-speed-up)
+    (should (eq bidi-paragraph-direction 'left-to-right))
+    (should bidi-inhibit-bpa)
+    (should (eq scroll-conservatively most-positive-fixnum))))
 
 (ert-deftest init-shell-ghostel-comint-needs-lisp-and-native-module ()
   "Enable the VT filter only when both the Lisp and the native module load.
