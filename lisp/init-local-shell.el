@@ -124,6 +124,8 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
 ;; runs from the option's :set function.  Char mode still sends M-<digit> to the
 ;; terminal, so a TUI that wants Alt-digit can have it there.
 (with-eval-after-load 'ghostel
+  (setq ghostel-timer-delay 0.01
+        ghostel-max-scrollback (* 1024 1024))
   (let ((keys (mapcar (lambda (n) (format "M-%d" n)) (number-sequence 1 9))))
     (customize-set-variable
      'ghostel-keymap-exceptions
@@ -321,6 +323,18 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
 ;; every git call dies with "permission denied" on an empty command.  Seed the
 ;; var here so the claude subprocess and its tool shells inherit a real path.
 (setenv "_git_cmd" (or (executable-find "git") "/usr/bin/git"))
+
+;; https://www.jamescherti.com/emacs-terminal-performance-vterm-eat-ansi-term-ghostel/
+(defun init-ghostel-speed-up ()
+  "Drop editor work that fights Ghostel redraw."
+  (setq-local scroll-conservatively most-positive-fixnum
+              bidi-paragraph-direction 'left-to-right
+              bidi-inhibit-bpa t)
+  (electric-pair-local-mode -1)
+  (electric-indent-local-mode -1)
+  (show-paren-local-mode -1)
+  (when (fboundp 'corfu-mode) (corfu-mode -1)))
+(add-hook 'ghostel-mode-hook #'init-ghostel-speed-up t)
 
 ;; Keep a steady block in every Ghostel buffer, including manually started
 ;; Claude Code sessions.  Stop both blink timers so Claude's painted black
