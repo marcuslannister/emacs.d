@@ -64,7 +64,9 @@
                   (#xE300 . #xE3E3)    ;; Weather
                   (#xF400 . #xF533)    ;; Octicons
                   (#xE000 . #xE00A)    ;; Pomicons
-                  (#xEA60 . #xEC1E)))) ;; Codicons
+                  (#xEA60 . #xEC1E)    ;; Codicons
+                  (#x2500 . #x257F)    ;; Box Drawing (MonoLisa seams)
+                  (#x2580 . #x259F)))) ;; Block Elements (MonoLisa seams)
     (dolist (range ranges)
       (set-fontset-font t range NERD-ICONS-FONT)))
   ;; Last so CJK 'symbol and nerd ranges do not steal U+2600-U+26FF.
