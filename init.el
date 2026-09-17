@@ -96,8 +96,12 @@
 (defconst *is-a-mac* (eq system-type 'darwin))
 
 
-;; Adjust garbage collection threshold for early startup (see use of gcmh below)
-(setq gc-cons-threshold (* 128 1024 1024))
+;; early-init.el raises GC for startup; restore a steady threshold here.
+;; GUI then hands off to gcmh on `after-init-hook'.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold (* 128 1024 1024)
+                  gc-cons-percentage 0.1)))
 
 
 ;; Process performance tuning

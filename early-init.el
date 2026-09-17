@@ -8,7 +8,13 @@
 
 ;;; Code:
 
-(setq package-enable-at-startup nil)
+;; Avoid GC during startup. Restored after init: gcmh on GUI,
+;; `emacs-startup-hook' in init.el on all sessions.
+(setq gc-cons-threshold most-positive-fixnum
+      gc-cons-percentage 0.6)
+
+(setq package-enable-at-startup nil
+      package-quickstart t)
 
 ;; Prefer newer source files over stale .elc — must be set before any other
 ;; load happens so it applies to early-init.el's own re-loads on next start.
@@ -26,7 +32,9 @@
 (require 'package)
 (setq package-user-dir
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
-                        user-emacs-directory))
+                        user-emacs-directory)
+      package-quickstart-file
+      (expand-file-name "package-quickstart.el" package-user-dir))
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 
