@@ -92,6 +92,13 @@
 (when (fboundp 'pixel-scroll-precision-mode)
   (pixel-scroll-precision-mode))
 
+;; emacsclient -t against Emacs.app is two terminals (ns + tty).
+;; Without this, typing in one frame can lock the other.
+(when (boundp 'multiple-terminals-merge-keyboards)
+  (setq multiple-terminals-merge-keyboards t))
+;; `fresh' also opened a GUI frame for the same file visit.
+(when (boundp 'ns-pop-up-frames)
+  (setq ns-pop-up-frames nil))
 
 (provide 'init-gui-frames)
 ;;; init-gui-frames.el ends here
