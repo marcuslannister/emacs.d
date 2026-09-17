@@ -6,6 +6,10 @@
 
 ;;; Code:
 
+;; Nix/home-manager files are symlinks into git repos. Prompting on every
+;; emacsclient visit made a second frame easy to open by mistake.
+(setq vc-follow-symlinks t)
+
 (when (maybe-require-package 'diff-hl)
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (add-hook 'after-init-hook 'global-diff-hl-mode)
