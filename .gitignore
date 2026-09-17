@@ -69,6 +69,7 @@ projects.eld
 anvil-state.db
 anvil-memory-index.db
 anvil-org-index.db*
+anvil-defs-index.db*
 anvil-init.el
 anvil-worker-init.el
 /anvil-stdio.cmd
