@@ -10,8 +10,10 @@
                       :weight (face-attribute 'default :weight)
                       :slant (face-attribute 'default :slant)))
 
-(defun +setup-fonts ()
+(cl-defun +setup-fonts ()
   "Setup fonts."
+  (unless (frame-parameter nil 'window-system)
+    (cl-return-from +setup-fonts))
   ;; Setting the default
   (set-face-attribute 'default nil :font DEFAULT-FONT :weight 'normal)
   (set-face-like-default 'fixed-pitch-serif)
