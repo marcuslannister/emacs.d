@@ -333,7 +333,8 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
   (electric-pair-local-mode -1)
   (electric-indent-local-mode -1)
   (show-paren-local-mode -1)
-  (when (fboundp 'corfu-mode) (corfu-mode -1)))
+  (when (fboundp 'corfu-mode) (corfu-mode -1))
+  (add-hook 'window-state-change-functions #'ghostel--adjust-size nil t))
 (add-hook 'ghostel-mode-hook #'init-ghostel-speed-up t)
 
 ;; Keep a steady block in every Ghostel buffer, including manually started
