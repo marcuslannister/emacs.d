@@ -469,6 +469,13 @@ the breakage."
 ;; prompt takes SPC, the Hel leader key, as "run it".  `M-x' runs it unprompted.
 (global-unset-key (kbd "C-x C-u"))
 
+;; The unbinding above, and the five Hel case keys that `init-local-hel' unbinds,
+;; both held on 2026-09-17 -- and ~/org/software.org was upcased again anyway, so
+;; the entry path is still unknown.  Key bindings are the wrong layer to defend.
+;; `init-local-case-guard' guards the commands and the save instead, and logs a
+;; backtrace so the next event names its caller.
+(require 'init-local-case-guard)
+
 ;; ;; Load keybinding
 ;; (require 'init-local-keybinding)
 
