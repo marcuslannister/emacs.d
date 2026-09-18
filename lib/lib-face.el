@@ -30,6 +30,12 @@
   (dolist (charset '(kana han symbol cjk-misc bopomofo))
     (set-fontset-font (frame-parameter nil 'font) charset
                       (font-spec :family ZH-DEFAULT-FONT)))
+  ;; 'symbol above also claims Box Drawing and Block Elements, which
+  ;; ZH-DEFAULT-FONT draws with sub-pixel seams (visible as a dark grid over
+  ;; TUI art). Give those two ranges back to the default font.
+  (dolist (range '((#x2500 . #x257F) (#x2580 . #x259F)))
+    (set-fontset-font (frame-parameter nil 'font) range
+                      (font-spec :family (face-attribute 'default :family))))
   ;; Setting fall-back fonts
   ;; https://idiocy.org/emacs-fonts-and-fontsets.html
   (dolist (font FALLBACK-FONTS)
@@ -64,9 +70,7 @@
                   (#xE300 . #xE3E3)    ;; Weather
                   (#xF400 . #xF533)    ;; Octicons
                   (#xE000 . #xE00A)    ;; Pomicons
-                  (#xEA60 . #xEC1E)    ;; Codicons
-                  (#x2500 . #x257F)    ;; Box Drawing (MonoLisa seams)
-                  (#x2580 . #x259F)))) ;; Block Elements (MonoLisa seams)
+                  (#xEA60 . #xEC1E)))) ;; Codicons
     (dolist (range ranges)
       (set-fontset-font t range NERD-ICONS-FONT)))
   ;; Last so CJK 'symbol and nerd ranges do not steal U+2600-U+26FF.
