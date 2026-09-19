@@ -105,13 +105,17 @@
 (defun bh/org-agenda-to-appt ()
   (interactive)
   (setq appt-time-msg-list nil)
-  (org-agenda-to-appt))
+  (condition-case err
+      (org-agenda-to-appt)
+    (error (message "org-agenda-to-appt failed: %s"
+                    (error-message-string err)))))
 
 ;; Rebuild the reminders everytime the agenda is displayed
 (add-hook 'org-agenda-finalize-hook 'bh/org-agenda-to-appt 'append)
 
-;; This is at the end of my .emacs - so appointments are set up when Emacs starts
-(bh/org-agenda-to-appt)
+;; After init, not while this file is still loading: org timestamp regexps
+;; plus GUI font-lock trip Emacs's syntax-table cache.
+(add-hook 'after-init-hook #'bh/org-agenda-to-appt)
 
 ;; Activate appointments so we get notifications
 (appt-activate t)
