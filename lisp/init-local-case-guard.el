@@ -63,7 +63,6 @@ the 2026-09-17 software.org damage matched 211 times.")
 (defvar ml-case-guard-canary-patterns
   '("^[ \t]*- STATE +\""
     "^[ \t]*:ORG_GTD: *[A-Z][A-Z]+"
-    "^[ \t]*:ORG_GTD_PROJECT[A-Z_]*: *[A-Z][A-Z]+"
     "^[ \t]*:TRIGGER: *[A-Z]")
   "Case-sensitive patterns that only appear after an accidental upcase.
 Org writes `- State \"DONE\" from \"TODO\"', org-gtd writes `Projects' and
@@ -71,7 +70,15 @@ Org writes `- State \"DONE\" from \"TODO\"', org-gtd writes `Projects' and
 forms are damage.  A scan of every file in ~/org after the 2026-09-17 repair
 matched none of these.  Org keywords such as `#+FILETAGS:' and `#+AUTHOR:' are
 left out because they are legitimately uppercase, and `:ID:' is left out
-because org-gtd stores uppercase UUIDs there, so an uppercase ID is normal.")
+because org-gtd stores uppercase UUIDs there, so an uppercase ID is normal.
+
+Every pattern must read a property with a closed vocabulary.  `:ORG_GTD:' holds
+only `Actions' or `Projects', so an uppercase value there is damage.
+`:ORG_GTD_PROJECT:' and `:ORG_GTD_PROJECT_IDS:' hold the project title and a
+slug made from it, which are free text, so a project named `ER-X' or `PVE on
+i5-8600K' is normal.  A pattern over those two matched 22 healthy lines and
+blocked a save on 2026-09-18.  A real upcase hits `:ORG_GTD:' on the same
+heading, so nothing is lost by reading only the closed vocabulary.")
 
 (defvar ml-case-guard-guarded-functions
   '(upcase-region downcase-region capitalize-region upcase-initials-region

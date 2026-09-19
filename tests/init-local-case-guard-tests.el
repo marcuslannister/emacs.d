@@ -51,6 +51,31 @@
    ":END:")
   "An undamaged Org task, in the shape org-gtd writes it.")
 
+(defconst init-local-case-guard-tests--acronym-projects
+  (init-local-case-guard-tests--lines
+   "#+title: hardware"
+   ""
+   "* NEXT Flash the router"
+   ":PROPERTIES:"
+   ":ORG_GTD_PROJECT_IDS: ER-X-2026-09-18-16-53-39"
+   ":ORG_GTD_PROJECT: ER-X"
+   ":END:"
+   "* NEXT Fit the cooler"
+   ":PROPERTIES:"
+   ":ORG_GTD_PROJECT_IDS: PVE-on-i5-8600K-2026-09-14-19-37-35"
+   ":ORG_GTD_PROJECT: PVE on i5-8600K"
+   ":END:"
+   "* NEXT Write the agent notes"
+   ":PROPERTIES:"
+   ":ORG_GTD_PROJECT_IDS: AGENTS-dot-md-2026-09-12-00-33-24"
+   ":ORG_GTD_PROJECT: AGENTS.md"
+   ":END:")
+  "Healthy projects whose titles are acronyms.
+A canary pattern over `:ORG_GTD_PROJECT' and `:ORG_GTD_PROJECT_IDS' read these
+six lines as damage and blocked a save of ~/org/hardware.org on 2026-09-18.
+Six is above `ml-case-guard-canary-threshold', so this fixture fails loudly if
+that pattern ever comes back.")
+
 (defconst init-local-case-guard-tests--damaged
   (init-local-case-guard-tests--lines
    "#+TITLE: SOFTWARE"
@@ -58,7 +83,6 @@
    "* NEXT ADD A RAYCAST PLUGIN"
    ":PROPERTIES:"
    ":ORG_GTD:  ACTIONS"
-   ":ORG_GTD_PROJECT: EMACS"
    ":TRIGGER:  SELF ORG-GTD-UPDATE-PROJECT-AFTER-TASK-DONE!"
    ":END:"
    ":LOGBOOK:"
@@ -89,6 +113,17 @@
   "An undamaged guarded file must still save without a prompt."
   (init-local-case-guard-tests--with-org-file
       init-local-case-guard-tests--healthy
+    (should (= 0 (ml-case-guard-canary-count)))
+    (cl-letf (((symbol-function 'yes-or-no-p)
+               (lambda (&rest _) (error "Must not prompt"))))
+      (save-buffer))
+    (should (file-exists-p (buffer-file-name)))
+    (should-not (buffer-modified-p))))
+
+(ert-deftest init-local-case-guard-allows-save-of-acronym-projects ()
+  "A project named `ER-X' is not damage, and must not raise a prompt."
+  (init-local-case-guard-tests--with-org-file
+      init-local-case-guard-tests--acronym-projects
     (should (= 0 (ml-case-guard-canary-count)))
     (cl-letf (((symbol-function 'yes-or-no-p)
                (lambda (&rest _) (error "Must not prompt"))))
