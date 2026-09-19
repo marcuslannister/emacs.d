@@ -115,6 +115,23 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
     ;; Mode changes can replace the cursor without changing windows.
     (init-ghostel-cursor-sync)))
 
+;; Upstream `ghostel--kitty-check-source-rect' rejects a Kitty-graphics
+;; placement whenever SRC-W/SRC-H (the crop size in the *source* image's
+;; pixel space) differ from PIXEL-W/PIXEL-H (the *rendered*, post-scale
+;; pixel size).  Those two differ on every ordinary scale-to-fit placement
+;; -- e.g. a yazi/timg preview scaled down into a smaller cell region --
+;; so the check false-positives on scaling, not just cropping, and floods
+;; `ghostel-kitty-unsupported-source-rect' errors.  A non-zero SRC-X/SRC-Y
+;; is the only atlas-crop signal available here without decoding the
+;; source image's native dimensions, so use that instead.
+(defun ml/ghostel-kitty-check-source-rect (src-x src-y src-w src-h pixel-w pixel-h)
+  "Signal `ghostel-kitty-unsupported-source-rect' only for a true atlas crop.
+SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
+`ghostel--kitty-check-source-rect', which this overrides."
+  (when (or (> src-x 0) (> src-y 0))
+    (signal 'ghostel-kitty-unsupported-source-rect
+            (list src-x src-y src-w src-h pixel-w pixel-h))))
+
 ;; M-1..M-9 select tab-bar tabs globally (see `init-local.el').  Ghostel's
 ;; semi-char mode binds every M-<printable> to the terminal, so those keys never
 ;; reach Emacs inside a terminal buffer.  Register them as keymap exceptions
@@ -131,7 +148,10 @@ read-only, so Hel's space leader is what we want when available.  In copy mode u
      'ghostel-keymap-exceptions
      (append ghostel-keymap-exceptions
              (seq-remove (lambda (key) (member key ghostel-keymap-exceptions))
-                         keys)))))
+                         keys))))
+  (when (fboundp 'ghostel--kitty-check-source-rect)
+    (advice-add 'ghostel--kitty-check-source-rect
+                :override #'ml/ghostel-kitty-check-source-rect)))
 
 (if IS-WINDOWS
     ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
