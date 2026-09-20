@@ -30,12 +30,11 @@
   (dolist (charset '(kana han symbol cjk-misc bopomofo))
     (set-fontset-font (frame-parameter nil 'font) charset
                       (font-spec :family ZH-DEFAULT-FONT)))
-  ;; 'symbol above also claims Box Drawing and Block Elements, which
-  ;; ZH-DEFAULT-FONT draws with sub-pixel seams (visible as a dark grid over
-  ;; TUI art). Give those two ranges back to the default font.
-  (dolist (range '((#x2500 . #x257F) (#x2580 . #x259F)))
-    (set-fontset-font (frame-parameter nil 'font) range
-                      (font-spec :family (face-attribute 'default :family))))
+  ;; 'symbol above also claims Box Drawing (U+2500-257F) and Block Elements
+  ;; (U+2580-259F), which ZH-DEFAULT-FONT draws with sub-pixel seams (visible
+  ;; as a dark grid over TUI art). Give that range back to the default font.
+  (set-fontset-font (frame-parameter nil 'font) '(#x2500 . #x259F)
+                    (font-spec :family (face-attribute 'default :family)))
   ;; Setting fall-back fonts
   ;; https://idiocy.org/emacs-fonts-and-fontsets.html
   (dolist (font FALLBACK-FONTS)
