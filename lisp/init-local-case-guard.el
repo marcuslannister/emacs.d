@@ -34,9 +34,20 @@
 ;; anyway.  Every save path reaches `basic-save-buffer', including the
 ;; `org-gtd-save-buffers' call that put the damage on disk on 2026-09-17.
 ;;
-;; Every prompt uses `yes-or-no-p'.  `y-or-n-p' and the `disabled' property
-;; prompt are no good here: their prompts accept SPC, which is the Hel leader
-;; key, so the reflex answer runs the command.  `yes-or-no-p' needs a typed word.
+;; Every prompt uses `yes-or-no-p' with `use-short-answers' bound to nil.  A
+;; plain call is not enough: `init-misc' sets `use-short-answers' globally, so
+;; Emacs turns `yes-or-no-p' into `y-or-n-p', whose prompt accepts SPC, the Hel
+;; leader key.  That is how the save of ~/org/hardware.org went through on
+;; 2026-09-21: layer 3 counted 36 upcased lines, asked, and the log records the
+;; answer as `allowed'.
+;;
+;; The same log entry shows why a timer must not be asked at all.  It came from
+;; `auto-save-buffers', which calls `basic-save-buffer' on an idle timer inside
+;; `with-temp-message' with `inhibit-redisplay' bound, so the question never
+;; reached the screen and still read the keys typed into the buffer.  A save
+;; with no `this-command' is therefore refused with no question, and warns once
+;; per buffer, because `ignore-errors' in `auto-save-buffers' swallows the
+;; `user-error' and would otherwise leave the refusal silent.
 ;;
 ;; To switch the whole guard off:
 ;;   (dolist (f ml-case-guard-guarded-functions) (advice-remove f 'ml-case-guard))
@@ -116,11 +127,23 @@ indirect buffer and that buffer carries no file name of its own."
                (ml-case-guard--backtrace))
        nil ml-case-guard-log-file t 'quiet))))
 
+(defvar-local ml-case-guard--warned nil
+  "Non-nil once this buffer has reported a refused timer save.")
+
 (defun ml-case-guard--confirm (file detail prompt message)
   "Ask PROMPT before touching FILE, and log DETAIL either way.
-Signal a `user-error' carrying MESSAGE when the answer is no, or when Emacs
-runs in batch and cannot ask."
-  (if (and (not noninteractive) (yes-or-no-p prompt))
+Signal a `user-error' carrying MESSAGE when the answer is no, when Emacs runs
+in batch and cannot ask, or when PROMPT is nil, which means the caller knows
+there is nobody at the keyboard to answer.
+
+`use-short-answers' is bound off, so the question needs a typed word instead of
+the SPC that `y-or-n-p' accepts, and `inhibit-redisplay' is bound off, so the
+question is visible even when an idle timer asked it."
+  (if (and prompt
+           (not noninteractive)
+           (let ((use-short-answers nil)
+                 (inhibit-redisplay nil))
+             (yes-or-no-p prompt)))
       (ml-case-guard--log "allowed" file detail)
     (ml-case-guard--log "refused" file detail)
     (user-error "%s" message)))
@@ -190,20 +213,29 @@ names the caller at the moment of the change rather than at the later save."
   "Block a save that would write upcased org metadata to a guarded file.
 This is the layer that does not care how the damage arrived.  Used as
 `:before' advice on `basic-save-buffer', so a `user-error' raised here aborts
-the save instead of being demoted to a message."
+the save instead of being demoted to a message.
+
+A save with no `this-command' comes from a timer, not from a person, so it is
+refused with no question and warns once per buffer."
   (let ((file (ml-case-guard--file)))
     (when file
       (let ((hits (ml-case-guard-canary-count)))
         (when (>= hits ml-case-guard-canary-threshold)
-          (ml-case-guard--confirm
-           file (format "%d upcased metadata lines" hits)
-           (format "%s looks upcased (%d lines).  Save anyway? "
-                   (abbreviate-file-name file) hits)
-           (format (concat "Save blocked: %s holds %d upcased metadata lines;"
-                           " undo first.  Any later buffer in this save is"
-                           " still unsaved (see %s)")
-                   (abbreviate-file-name file) hits
-                   (abbreviate-file-name ml-case-guard-log-file))))))))
+          (let ((reason (format (concat "Save blocked: %s holds %d upcased"
+                                        " metadata lines; undo first.  Any"
+                                        " later buffer in this save is still"
+                                        " unsaved (see %s)")
+                                (abbreviate-file-name file) hits
+                                (abbreviate-file-name ml-case-guard-log-file))))
+            (unless (or this-command ml-case-guard--warned)
+              (setq ml-case-guard--warned t)
+              (display-warning 'ml-case-guard reason :error))
+            (ml-case-guard--confirm
+             file (format "%d upcased metadata lines" hits)
+             (and this-command
+                  (format "%s looks upcased (%d lines).  Save anyway? "
+                          (abbreviate-file-name file) hits))
+             reason)))))))
 
 (dolist (command '(upcase-region downcase-region
                    capitalize-region upcase-initials-region))

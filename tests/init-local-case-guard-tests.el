@@ -104,10 +104,37 @@ that pattern ever comes back.")
       init-local-case-guard-tests--damaged
     ;; Keep clear of the threshold, so trimming the fixture cannot mask a fault.
     (should (> (ml-case-guard-canary-count) ml-case-guard-canary-threshold))
-    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&rest _) nil)))
-      (should-error (save-buffer) :type 'user-error))
+    (let ((this-command 'save-buffer))
+      (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&rest _) nil)))
+        (should-error (save-buffer) :type 'user-error)))
     (should (buffer-modified-p))
     (should-not (file-exists-p (buffer-file-name)))))
+
+(ert-deftest init-local-case-guard-refuses-a-timer-save-without-asking ()
+  "A save with no `this-command' has nobody at the keyboard, so it must not ask.
+`auto-save-buffers' calls `basic-save-buffer' from an idle timer with
+`inhibit-redisplay' bound, which hides the question and lets the next SPC
+answer it.  That is how ~/org/hardware.org reached disk upcased on 2026-09-21."
+  (init-local-case-guard-tests--with-org-file
+      init-local-case-guard-tests--damaged
+    (let ((this-command nil))
+      (cl-letf (((symbol-function 'yes-or-no-p)
+                 (lambda (&rest _) (error "Must not ask a timer")))
+                ((symbol-function 'display-warning) #'ignore))
+        (should-error (save-buffer) :type 'user-error)))
+    (should (buffer-modified-p))
+    (should-not (file-exists-p (buffer-file-name)))))
+
+(ert-deftest init-local-case-guard-asks-for-a-typed-word ()
+  "`init-misc' sets `use-short-answers', which turns the prompt into `y-or-n-p'.
+That prompt accepts SPC, the Hel leader key, so the guard must switch it off."
+  (init-local-case-guard-tests--with-org-file
+      (init-local-case-guard-tests--filler)
+    (let ((use-short-answers t))
+      (cl-letf (((symbol-function 'yes-or-no-p)
+                 (lambda (&rest _) (should-not use-short-answers) nil)))
+        (should-error (upcase-region (point-min) (point-max))
+                      :type 'user-error)))))
 
 (ert-deftest init-local-case-guard-allows-save-of-healthy-file ()
   "An undamaged guarded file must still save without a prompt."
