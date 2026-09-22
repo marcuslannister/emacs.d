@@ -21,10 +21,9 @@
 ;;    region is active, so guarding only `upcase-region' leaves plain `M-u' free
 ;;    to upcase thousands of characters.
 ;; 2. An `after-change-functions' watcher that logs a backtrace at the moment a
-;;    large equal-length rewrite happens.  A casify replaces a span with exactly
-;;    as many characters as it removed, which is a precise and cheap signature.
-;;    This is the layer that can name an unknown caller, because layers 1 and 3
-;;    only see callers that use the case commands, or the damage after the fact.
+;;    large change happens.  This is the layer that can name an unknown caller,
+;;    because layers 1 and 3 only see callers that use the case commands, or the
+;;    damage after the fact.
 ;; 3. A save canary.  It refuses to write a guarded file that carries the damage
 ;;    signature, whatever produced it.
 ;;
@@ -49,8 +48,29 @@
 ;; per buffer, because `ignore-errors' in `auto-save-buffers' swallows the
 ;; `user-error' and would otherwise leave the refusal silent.
 ;;
+;; Layer 2 had never fired once across four incidents, for two separate reasons,
+;; both found on 2026-09-21 by reading a live damaged buffer.
+;;
+;; It was not installed.  `after-change-functions' is buffer-local when added
+;; with LOCAL, and `kill-all-local-variables' strips it, so a major mode that
+;; runs a second time in a live buffer silently drops the watcher; the damaged
+;; `software.org' buffer carried ten other after-change hooks and not this one.
+;; The watcher is therefore on the global hook now, with the size test ahead of
+;; the file test so an unguarded buffer costs two integer comparisons.  That
+;; also deletes the `find-file-hook' installer and the loop over `buffer-list'
+;; it needed, because there is no longer a per-buffer state to get wrong.
+;;
+;; It also looked for the wrong shape.  It required one change that put back
+;; exactly as many characters as it removed, and the comment claimed a delete
+;; plus an insert was "deliberately not the signature".  The real event is a
+;; delete and then an insert — two changes — and their sizes need not match:
+;; `software.org' recorded pairs of 61054/61054 and of 60628/61585 in the same
+;; `buffer-undo-list'.  Either half is now enough to log.  A revert of a guarded
+;; file reaches this too, which is worth a log line rather than worth filtering.
+;;
 ;; To switch the whole guard off:
 ;;   (dolist (f ml-case-guard-guarded-functions) (advice-remove f 'ml-case-guard))
+;;   (remove-hook 'after-change-functions #'ml-case-guard--after-change)
 ;;; Code:
 
 (require 'seq)
@@ -181,21 +201,20 @@ region is active, so this is the route plain \\[upcase-word] takes."
   (apply original arg args))
 
 (defun ml-case-guard--after-change (beg end len)
-  "Log a large equal-length rewrite of BEG to END, replacing LEN characters.
-A casify puts back exactly as many characters as it took out, so this is the
-signature of the damage.  It only records: the point is the backtrace, which
-names the caller at the moment of the change rather than at the later save."
-  (when (and (= len (- end beg))
-             (>= len ml-case-guard-region-threshold))
-    (let ((file (ml-case-guard--file)))
-      (when file
-        (ml-case-guard--log "equal-length-rewrite" file
-                            (format "%d chars at %d..%d" len beg end))))))
-
-(defun ml-case-guard--watch-buffer ()
-  "Watch this buffer for equal-length rewrites when it visits a guarded file."
-  (when (ml-case-guard--file)
-    (add-hook 'after-change-functions #'ml-case-guard--after-change nil t)))
+  "Log a large change over BEG to END that replaced LEN characters.
+Either half of a delete-then-insert pair is enough, because that is the shape
+the damage arrives in and the two sizes need not match.  It only records: the
+point is the backtrace, which names the caller at the moment of the change
+rather than at the later save.  This runs on the global `after-change-functions'
+and so tests the size before the file, to stay cheap in unguarded buffers."
+  (let ((inserted (- end beg)))
+    (when (or (>= inserted ml-case-guard-region-threshold)
+              (>= len ml-case-guard-region-threshold))
+      (let ((file (ml-case-guard--file)))
+        (when file
+          (ml-case-guard--log
+           (if (> len inserted) "large-delete" "large-insert") file
+           (format "%d in, %d out, at %d..%d" inserted len beg end)))))))
 
 (defun ml-case-guard-canary-count ()
   "Return how many damage-signature lines the current buffer holds."
@@ -247,11 +266,9 @@ refused with no question and warns once per buffer."
 (advice-add 'basic-save-buffer :before #'ml-case-guard--check-save
             '((name . ml-case-guard)))
 
-(add-hook 'find-file-hook #'ml-case-guard--watch-buffer)
-
-;; Buffers opened before this module loaded need the watcher too.
-(dolist (buffer (buffer-list))
-  (with-current-buffer buffer (ml-case-guard--watch-buffer)))
+;; Global, not buffer-local: `kill-all-local-variables' strips a local hook
+;; whenever a major mode runs again, which is how this watcher went missing.
+(add-hook 'after-change-functions #'ml-case-guard--after-change)
 
 (provide 'init-local-case-guard)
 ;;; init-local-case-guard.el ends here
