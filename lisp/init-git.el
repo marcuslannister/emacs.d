@@ -21,8 +21,8 @@
 
   ;; Hint: customize `magit-repository-directories' so that you can use C-u M-F12 to
   ;; quickly open magit on any one of your projects.
+  ;; `C-x g' is vc-dir-root now: see init-vc.el.
   (global-set-key [(meta f12)] 'magit-status)
-  (global-set-key (kbd "C-x g") 'magit-status)
   (global-set-key (kbd "C-x M-g") 'magit-dispatch)
 
   (defun sanityinc/magit-or-vc-log-file (&optional prompt)

@@ -140,10 +140,11 @@ ARGS are additional arguments."
   (kbd "<leader> tc") '("Close tab" . tab-close)
 
   ;; git
-  (kbd "<leader> gs") '("Show status" . magit-status)
+  (kbd "<leader> gs") '("Show status" . vc-dir-root)
   (kbd "<leader> gb") '("Switch git status buffer" . emacs-solo/switch-git-status-buffer)
-  (kbd "<leader> gi") '("Show magit" . magit)
-  (kbd "<leader> gd") '("Show git diff working tree" . magit-diff-working-tree)
+  (kbd "<leader> gi") '("Commit or next action" . vc-next-action)
+  (kbd "<leader> gd") '("Show git diff working tree" . vc-root-diff)
+  (kbd "<leader> gl") '("Show git log" . vc-print-root-log)
 
   ;; search
   (kbd "<leader> sgr") '("Search with rg" . rgrep)

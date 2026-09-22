@@ -392,8 +392,6 @@ The completion candidates include the Git status of each file."
 
 (global-set-key (kbd "C-x C-g") 'emacs-solo/switch-git-status-buffer)
 
-(require 'init-local-git)
-
 
 (require 'init-local-hel)
 (require 'init-local-gtd nil t)

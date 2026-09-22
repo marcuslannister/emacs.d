@@ -110,14 +110,14 @@
     "C-c d j" #'ekp-justify-buffer
 
     ;; Git / translate / Ghostel.
-    "C-c g s" #'magit-status
+    "C-c g s" #'vc-dir-root
     "C-c g b" #'emacs-solo/switch-git-status-buffer
-    "C-c g i" #'magit
-    "C-c g d" #'magit-diff-working-tree
+    "C-c g i" #'vc-next-action
+    "C-c g d" #'vc-root-diff
     "C-c g t" #'gt-translate
-    "C-c g u" #'my/git-push
-    "C-c g l" #'magit-log-current
-    "C-c g f" #'my/git-pull-ff-only
+    "C-c g u" #'vc-push
+    "C-c g l" #'vc-print-root-log
+    "C-c g f" #'vc-pull
     "C-c g p" #'ml-llm-proof
     "C-c g h" #'ghostel
     "C-c g o" #'ghostel-project
