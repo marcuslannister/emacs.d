@@ -8,10 +8,17 @@ Ghostel is the built-in terminal emulator package (`M-x ghostel`, `SPC g h` /
 
 | Key | Command |
 | --- | --- |
-| `SPC g h` / `C-c g h` | Start a Ghostel terminal buffer |
+| `SPC g h` / `C-c g h` | Start a Ghostel terminal buffer (reuses `*ghostel*` if already open) |
+| `SPC g n` / `C-c g n` | Fresh, auto-numbered Ghostel buffer in the current tab |
 | `SPC g o` / `C-c g o` | Start a Ghostel terminal for the current project |
+| `SPC t g` | New tab with a fresh, auto-numbered Ghostel buffer |
 | `M-t` | Split right and open a fresh, auto-numbered Ghostel terminal there |
-| `C-u 3 M-x ghostel` | Switch to `*ghostel*<3>`, creating it first if needed (any number works) |
+| `M-u 3 M-x ghostel` | Switch to `*ghostel*<3>`, creating it first if needed (any number works) |
+
+Note: numbered Ghostel buffers take the universal argument from **before** the command
+(`M-u 2 SPC g h` works; `SPC 2 SPC g h` does not — Hel's leader reads digits itself, so a
+digit after `SPC` cannot become a prefix argument and `M-u` is Hel's universal-argument key,
+while `C-u` is unbound for scrolling).
 
 ## Input modes
 
