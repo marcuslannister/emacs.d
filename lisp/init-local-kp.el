@@ -18,14 +18,14 @@
   ;; stretch prose across a full-frame Org buffer).
   (setq ekp-buffer-measure (cons 'max (* (frame-char-width) 80)))
 
-  ;; ekp-auto-justify-mode already consults `ekp-buffer-mode-policy-alist' for
-  ;; Org/Markdown, so code blocks are skipped automatically; the *-setup
-  ;; calls additionally make manual `ekp-justify-region'/`-buffer' respect the
-  ;; same skip faces in these modes.
+  ;; On Emacs 31, automatic pixel measurement can crash native macOS font
+  ;; lookup while `org-agenda-to-appt' visits Org files.  Keep the setup hooks
+  ;; available for manual commands, but do not start automatic reflow there.
   (add-hook 'org-mode-hook #'ekp-org-setup)
-  (add-hook 'org-mode-hook #'ekp-auto-justify-mode)
   (add-hook 'markdown-mode-hook #'ekp-markdown-setup)
-  (add-hook 'markdown-mode-hook #'ekp-auto-justify-mode))
+  (unless (>= emacs-major-version 31)
+    (add-hook 'org-mode-hook #'ekp-auto-justify-mode)
+    (add-hook 'markdown-mode-hook #'ekp-auto-justify-mode)))
 
 (provide 'init-local-kp)
 ;;; init-local-kp.el ends here
