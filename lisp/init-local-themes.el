@@ -104,10 +104,20 @@
     (nerd-icons-completion-mode))
 
   (use-package nerd-icons-dired
-    :ensure t
-    :hook (dired-mode . nerd-icons-dired-mode)))
+    :ensure t))
 
 ;; (use-package nerd-icons-devicon :ensure t)
+
+(when window-system
+  (use-package material-icons
+    :ensure t
+    :hook
+    (dired-mode . material-icons-dired-icons-mode)
+    (ibuffer-mode . material-icons-ibuffer-icons-mode)
+    :init
+    (setq material-icons-size 22)
+    (with-eval-after-load 'speedbar
+      (material-icons-speedbar-icons-mode 1))))
 
 
 
