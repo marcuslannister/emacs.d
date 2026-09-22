@@ -75,6 +75,11 @@
 
 (require 'seq)
 
+;; `use-short-answers' arrived in Emacs 28, and `init.el' sets the floor at
+;; 27.1.  Without this declaration the symbol is not special on 27.x, so the
+;; `let' in `ml-case-guard--confirm' would bind it lexically and do nothing.
+(defvar use-short-answers)
+
 (defvar ml-case-guard-directories (list (expand-file-name "org/" "~"))
   "Directories whose files must not be case-rewritten without confirmation.")
 
