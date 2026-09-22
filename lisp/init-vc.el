@@ -10,6 +10,11 @@
 ;; emacsclient visit made a second frame easy to open by mistake.
 (setq vc-follow-symlinks t)
 
+;; Experiment: drive daily work from vc-dir, keep magit for the hard parts.
+;; `vc-dir-root' opens at the repo root without prompting.
+(global-set-key (kbd "C-x g") 'vc-dir-root)
+(sanityinc/fullframe-mode 'vc-dir-mode)
+
 (when (maybe-require-package 'diff-hl)
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (add-hook 'after-init-hook 'global-diff-hl-mode)
