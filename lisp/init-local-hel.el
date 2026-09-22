@@ -23,6 +23,11 @@
   (tab-new)
   (ghostel '(4)))
 
+(defun my/hel-new-ghostel-buffer ()
+  "Open a fresh, auto-numbered Ghostel terminal in the current tab."
+  (interactive)
+  (ghostel '(4)))
+
 (defun my/copy-buffer-file-name ()
   "Copy the current buffer's full file name to the kill ring."
   (interactive)
@@ -126,6 +131,7 @@
     "C-c g f" #'vc-pull
     "C-c g p" #'ml-llm-proof
     "C-c g h" #'ghostel
+    "C-c g n" #'my/hel-new-ghostel-buffer
     "C-c g o" #'ghostel-project
 
     ;; Highlight.
@@ -379,6 +385,7 @@ manual selection is searched as-is instead of being replaced."
     "C-c g f" "Git pull (ff-only)"
     "C-c g p" "Polish region"
     "C-c g h" "Ghostel terminal"
+    "C-c g n" "New Ghostel buffer"
     "C-c g o" "Ghostel project terminal"
     "C-c h"   "highlight"
     "C-c h l" "Permanently highlight line"

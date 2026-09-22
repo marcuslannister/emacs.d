@@ -7,7 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Added
-- Add `my/hel-new-tab-ghostel`, bound to `SPC t g`, to create a new tab and open a fresh auto-numbered Ghostel terminal in it. It avoids the leader's prefix-argument trap: `hel-leader--handle-input-event` reads keys itself, so digits after `SPC` feed `digit-argument` a stale `last-command-event` (SPC, 32) and Ghostel receives `*ghostel*<-16>`; the fresh path takes a constant non-numeric prefix instead.
+- Add `my/hel-new-tab-ghostel`, bound to `SPC t g`, to create a new tab and open a fresh auto-numbered Ghostel terminal in it, and `my/hel-new-ghostel-buffer`, bound to `SPC g n`, for the same fresh terminal in the current tab. Both avoid the leader's prefix-argument trap: `hel-leader--handle-input-event` reads keys itself, so digits after `SPC` feed `digit-argument` a stale `last-command-event` (SPC, 32) and Ghostel receives `*ghostel*<-16>`; the fresh path takes a constant non-numeric prefix instead.
 
 ### Fixed
 - Disable automatic emacs-kp reflow in Org and Markdown on Emacs 31 and later. Startup-time Org visits can trigger `EXC_BAD_ACCESS` in native macOS font lookup during pixel measurement. Keep the setup hooks so manual commands remain available. Filed upstream as Kinneyzhang/emacs-kp#11.
