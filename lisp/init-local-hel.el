@@ -17,6 +17,12 @@
   (interactive)
   (save-some-buffers t))
 
+(defun my/hel-new-tab-ghostel ()
+  "Create a new tab and open a fresh Ghostel terminal in it."
+  (interactive)
+  (tab-new)
+  (ghostel '(4)))
+
 (defun my/copy-buffer-file-name ()
   "Copy the current buffer's full file name to the kill ring."
   (interactive)
@@ -187,6 +193,7 @@
     ;; Tab.
     "C-c t n" #'tab-new
     "C-c t c" #'tab-close
+    "C-c t g" #'my/hel-new-tab-ghostel
 
     ;; Vulpea.
     "C-c v f" #'vulpea-find
@@ -432,6 +439,7 @@ manual selection is searched as-is instead of being replaced."
     "C-c t"   "tab"
     "C-c t n" "New tab"
     "C-c t c" "Close tab"
+    "C-c t g" "New tab with terminal"
     "C-c v"   "vulpea"
     "C-c v f" "Find note"
     "C-c v i" "Insert link"
