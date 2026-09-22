@@ -27,7 +27,6 @@
          (with-current-buffer (find-file-noselect file)
            (unwind-protect
                (progn (insert ,contents)
-                      (ml-case-guard--watch-buffer)
                       ,@body)
              (set-buffer-modified-p nil)
              (kill-buffer)))
@@ -220,18 +219,45 @@ This is the route plain \\[upcase-word] and `upcase-dwim' take with no region."
       (should (string-match-p "upcase-region" (buffer-string))))))
 
 (ert-deftest init-local-case-guard-logs-an-unattributed-rewrite ()
-  "A large equal-length rewrite must be logged even when no case command ran.
+  "A large in-place rewrite must be logged even when no case command ran.
 This is the only layer that can name the still-unknown caller."
   (init-local-case-guard-tests--with-org-file
       (init-local-case-guard-tests--filler)
-    ;; Rewrite in place, the way a casify does: one change that puts back
-    ;; exactly as many characters as it took out.  A delete plus an insert is
-    ;; two changes of unequal length and is deliberately not the signature.
     (subst-char-in-region (point-min) (point-max) ?a ?B)
     (should (file-exists-p ml-case-guard-log-file))
     (with-temp-buffer
       (insert-file-contents ml-case-guard-log-file)
-      (should (string-match-p "equal-length-rewrite" (buffer-string))))))
+      (should (string-match-p "large-insert\\|large-delete" (buffer-string))))))
+
+(ert-deftest init-local-case-guard-logs-a-delete-then-insert-pair ()
+  "The real damage arrives as a delete and then an insert, not as one change.
+The two sizes need not match either: the 2026-09-21 `software.org' undo record
+held pairs of 61054/61054 and of 60628/61585.  Requiring one equal-length
+change is what kept this layer silent through four incidents."
+  (init-local-case-guard-tests--with-org-file
+      (init-local-case-guard-tests--filler)
+    (let ((text (buffer-string)))
+      (delete-region (point-min) (point-max))
+      (insert (upcase (substring text 0 (- (length text) 7)))))
+    (with-temp-buffer
+      (insert-file-contents ml-case-guard-log-file)
+      (should (string-match-p "large-delete" (buffer-string)))
+      (should (string-match-p "large-insert" (buffer-string))))))
+
+(ert-deftest init-local-case-guard-watcher-survives-a-major-mode-rerun ()
+  "`kill-all-local-variables' must not be able to strip the watcher.
+A buffer-local hook did not survive a second major-mode run, which is why the
+damaged `software.org' buffer carried ten after-change hooks and not this one."
+  (init-local-case-guard-tests--with-org-file
+      "* Nothing yet\n"
+    (fundamental-mode)
+    (org-mode)
+    (should (memq #'ml-case-guard--after-change (default-value 'after-change-functions)))
+    (insert (init-local-case-guard-tests--filler))
+    (should (file-exists-p ml-case-guard-log-file))
+    (with-temp-buffer
+      (insert-file-contents ml-case-guard-log-file)
+      (should (string-match-p "large-insert" (buffer-string))))))
 
 (ert-deftest init-local-case-guard-follows-indirect-buffers ()
   "An indirect buffer carries no file name, but org-gtd clarifies tasks in one."
