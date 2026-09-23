@@ -112,8 +112,12 @@ advice for `require-package', to which ARGS are passed."
   (require-package 'seq)
   (add-hook 'after-init-hook
             (lambda ()
-              (package--save-selected-packages
-               (seq-uniq (append sanityinc/required-packages package-selected-packages))))))
+              ;; Do not run global file hooks while Custom saves package metadata.
+              ;; Projectile can autoload Tramp/GVFS and native dbus.el here.
+              (let ((find-file-hook nil))
+                (package--save-selected-packages
+                 (seq-uniq (append sanityinc/required-packages
+                                    package-selected-packages)))))))
 
 
 (let ((package-check-signature nil))
