@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Added
+- Bind `M-=` in `vc-dir` to `vc-ediff`, next to `=` for `vc-diff`, and restore the window layout when any ediff session quits, so `q` returns to `vc-dir`. Advice on `vc-version-ediff` saves the layout before it visits the file. Thanks @marcuslannister for the request.
 - Add `my/hel-new-tab-ghostel`, bound to `SPC t g`, to create a new tab and open a fresh auto-numbered Ghostel terminal in it, and `my/hel-new-ghostel-buffer`, bound to `SPC g n`, for the same fresh terminal in the current tab. Both avoid the leader's prefix-argument trap: `hel-leader--handle-input-event` reads keys itself, so digits after `SPC` feed `digit-argument` a stale `last-command-event` (SPC, 32) and Ghostel receives `*ghostel*<-16>`; the fresh path takes a constant non-numeric prefix instead.
 
 ### Fixed
