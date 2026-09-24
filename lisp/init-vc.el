@@ -14,6 +14,16 @@
 ;; `vc-dir-root' opens at the repo root without prompting.
 (global-set-key (kbd "C-x g") 'vc-dir-root)
 (sanityinc/fullframe-mode 'vc-dir-mode)
+;; `=' is `vc-diff'; `M-=' opens the same comparison in ediff.
+(with-eval-after-load 'vc-dir
+  (define-key vc-dir-mode-map (kbd "M-=") 'vc-ediff))
+
+;; `vc-version-ediff' visits the file before ediff saves the windows, so
+;; save them here to return to vc-dir on quit (see init-editing-utils.el).
+(define-advice vc-version-ediff (:around (orig &rest args) sanityinc-save-windows)
+  (let ((windows (current-window-configuration)))
+    (apply orig args)
+    (setq sanityinc/ediff-saved-windows windows)))
 
 (when (maybe-require-package 'diff-hl)
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)

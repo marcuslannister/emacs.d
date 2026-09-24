@@ -33,6 +33,17 @@
  truncate-lines nil
  truncate-partial-width-windows nil)
 
+;; Quitting ediff restores the windows it started from (e.g. vc-dir).
+(defvar sanityinc/ediff-saved-windows nil)
+(add-hook 'ediff-before-setup-hook
+          (lambda () (setq sanityinc/ediff-saved-windows (current-window-configuration))))
+(add-hook 'ediff-quit-hook
+          (lambda ()
+            (when sanityinc/ediff-saved-windows
+              (set-window-configuration sanityinc/ediff-saved-windows)
+              (setq sanityinc/ediff-saved-windows nil)))
+          t)
+
 (add-hook 'after-init-hook 'delete-selection-mode)
 
 (add-hook 'after-init-hook 'global-auto-revert-mode)
