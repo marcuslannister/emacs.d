@@ -20,7 +20,7 @@ save or a revert deletes that history.
 Run from the repository root:
 
 ```sh
-emacs -Q --batch -L lisp -l .claude/skills/org-case-check/scan.el -f org-case-check-files
+emacs -Q --batch -L lisp -l .agents/skills/org-case-check/scan.el -f org-case-check-files
 ```
 
 Done when the command exits. No output means every file is clean.
@@ -30,7 +30,7 @@ Done when the command exits. No output means every file is clean.
 Damage is in a buffer before it is on disk. Run from the repository root:
 
 ```sh
-emacsclient --eval "(progn (load \"$PWD/.claude/skills/org-case-check/scan.el\") (org-case-check-buffers))"
+emacsclient --eval "(progn (load \"$PWD/.agents/skills/org-case-check/scan.el\") (org-case-check-buffers))"
 ```
 
 Done when the command returns. `""` means every buffer is clean. If there is no Emacs server,
