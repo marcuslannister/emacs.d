@@ -30,11 +30,8 @@ Done when the command exits. No output means every file is clean.
 Damage is in a buffer before it is on disk. Run from the repository root:
 
 ```sh
-emacsclient -s "/tmp/emacs$(id -u)/server" --eval "(progn (load \"$PWD/.claude/skills/org-case-check/scan.el\") (org-case-check-buffers))"
+emacsclient --eval "(progn (load \"$PWD/.claude/skills/org-case-check/scan.el\") (org-case-check-buffers))"
 ```
-
-The server socket is in `/tmp`, but on macOS a plain `emacsclient` looks in `$TMPDIR` and
-cannot find it, so `-s` gives the path.
 
 Done when the command returns. `""` means every buffer is clean. If there is no Emacs server,
 tell the user that the buffers are not checked.
