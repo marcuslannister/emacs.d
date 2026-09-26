@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Added
+- Add the `org-case-check` Claude Code skill in `.claude/skills/org-case-check/`, which reports upcase damage in `~/org` files on disk and in live Emacs buffers, with the matching lines. `scan.el` reuses the canary patterns, count, and file test from `lisp/init-local-case-guard.el`, so the patterns keep one source of truth. The buffer scan passes `-s /tmp/emacs$(id -u)/server`, because Emacs.app puts its server socket in `/tmp` while Homebrew `emacsclient` looks in `$TMPDIR`.
 - Bind `M-=` in `vc-dir` to `vc-ediff`, next to `=` for `vc-diff`, and restore the window layout when any ediff session quits, so `q` returns to `vc-dir`. Advice on `vc-version-ediff` saves the layout before it visits the file. Thanks @marcuslannister for the request.
 - Add `my/hel-new-tab-ghostel`, bound to `SPC t g`, to create a new tab and open a fresh auto-numbered Ghostel terminal in it, and `my/hel-new-ghostel-buffer`, bound to `SPC g n`, for the same fresh terminal in the current tab. Both avoid the leader's prefix-argument trap: `hel-leader--handle-input-event` reads keys itself, so digits after `SPC` feed `digit-argument` a stale `last-command-event` (SPC, 32) and Ghostel receives `*ghostel*<-16>`; the fresh path takes a constant non-numeric prefix instead.
 
