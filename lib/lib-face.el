@@ -83,7 +83,15 @@
                                        (#x2600 . #x26FF)
                                        (#x1F000 . #x1F4AB)
                                        (#x1F4AE . #x1FAFF)))
-                        (set-fontset-font fs range spec nil 'prepend))))))
+                        (set-fontset-font fs range spec nil 'prepend))
+                      ;; Fluent Emoji Flat only for the pi-statusline icons
+                      ;; (pi-settings agent/pi-statusline.json). It has no flags, so
+                      ;; as the main emoji font it breaks "🇭🇰" into boxed "H" "K".
+                      (when (find-font (font-spec :name "Fluent Emoji Flat"))
+                        (dolist (c (string-to-list "🔌🤖🧠📁🌿🪟🔢📦💸🕒👤💊🌐🔥🔎🎯✨🧰📝🔁🔄📊"))
+                          (set-fontset-font fs c (font-spec :family "Fluent Emoji Flat"
+                                                            :size FONT-SIZE)
+                                            nil 'prepend)))))))
 
 (defun +suggest-other-faces (func &rest args)
   "Temporarily disable `global-hl-line-mode' while executing FUNC with ARGS."

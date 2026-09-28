@@ -24,8 +24,7 @@
           FONT-SIZE))
 (defconst ZH-DEFAULT-FONT "Maple Mono NF CN")
 (defconst NERD-ICONS-FONT "Symbols Nerd Font Mono")
-(defconst EMOJI-FONTS '("Fluent Emoji Flat"
-                        "Apple Color Emoji"
+(defconst EMOJI-FONTS '("Apple Color Emoji"
                         "Noto Color Emoji"
                         "Noto Emoji"
                         "Segoe UI Emoji"))
