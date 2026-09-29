@@ -89,6 +89,17 @@ two call sites, and this is the one point both pass through."
   (let ((org-reverse-note-order t))
     (funcall orig-fun func)))
 
+(defun init-local-gtd--plain-project-names (orig-fun &rest args)
+  "Run ORIG-FUN with ARGS, with plain-text project names.
+org-gtd collects project names with `org-get-heading', which keeps the Org
+heading faces.  The prompt then shows each Project in its heading size,
+overline, and background."
+  (let ((get-heading (symbol-function 'org-get-heading)))
+    (cl-letf (((symbol-function 'org-get-heading)
+               (lambda (&rest heading-args)
+                 (substring-no-properties (apply get-heading heading-args)))))
+      (apply orig-fun args))))
+
 (defun init-local-gtd-engage ()
   "Open `org-gtd-engage' in its own buffer.
 `org-agenda-sticky' is still on, so a leftover `*Org Agenda(g)*' would
@@ -142,6 +153,9 @@ org-gtd's view language, so one spec covers it."
                 #'init-local-gtd--refile-project))
   (advice-add 'org-gtd-organize--call :around
               #'init-local-gtd--organize-newest-first)
+  (dolist (fn '(org-gtd-project-extend--select-project
+                org-gtd-project--get-marker-at-point))
+    (advice-add fn :around #'init-local-gtd--plain-project-names))
   (advice-add 'org-gtd-save-buffers :after
               #'init-local-gtd-refresh-agenda-files))
 
