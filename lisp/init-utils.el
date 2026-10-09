@@ -41,7 +41,7 @@ BUFFER and ALIST are as for `display-buffer-full-frame'."
 If point is in a side window, switch to the most recent main
 window.  Return non-nil when the selected window is a main window."
   (when (window-parameter (selected-window) 'window-side)
-    (when-let ((main (seq-find (lambda (w)
+    (when-let* ((main (seq-find (lambda (w)
                                  (not (window-parameter w 'window-side)))
                                (window-list nil 'no-minibuf))))
       (select-window main)))
