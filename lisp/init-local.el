@@ -414,7 +414,10 @@ This moves its load time out of startup.  A batch run, such as
 
 (require 'init-local-kp)
 
-(require 'blinko)
+;; Autoload, not require: blinko pulls in url-http (about 140 ms at startup).
+(dolist (command '(blinko-post-content blinko-post-region blinko-post-buffer
+                   blinko-post-content-debug))
+  (autoload command "blinko" nil t))
 
 (require 'init-local-program)
 
