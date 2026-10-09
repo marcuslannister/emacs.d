@@ -24,20 +24,6 @@
   (when login
     (setq eshell-login-script login)))
 
-(when IS-MAC
-  (use-package eat
-    :ensure t
-    :config
-    (eat-compile-terminfo)       ;; optional but advised
-    (setq eat-kill-buffer-on-exit t))
-
-  ;; For `eat-eshell-visual-command-mode'.
-  ;; (add-hook 'eshell-first-time-mode-hook
-  ;;           #'eat-eshell-visual-command-mode)
-
-  ;; For `eat-eshell-mode'.
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
-
 
 ;; Vim-style navigation + selection for ghostel copy mode (tmux copy-mode-vi
 ;; feel).  Hel is disabled in copy mode (see `ml/ghostel-sync-hel') so these
