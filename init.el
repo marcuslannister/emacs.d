@@ -67,11 +67,9 @@
       (push (concat "/" (file-name-nondirectory recentf-save-file))
             compile-angel-excluded-files))
 
-    ;; Ensure that the value of `custom-file` is updated before proceeding
-    (with-eval-after-load "cus-edit"
-      (when (stringp custom-file)
-        (push (concat "/" (file-name-nondirectory custom-file))
-              compile-angel-excluded-files)))
+    ;; `custom-file' is always custom.el (set below).  Do not wait for
+    ;; cus-edit: custom.el loads before cus-edit does.
+    (push "/custom.el" compile-angel-excluded-files)
 
     ;; org-clock rewrites this file on every exit, so it would be compiled on every start
     (with-eval-after-load "org-clock"
