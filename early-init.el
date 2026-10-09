@@ -26,9 +26,9 @@
        (not (display-graphic-p))
        (not (daemonp))))
 
-;; Initialize package.el early so init.el can `use-package' compile-angel
-;; before init-elpa.el runs.  init-elpa.el later re-applies these settings and
-;; only initializes package.el if this file did not already do so.
+;; Initialize package.el early, before init-elpa.el runs.  init-elpa.el later
+;; re-applies these settings and only initializes package.el if this file did
+;; not already do so.
 (require 'package)
 (setq package-user-dir
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
