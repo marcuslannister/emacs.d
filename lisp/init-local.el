@@ -498,6 +498,9 @@ the breakage."
 ;; With nothing downstream, a broken Anvil clone costs the AI module alone.
 ;; Idle load also keeps a broken Anvil clone from aborting startup.
 (init-local--require-when-idle 'init-local-ai 2)
+;; anvil-stdio.sh calls this through emacsclient.  An MCP client that connects
+;; before the idle timer fires loads Anvil at once instead of failing.
+(autoload 'anvil-server-process-jsonrpc "init-local-ai")
 
 (provide 'init-local)
 ;;; init-local.el ends here
