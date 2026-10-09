@@ -73,6 +73,11 @@
         (push (concat "/" (file-name-nondirectory custom-file))
               compile-angel-excluded-files)))
 
+    ;; org-clock rewrites this file on every exit, so it would be compiled on every start
+    (with-eval-after-load "org-clock"
+      (push (concat "/" (file-name-nondirectory org-clock-persist-file))
+            compile-angel-excluded-files))
+
     ;; Enable the (compile-angel-on-load-mode) mode after the above
 
 
