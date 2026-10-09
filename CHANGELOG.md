@@ -23,6 +23,7 @@ continuously, so changes land under "Unreleased".
 - Keep repo agent skills only in `.agents/skills/`, which Codex and other agents read, and make `.claude/skills` a symlink to it, because Claude Code loads only `.claude/skills`. This drops the duplicate `.claude/skills/new-init-module/` copy.
 
 ### Fixed
+- Set `ad-redefinition-action` to `accept` in `lisp/init-local-hel.el`, which removes the startup warning "ad-handle-definition: ‘find-tag-regexp’ got redefined". `pcre2el`, which Hel needs, puts a disabled `defadvice` on that etags function, and etags loads later.
 - Autoload `anvil-server-process-jsonrpc` from `init-local-ai` in `lisp/init-local.el`, so an MCP client that calls `anvil-stdio.sh` before the idle timer loads Anvil at once instead of failing with "Symbol's function definition is void".
 - Exclude `custom.el` from compile-angel at once in `init.el`. The old exclusion waited for `cus-edit`, which loads after `custom.el`, so compile-angel still compiled `custom.el` whenever it changed.
 - Stop rewriting `custom.el` on every start: the `after-init-hook` in `lisp/init-elpa.el` now calls `package--save-selected-packages` only when a required package is missing from `package-selected-packages`. The unchanged save also made compile-angel recompile `custom.el` on the next start.
