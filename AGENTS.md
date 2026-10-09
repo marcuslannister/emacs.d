@@ -6,6 +6,7 @@ The entry point is `init.el`, which loads modular configuration from `lisp/` (ea
 ## Build, Test, and Development Commands
 - `./test-startup.sh`: launches Emacs in batch mode with strict error checking to verify the configuration loads without regressions.
 - `EMACS=/path/to/Emacs ./test-startup.sh`: repeat the startup check against a specific Emacs binary when validating cross-version support.
+- `./bench-startup.sh [RUNS]`: times a batch load of the config. For real startup use `M-x emacs-init-time`, and `M-x sanityinc/require-times` for per-feature load time (the "Self" column excludes nested requires).
 - `emacs -nw --batch -l init.el --eval '(message "OK")'`: quick smoke test while iterating on a single module; keep `user-emacs-directory` pointing at the repo to mirror CI.
 
 ## Coding Style & Naming Conventions
