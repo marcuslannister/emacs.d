@@ -393,7 +393,17 @@ The completion candidates include the Git status of each file."
 
 
 (require 'init-local-hel)
-(require 'init-local-gtd nil t)
+(defun init-local--require-when-idle (feature delay)
+  "Require FEATURE once Emacs has been idle for DELAY seconds.
+This moves its load time out of startup.  A batch run, such as
+`test-startup.sh', has no idle time, so it requires FEATURE at once."
+  (if noninteractive
+      (require feature nil t)
+    (run-with-idle-timer delay nil #'require feature nil t)))
+
+;; org-gtd costs about 2 s at load.  Hel binds its commands, so they are void
+;; for the first second of idle time.
+(init-local--require-when-idle 'init-local-gtd 1)
 
 (require 'init-local-shell)
 
@@ -481,7 +491,8 @@ the breakage."
 ;; skips every `require' after it.  The NOERROR flag does not help: it only
 ;; covers a missing feature file, not an error signalled while loading one.
 ;; With nothing downstream, a broken Anvil clone costs the AI module alone.
-(require 'init-local-ai nil t)
+;; Idle load also keeps a broken Anvil clone from aborting startup.
+(init-local--require-when-idle 'init-local-ai 2)
 
 (provide 'init-local)
 ;;; init-local.el ends here
