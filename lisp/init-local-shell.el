@@ -483,9 +483,6 @@ Stolen from aweshell."
     "Face used for invalid Eshell commands."
     :group 'eshell-syntax-highlighting))
 
-(require 'eshell)
-(require 'em-dirs)
-
 (defun eshell/pure-git-branch ()
   "Returns the current git branch."
   (let ((branch (car (cl-loop for match in (split-string (shell-command-to-string "git branch") "\n")
