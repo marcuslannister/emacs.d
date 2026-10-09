@@ -461,7 +461,21 @@ the breakage."
        (if broken
            (message "[async-git] Update skipped; delete and reinstall: %s"
                     (mapconcat #'identity broken ", "))
-         (async-installer-git-update-all-interactive))))))
+         (async-installer-git--update-all
+          (lambda (ok ng)
+            (message "[async-git] Update done! success=%d, fail=%d" ok ng)
+            (ml-compile-local-lisp))))))))
+
+(defun ml-compile-local-lisp ()
+  "Byte-compile again each out-of-date `.elc' in `lib/', `site-lisp/' and
+`external-packages/'.  Files that have no `.elc' (tests, scripts, `lisp/')
+stay as source.  Emacs then native-compiles the new `.elc' files when they
+load."
+  (interactive)
+  (dolist (dir '("lib" "site-lisp" "external-packages"))
+    (let ((path (expand-file-name dir user-emacs-directory)))
+      (when (file-directory-p path)
+        (byte-recompile-directory path)))))
 
 (defun ml-init-ediff-current-with-other-window ()
   "Ediff current window buffer with the next window buffer."
