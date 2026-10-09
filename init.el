@@ -235,7 +235,7 @@
 (require 'init-lua)
 ;; (require 'init-uiua)
 ;; (require 'init-zig)
-(require 'init-terminals)
+;; (require 'init-terminals)   ; eat only; Ghostel is the terminal now
 
 ;; Extra packages which don't require any configuration
 
