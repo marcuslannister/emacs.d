@@ -318,6 +318,9 @@ manual selection is searched as-is instead of being replaced."
 (if (version< emacs-version my/hel-minimum-emacs-version)
     (message "Hel requires Emacs %s or newer; running without Hel"
              my/hel-minimum-emacs-version)
+  ;; pcre2el puts a disabled `defadvice' on etags' `find-tag-regexp', so
+  ;; loading etags later warned "got redefined".
+  (setq ad-redefinition-action 'accept)
   (dolist (package '(dash s avy pcre2el ultra-scroll))
     (require-package package))
   (dolist (name '("hel" "hel-leader"))
