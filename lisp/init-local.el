@@ -189,7 +189,8 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 (add-hook 'substitute-post-replace-functions #'substitute-report-operation)
 
 (use-package ztree
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (with-eval-after-load 'ztree-diff
   ;; Automatically show hidden files (like .config, .bashrc, etc.)
@@ -287,7 +288,8 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
 ;; useage /sshx:host: or /-:host:
 (setq tramp-default-method "sshx")
 (use-package tramp-term
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package pulsar
   :ensure t
@@ -320,14 +322,17 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
   (imenu-after-jump-hook . pulsar-recenter-top)
   (imenu-after-jump-hook . pulsar-reveal-entry))
 
-(use-package gt :ensure t)
-
-(setq gt-langs '(en zh))
-
-;; (setq gt-osxdict-program "osx-dictionary")
-;; (setq gt-default-translator (gt-translator :engines (gt-osxdict-engine)))
-
-(setq gt-default-translator (gt-translator :engines (gt-stardict-engine)))
+;; `gt-translator' needs gt loaded, so the default translator is set in
+;; :config; the commands autoload from the package.
+(use-package gt
+  :ensure t
+  :defer t
+  :init
+  (setq gt-langs '(en zh))
+  :config
+  ;; (setq gt-osxdict-program "osx-dictionary")
+  ;; (setq gt-default-translator (gt-translator :engines (gt-osxdict-engine)))
+  (setq gt-default-translator (gt-translator :engines (gt-stardict-engine))))
 ;; This configuration means:
 ;; Initialize the default translator, let it translate between en and zh via Google Translate,
 ;; and the result will be displayed in the Echo Area.

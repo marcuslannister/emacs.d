@@ -2,6 +2,11 @@
 ;;; Commentary:
 ;;; Code:
 
+;; The default `org-modules' loads ol-gnus, ol-eww and ol-docview with the
+;; first Org buffer.  That cost about 1 s at startup, and gnus alone 0.8 s.
+;; Only `ol-info' stays; the other link types are not used here.
+(setq org-modules '(ol-info))
+
 (setq org-directory "~/org/"
       org-default-notes-file (expand-file-name "gtd/inbox.org" org-directory))
 
