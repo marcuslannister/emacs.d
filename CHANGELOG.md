@@ -21,6 +21,8 @@ continuously, so changes land under "Unreleased".
 - Keep repo agent skills only in `.agents/skills/`, which Codex and other agents read, and make `.claude/skills` a symlink to it, because Claude Code loads only `.claude/skills`. This drops the duplicate `.claude/skills/new-init-module/` copy.
 
 ### Fixed
+- Stop rewriting `custom.el` on every start: the `after-init-hook` in `lisp/init-elpa.el` now calls `package--save-selected-packages` only when a required package is missing from `package-selected-packages`. The unchanged save also made compile-angel recompile `custom.el` on the next start.
+- Exclude `org-clock-save.el` from compile-angel in `init.el`. org-clock rewrites the file on every exit, so compile-angel byte-compiled and native-compiled it on every start.
 - Replace the obsolete `when-let` with `when-let*` in `lisp/init-utils.el`, which removes the Emacs 31.1 byte-compile warning.
 - Show plain project names in the org-gtd "Add to project:" and "Which project?" prompts. org-gtd gets the names with `org-get-heading`, which keeps the Org heading faces, so level-1 projects showed at 1.4 height with an overline and a background. `init-local-gtd--plain-project-names` in `lisp/init-local-gtd.el` removes the faces in those two prompts only.
 - Avoid global `find-file-hook` execution while saving package metadata after startup, so Projectile cannot autoload Tramp/GVFS and crash native `dbus.el` on macOS. Thanks @marcuslannister for the report.
