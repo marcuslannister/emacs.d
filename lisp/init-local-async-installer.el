@@ -18,7 +18,8 @@
              (fboundp 'native-compile-async))
     (message "[async-git] native-compile queued: %s" dir)
     (native-compile-async
-     dir 2 t
+     ;; LOAD nil: t loads every compiled file, including benchmark and demo scripts.
+     dir 2 nil
      (lambda (file)
        (not (or (string-match-p "[/\\\\]tests?[/\\\\]" file)
                 (string-suffix-p "-pkg.el" file)))))))
