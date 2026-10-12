@@ -18,9 +18,10 @@
   "Native-comp must skip package metadata and test helpers."
   (let (selector)
     (cl-letf (((symbol-function 'native-compile-async)
-               (lambda (files &optional recursively _load candidate)
+               (lambda (files &optional recursively load candidate)
                  (should (equal files "/tmp/org-gtd.el"))
                  (should recursively)
+                 (should-not load)
                  (setq selector candidate))))
       (init-local-async-installer-native-compile "/tmp/org-gtd.el"))
     (should (funcall selector "/tmp/org-gtd.el/org-gtd.el"))
