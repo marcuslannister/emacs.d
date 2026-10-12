@@ -444,6 +444,11 @@ without `.git' fails in the update pass; see
      (async-installer-git--update-all
       (lambda (ok ng)
         (message "[async-git] Update done! success=%d, fail=%d" ok ng)
+        ;; The MCP bridge is a copy of the checkout's script; refresh it so a
+        ;; bump cannot leave the old one behind.  Skip its "Overwrite?" prompt.
+        (when (fboundp 'anvil-server-install)
+          (cl-letf (((symbol-function 'yes-or-no-p) #'always))
+            (anvil-server-install)))
         (ml-compile-local-lisp))))))
 
 (defun ml-compile-local-lisp ()
