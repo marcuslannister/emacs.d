@@ -27,6 +27,61 @@
 (advice-add 'async-installer-git--native-compile
             :override #'init-local-async-installer-native-compile)
 
+(defun init-local-async-installer-git-update-one (package callback)
+  "Update PACKAGE like `async-installer-git--update-one', but check git.
+The original runs `git pull', which fails on the detached HEAD of a tag
+checkout without fetching the new tag.  It ignores the exit codes and writes
+`.gitcommit' anyway, so each later run reports \"Already at\" and skips the
+package.  A failed clone leaves a directory without `.git'; git would then
+run in the parent `~/.emacs.d' repository, so such a package fails instead.
+Call CALLBACK with the package directory, or nil on failure."
+  (let* ((tgt (or (plist-get package :commit) (plist-get package :branch)
+                  (plist-get package :tag) "main"))
+         (name (file-name-nondirectory
+                (string-remove-suffix ".git" (plist-get package :repo))))
+         (dir (expand-file-name name async-installer-git-install-dir))
+         (cache-file (expand-file-name ".gitcommit" dir))
+         (cached (if (file-exists-p cache-file)
+                     (with-temp-buffer
+                       (insert-file-contents cache-file)
+                       (string-trim (buffer-string)))
+                   ""))
+         ;; Only a branch target can move after the checkout.
+         (cmds `(("fetch" "--tags" "origin") ("checkout" ,tgt)
+                 ,@(unless (or (plist-get package :commit) (plist-get package :tag))
+                     '(("pull" "--ff-only"))))))
+    (cond
+     ((not (file-directory-p dir))
+      (message "[async-git] Not installed, skip update: %s" name)
+      (funcall callback nil))
+     ((not (file-exists-p (expand-file-name ".git" dir)))
+      (message "[async-git] Broken clone, delete and reinstall: %s" name)
+      (funcall callback nil))
+     ((string= cached tgt)
+      (message "[async-git] Already at %s: %s" tgt name)
+      (funcall callback dir))
+     (t
+      (message "[async-git] Updating %s: %s -> %s" name cached tgt)
+      (async-start
+       (lambda ()
+         (let ((default-directory dir))
+           (catch 'fail
+             (dolist (args cmds t)
+               (unless (eql 0 (apply #'call-process "git" nil nil nil args))
+                 (throw 'fail nil))))))
+       (lambda (ok)
+         (if (not ok)
+             (progn
+               (message "[async-git] Update failed: %s" name)
+               (funcall callback nil))
+           (with-temp-file cache-file (insert tgt))
+           (message "[async-git] Updated: %s -> %s" name tgt)
+           (async-installer-git--native-compile dir)
+           (funcall callback dir))))))))
+
+(advice-add 'async-installer-git--update-one
+            :override #'init-local-async-installer-git-update-one)
+
 (setq async-installer-reload-files
       (list (expand-file-name "lisp/package-list.el" user-emacs-directory)))
 
