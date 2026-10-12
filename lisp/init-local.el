@@ -422,26 +422,6 @@ This moves its load time out of startup.  A batch run, such as
 (require 'init-local-program)
 
 
-(defun ml--async-installer-broken-clones ()
-  "Return the names of registered Git packages whose clone is unusable.
-`async-installer-git--make-clone-script' runs `mkdir -p' before `git clone',
-so a clone that fails still leaves its directory behind, and
-`async-installer-git--install-one' then reports success on `file-directory-p'
-alone.  Handing such a directory to the update pass is what makes the damage
-permanent: that pass discards the exit status of `git pull' and `git checkout'
-and writes the target into `.gitcommit' regardless, after which every later
-run reports \"Already at\" and skips the package for good."
-  (delq nil
-        (mapcar
-         (lambda (package)
-           (let* ((name (file-name-nondirectory
-                         (string-remove-suffix ".git" (plist-get package :repo))))
-                  (dir (expand-file-name name async-installer-git-install-dir)))
-             (and (file-directory-p dir)
-                  (not (file-exists-p (expand-file-name ".git" dir)))
-                  name)))
-         async-installer-git-list)))
-
 (defun ml-update-all-packages ()
   "Update all installed packages, including async-installer Git packages.
 Clone the Git packages before updating them.  The update pass skips a
@@ -449,10 +429,9 @@ package whose `external-packages/' directory is absent and counts it as a
 failure, so a deleted clone never repairs itself; the install pass clones
 what is missing and skips what is already there.  Both passes are
 asynchronous, so the install callback chains the update rather than
-running the two side by side.  A clone that failed and left an empty
-directory behind blocks the update pass instead of chaining into it; see
-`ml--async-installer-broken-clones' for why that pass would otherwise cement
-the breakage."
+running the two side by side.  A clone that failed and left a directory
+without `.git' fails in the update pass; see
+`init-local-async-installer-git-update-one'."
   (interactive)
   ;; Read `package-list.el' again so a `:tag' bump takes effect without a restart.
   (async-installer-reload)
@@ -462,14 +441,10 @@ the breakage."
   (async-installer-git--install-all
    (lambda (ok ng)
      (message "[async-git] Install done! success=%d, fail=%d" ok ng)
-     (let ((broken (ml--async-installer-broken-clones)))
-       (if broken
-           (message "[async-git] Update skipped; delete and reinstall: %s"
-                    (mapconcat #'identity broken ", "))
-         (async-installer-git--update-all
-          (lambda (ok ng)
-            (message "[async-git] Update done! success=%d, fail=%d" ok ng)
-            (ml-compile-local-lisp))))))))
+     (async-installer-git--update-all
+      (lambda (ok ng)
+        (message "[async-git] Update done! success=%d, fail=%d" ok ng)
+        (ml-compile-local-lisp))))))
 
 (defun ml-compile-local-lisp ()
   "Byte-compile again each out-of-date `.elc' in `lib/', `site-lisp/' and
