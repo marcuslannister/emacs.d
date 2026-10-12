@@ -454,6 +454,8 @@ directory behind blocks the update pass instead of chaining into it; see
 `ml--async-installer-broken-clones' for why that pass would otherwise cement
 the breakage."
   (interactive)
+  ;; Read `package-list.el' again so a `:tag' bump takes effect without a restart.
+  (async-installer-reload)
   (package-refresh-contents)
   (package-upgrade-all)
   (package-vc-upgrade-all)
