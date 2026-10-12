@@ -10,7 +10,7 @@
 ;; Do not `git checkout' external-packages/anvil.el by hand: it desyncs the
 ;; async-installer .gitcommit cache and skips the native-compile.
 (async-installer-git-add "https://github.com/zawatton/anvil.el.git"
-                         :tag "v1.3.0"
+                         :tag "v1.4.1"
                          :main "anvil.el")
 
 ;; Windows only: init-local-shell.el loads this fork via :load-path on Windows
