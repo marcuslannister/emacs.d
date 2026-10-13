@@ -78,9 +78,7 @@
     "C-c b r" #'revert-buffer
     "C-c b y" #'my/copy-buffer-file-name
 
-    ;; Claude / comment / clock.
-    "C-c a c" #'claude-code-ide
-    "C-c a m" #'claude-code-ide-menu
+    ;; Comment / clock.
     "C-c a /" #'comment-dwim
     "C-c a t" #'org-clock-update-time-maybe
     "C-c a i" #'org-clock-in
