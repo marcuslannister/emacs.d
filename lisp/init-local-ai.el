@@ -46,17 +46,6 @@
 (anvil-server-start)
 
 
-(use-package claude-code-ide
-  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-  :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
-  :custom
-  (claude-code-ide-terminal-backend 'ghostel)
-  (claude-code-ide-cli-extra-flags "--dangerously-skip-permissions")
-  (claude-code-ide-use-ide-diff nil) ; no auto-ediff; diffs show in terminal. Toggle via menu (i), takes effect next session
-  :config
-  (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
-
-
 ;; Proofread: context-aware LLM proofreading.  The endpoint is private, so the
 ;; feature lives in its own module backed by a gitignored config file.
 (require 'init-local-proofread nil t)

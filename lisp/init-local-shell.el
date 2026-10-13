@@ -225,18 +225,6 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
       (advice-add 'ghostel--module-download-url
                   :around #'ml/ghostel-module-download-url)
 
-      (defun ml/ghostel-windows-unescape-mcp-config-args (args)
-        "Undo shell-only quote escaping in `claude-code-ide' MCP config args."
-        (let ((rest args)
-              normalized)
-          (while rest
-            (let ((arg (pop rest)))
-              (push arg normalized)
-              (when (and (string= arg "--mcp-config") rest)
-                (push (replace-regexp-in-string "\\\\\"" "\"" (pop rest) t t)
-                      normalized))))
-          (nreverse normalized)))
-
       (defun ml/ghostel-exec-windows-conpty (orig buffer program &optional args)
         "Use Ghostel's Windows ConPTY backend for local `ghostel-exec'."
         (if (or (not IS-WINDOWS)
@@ -256,8 +244,7 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
                  (width (if window
                             (max 1 (window-max-chars-per-line window))
                           80))
-                 (program (or (executable-find program) program))
-                 (args (ml/ghostel-windows-unescape-mcp-config-args args)))
+                 (program (or (executable-find program) program)))
             (with-current-buffer buffer
               (let ((ghostel-shell (cons program args))
                     (ghostel-shell-integration nil))
@@ -323,7 +310,7 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
 
 (add-hook 'shell-mode-hook #'ml/shell-enable-ghostel-comint)
 
-;; claude-code-ide spawns `claude' from Emacs, whose env never ran scm_breeze.
+;; `claude' started from an Emacs terminal inherits Emacs's env, which never ran scm_breeze.
 ;; Claude Code's Bash tool then sources a shell snapshot that replays
 ;; scm_breeze's `git' wrapper (which execs "$_git_cmd") without the var, so
 ;; every git call dies with "permission denied" on an empty command.  Seed the
