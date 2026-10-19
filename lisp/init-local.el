@@ -420,6 +420,7 @@ This moves its load time out of startup.  A batch run, such as
   (autoload command "blinko" nil t))
 
 (require 'init-local-program)
+(require 'init-local-etaf)
 
 
 (defun ml-update-all-packages ()
