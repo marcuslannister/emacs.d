@@ -43,6 +43,48 @@
 
 (maybe-require-package 'magit-todos)
 
+;; Fast Magit status: config from the magit-fast README.
+(use-package magit
+  :init
+  (magit-auto-revert-mode -1)
+  (setq with-editor-emacsclient-executable (executable-find "emacsclient"))
+  :custom
+  (magit-log-section-commit-count 5)
+  (magit-process-connection-type nil)
+  (magit-refresh-verbose nil)
+  (magit-refresh-status-buffer nil)
+  (magit-revision-insert-related-refs nil)
+  (magit-save-repository-buffers nil)
+  (magit-uniquify-buffer-names nil)
+  (magit-status-sections-hook
+   '(magit-insert-error-header
+     magit-insert-untracked-files
+     magit-insert-unstaged-changes
+     magit-insert-staged-changes
+     magit-insert-recent-commits)))
+
+;; The native-compile subprocess does not load Magit, so it compiles the
+;; `magit-insert-section' macro in magit-fast as a function call and the
+;; sections fail with "void-function unstaged".  Load Magit there first.
+(setq native-comp-async-env-modifier-form '(require 'magit nil t))
+
+(use-package magit-fast
+  :ensure t
+  :vc (:url "https://github.com/zHaOdANiuu/magit-fast" :rev :newest)
+  :after magit
+  :bind
+  (:map magit-status-mode-map
+   ("<return>" . my-magit-fast-diff))
+  :init
+  (remove-hook 'server-switch-hook 'magit-commit-diff)
+  (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
+  (magit-fast-mode)
+
+  (defun my-magit-fast-diff ()
+    (interactive)
+    (when-let* ((file (magit-file-at-point)))
+      (magit-diff-dwim nil `(,file)))))
+
 (add-hook 'git-commit-mode-hook 'goto-address-mode)
 
 
