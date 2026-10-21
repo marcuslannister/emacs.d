@@ -32,10 +32,11 @@
 ;; It needs Emacs 29+ with SQLite, which this build has.
 ;;
 ;; `disclosure' adds the Layer-2 `file-read-snippet' that `file-outline' and
-;; `file-read' already point at in their own descriptions.  Its org-index
-;; handler is referenced only in comments — the module itself requires just
-;; cl-lib, anvil-server, and anvil-uri — so enabling it does NOT pull in the
-;; org module or touch ~/org files.
+;; `file-read' already point at in their own descriptions.  At load it requires
+;; just cl-lib, anvil-server, and anvil-uri.  Its org handlers (the org-index
+;; search and the org:// resolver of `anvil-uri-fetch') lazily require
+;; anvil-org-index / anvil-org, but only to read: that loads the libraries
+;; without enabling the org module's write tools, so ~/org buffers do not race.
 ;;
 ;; `shell-filter' adds shell-run / shell-filter / shell-tee-get / shell-gain;
 ;; `context' adds context-compress / -retrieve / -stats.
