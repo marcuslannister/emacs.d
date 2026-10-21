@@ -40,8 +40,12 @@
 ;;
 ;; `shell-filter' adds shell-run / shell-filter / shell-tee-get / shell-gain;
 ;; `context' adds context-compress / -retrieve / -stats.
+;;
+;; `xlsx' and `pdf' need openpyxl and pymupdf in the Python on `exec-path';
+;; nix-config's common-darwin.nix installs both.  `sexp' adds reader-based
+;; Elisp structural edits (rename-symbol, replace-defun, wrap-form).
 (setq anvil-optional-modules
-      '(xlsx pdf http cron browser state shell-filter context disclosure))
+      '(xlsx pdf http cron browser state shell-filter context disclosure sexp))
 
 (anvil-enable)
 (anvil-server-start)
