@@ -232,6 +232,14 @@
   (interactive "*")
   (delete-region (point) (hel-end-of-line)))
 
+(defvar hel--cursors-table)
+
+(defun my/hel--all-fake-cursors-safe (orig &rest args)
+  "Call ORIG with ARGS only when the buffer has a Hel cursors table.
+Hel's global `current-kill' advice lists fake cursors in every buffer,
+but buffers without `hel-local-mode' (for example a minibuffer) have no table."
+  (and hel--cursors-table (apply orig args)))
+
 (defun my/hel--activate ()
   "Load Hel and hel-leader, configure them, and enable Hel globally."
   (when (and (require 'hel nil t)
@@ -271,6 +279,7 @@ manual selection is searched as-is instead of being replaced."
     (hel-keymap-global-set :state '(normal insert emacs)
       "C-v" #'yank)
     (my/hel-setup-leader)
+    (advice-add 'hel-all-fake-cursors :around #'my/hel--all-fake-cursors-safe)
     (hel-mode 1)
     ;; Mouse selection must not open a recursive prompt during a drag.
     ;; Apply after Hel loads saved cursor-command choices.

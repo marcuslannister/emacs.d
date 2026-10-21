@@ -49,4 +49,15 @@
       (should (= prompts 0))
       (should (= replays 0)))))
 
+(ert-deftest init-local-hel-yank-outside-hel-buffer ()
+  "Clipboard yank must work in a buffer without `hel-local-mode'."
+  (skip-unless (and (featurep 'hel) (featurep 'hel-leader)))
+  (let ((kill-ring nil)
+        (kill-ring-yank-pointer nil)
+        (interprogram-paste-function (lambda () "from-clipboard")))
+    (hel-mode 1)
+    (with-temp-buffer
+      (hel-local-mode -1)
+      (should (equal (current-kill 0) "from-clipboard")))))
+
 ;;; init-local-hel-tests.el ends here
