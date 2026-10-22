@@ -123,7 +123,8 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
 ;; focus click.  Focus regained without such a press (Cmd-Tab, a popup closing,
 ;; a click in a non-ghostel window) leaves the flag set, so a later tap in
 ;; ghostel is silently dropped.  A real focus click lands within milliseconds of
-;; its focus-in, so honor the flag only while it is fresh.
+;; its focus-in with no command between, so drop the flag on any other command
+;; and honor it only while it is fresh.
 (defvar ml/ghostel--focus-change-time 0.0
   "`float-time' of the last frame focus change.")
 
@@ -133,9 +134,20 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
 
 (defun ml/ghostel-expire-focus-flag (event &rest _)
   "Clear a stale refocus flag before ghostel handles the press EVENT."
-  (when (> (- (float-time) ml/ghostel--focus-change-time) 0.5)
-    (set-frame-parameter (window-frame (posn-window (event-start event)))
-                         'ghostel--frame-refocused nil)))
+  (let ((age (- (float-time) ml/ghostel--focus-change-time)))
+    ;; Negative age: the wall clock moved back, so the stamp is not fresh.
+    (when (or (< age 0) (> age 0.5))
+      (set-frame-parameter (window-frame (posn-window (event-start event)))
+                           'ghostel--frame-refocused nil))))
+
+(defun ml/ghostel-drop-focus-flag ()
+  "Clear refocus flags when a command other than the ghostel press runs."
+  (unless (memq this-command '(ghostel-mouse-press-or-copy-mode
+                               handle-switch-frame handle-focus-in
+                               handle-focus-out ignore))
+    (dolist (frame (frame-list))
+      (when (frame-parameter frame 'ghostel--frame-refocused)
+        (set-frame-parameter frame 'ghostel--frame-refocused nil)))))
 
 ;; M-1..M-9 select tab-bar tabs globally (see `init-local.el').  Ghostel's
 ;; semi-char mode binds every M-<printable> to the terminal, so those keys never
@@ -158,6 +170,7 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
     (advice-add 'ghostel--kitty-check-source-rect
                 :override #'ml/ghostel-kitty-check-source-rect))
   (add-function :after after-focus-change-function #'ml/ghostel-stamp-focus-change)
+  (add-hook 'pre-command-hook #'ml/ghostel-drop-focus-flag)
   (advice-add 'ghostel-mouse-press-or-copy-mode
               :before #'ml/ghostel-expire-focus-flag))
 
