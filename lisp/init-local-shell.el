@@ -118,6 +118,25 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
     (signal 'ghostel-kitty-unsupported-source-rect
             (list src-x src-y src-w src-h pixel-w pixel-h))))
 
+;; Upstream flags a frame as "refocused" on every focus change and clears the
+;; flag only on the next left press in a ghostel buffer, which it then eats as a
+;; focus click.  Focus regained without such a press (Cmd-Tab, a popup closing,
+;; a click in a non-ghostel window) leaves the flag set, so a later tap in
+;; ghostel is silently dropped.  A real focus click lands within milliseconds of
+;; its focus-in, so honor the flag only while it is fresh.
+(defvar ml/ghostel--focus-change-time 0.0
+  "`float-time' of the last frame focus change.")
+
+(defun ml/ghostel-stamp-focus-change (&rest _)
+  "Record the time of a frame focus change."
+  (setq ml/ghostel--focus-change-time (float-time)))
+
+(defun ml/ghostel-expire-focus-flag (event &rest _)
+  "Clear a stale refocus flag before ghostel handles the press EVENT."
+  (when (> (- (float-time) ml/ghostel--focus-change-time) 0.5)
+    (set-frame-parameter (window-frame (posn-window (event-start event)))
+                         'ghostel--frame-refocused nil)))
+
 ;; M-1..M-9 select tab-bar tabs globally (see `init-local.el').  Ghostel's
 ;; semi-char mode binds every M-<printable> to the terminal, so those keys never
 ;; reach Emacs inside a terminal buffer.  Register them as keymap exceptions
@@ -137,7 +156,10 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
                          keys))))
   (when (fboundp 'ghostel--kitty-check-source-rect)
     (advice-add 'ghostel--kitty-check-source-rect
-                :override #'ml/ghostel-kitty-check-source-rect)))
+                :override #'ml/ghostel-kitty-check-source-rect))
+  (add-function :after after-focus-change-function #'ml/ghostel-stamp-focus-change)
+  (advice-add 'ghostel-mouse-press-or-copy-mode
+              :before #'ml/ghostel-expire-focus-flag))
 
 (if IS-WINDOWS
     ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
