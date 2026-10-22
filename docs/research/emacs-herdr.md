@@ -97,7 +97,7 @@ only when the `herdr` binary exists, and it adds these keys:
 
 | Key | Command | Result |
 |-----|---------|--------|
-| `C-c m` | `ml/herdr-send-raw` | Type the region or line into an agent, with no code fence; `C-u` also presses Enter (`herdr pane run`). When the focused pane is not an agent and its tab has one agent, sends there without a prompt, else asks; then focuses the agent |
+| `C-c m` | `ml/herdr-send-raw` | Type the region or line into an agent, with no code fence; `C-u` also presses Enter (`herdr pane run`). Sends without a prompt to the focused pane when it is an agent, or to the only agent in a focused terminal pane's tab; else asks. Then focuses the agent |
 | `C-c M` | `herdr-menu` | Herdr transient menu |
 | `C-c W` | `ml/herdr-copy-pane-text` | Copy the region or line without the sidebar, borders, or scrollbar |
 | `RET` in Ghostel copy mode | advice on `ghostel-readonly-copy` | In `*herdr*`, copy only the pane text |
