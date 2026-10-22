@@ -66,14 +66,14 @@
                    "right one\nzsh: right two"))))
 
 (ert-deftest init-local-herdr-pane-trims-nbsp-prompt ()
-  (init-local-herdr-tests--with-screen " side  ││❯            ▕│\n"
+  (init-local-herdr-tests--with-screen " side  ││❯\u00a0           ▕│\n"
     (goto-char (point-min))
     (search-forward "❯")
     (should (equal (ml/herdr--pane-text (line-beginning-position) (line-end-position))
                    "❯"))))
 
 (ert-deftest init-local-herdr-line-drops-claude-marker ()
-  (init-local-herdr-tests--with-screen (concat " side  ││❯ ! cat AGENTS.md     ▕│\n"
+  (init-local-herdr-tests--with-screen (concat " side  ││❯\u00a0! cat AGENTS.md     ▕│\n"
                                                " side  ││⏺ Ran 1 shell command  ▕│\n")
     (goto-char (point-min))
     (search-forward "cat")
