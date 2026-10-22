@@ -131,6 +131,17 @@ order, Ghostel is configured before herdr can load it, also if you later turn
 on `herdr-mode` at startup. The `init-local-*` name matches AGENTS.md ("Keep
 personal overrides in `lisp/init-local.el`").
 
+## Verify pane-text changes
+
+`herdr pane read <PANE_ID> --source visible` returns a pane's screen rows
+without the sidebar, borders, or scrollbar. Use it as ground truth for any
+change to `ml/herdr--pane-text`: in the live `*herdr*` buffer, run the helper
+over every row of each pane (`herdr pane layout` lists the pane ids) and
+compare row by row. One hand-picked line is not enough, because wide
+characters shift borders by a column on some rows only. Expected differences:
+the pane's top and bottom frame lines, and a partial first row when the
+selection starts inside a line.
+
 ## Conflicts and risks
 
 - **You already run Herdr in Ghostel by hand.** `docs/ghostel-module.md:9`
