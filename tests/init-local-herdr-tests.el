@@ -106,34 +106,48 @@
                  (init-local-herdr-tests--snap (assq-delete-all 'focused (copy-alist term))
                                                '("w:p2" . "w:t1"))))))
 
-(ert-deftest init-local-herdr-copy-advice-replaces-kill ()
+(ert-deftest init-local-herdr-copy-filter-cuts-every-copy ()
+  ;; The filter serves kill-ring-save, copy mode RET and M-w, and a mouse
+  ;; drag; none of them needs an active region.
   (init-local-herdr-tests--with-screen init-local-herdr-tests--screen
-    (goto-char (point-min))
-    (search-forward "Ran")
-    (let ((transient-mark-mode t)
-          (kill-ring nil)
+    (let ((kill-ring nil)
           (interprogram-cut-function nil))
-      (set-mark (- (point) 3))
-      (end-of-line)
-      (activate-mark)
-      (ml/herdr--copy-pane-region
-       (lambda () (kill-ring-save (region-beginning) (region-end))))
-      (should (equal kill-ring '("Ran 1 shell command"))))))
+      (goto-char (point-min))
+      (search-forward "⏺")
+      (let ((beg (1- (point))))
+        (search-forward "command")
+        (copy-region-as-kill beg (point)))
+      (goto-char (point-min))
+      (should (equal kill-ring '("⏺ The test failed\n\n  Ran 1 shell command"))))))
 
-(ert-deftest init-local-herdr-copy-advice-skips-other-ghostel ()
-  ;; Ghostel's own copy joins soft-wrapped lines; the advice must keep it.
+(ert-deftest init-local-herdr-highlight-stays-in-pane ()
+  (init-local-herdr-tests--with-screen init-local-herdr-tests--screen
+    (should (eq redisplay-highlight-region-function #'ml/herdr--highlight-region))
+    (goto-char (point-min))
+    (search-forward "⏺")
+    (let* ((beg (1- (point)))
+           (end (progn (search-forward "command") (point)))
+           (rol (ml/herdr--highlight-region beg end (selected-window) nil))
+           (shown (mapcar (lambda (ov)
+                            (buffer-substring-no-properties (overlay-start ov) (overlay-end ov)))
+                          (cdr rol))))
+      ;; One overlay per line, each inside the middle pane: no sidebar, no x pane.
+      (should (eq (car rol) 'ml/herdr))
+      (should (equal (mapcar #'string-trim-right shown)
+                     '("⏺ The test failed" "" "  Ran 1 shell command")))
+      (funcall redisplay-unhighlight-region-function rol)
+      (should-not (seq-some #'overlay-buffer (cdr rol))))))
+
+(ert-deftest init-local-herdr-copy-filter-skips-other-ghostel ()
+  ;; Other Ghostel buffers keep Ghostel's own copy (it joins soft wraps).
   (with-temp-buffer
     (rename-buffer "*ghostel*" t)
+    (insert "a │ b")
     (ghostel-mode)
-    (insert "long-com\nmand   ")
-    (let ((transient-mark-mode t)
-          (kill-ring nil)
+    (let ((kill-ring nil)
           (interprogram-cut-function nil))
-      (set-mark (point-min))
-      (goto-char (point-max))
-      (activate-mark)
-      (ml/herdr--copy-pane-region (lambda () (kill-new "long-command")))
-      (should (equal kill-ring '("long-command"))))))
+      (copy-region-as-kill (point-min) (point-max))
+      (should (equal kill-ring '("a │ b"))))))
 
 (ert-deftest init-local-herdr-pane-other-ghostel-unchanged ()
   (with-temp-buffer
