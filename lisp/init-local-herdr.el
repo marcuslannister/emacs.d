@@ -20,44 +20,51 @@ Emacs and the terminal can disagree by a column on wide characters."
   (and (derived-mode-p 'ghostel-mode)
        (string-match-p "\\`\\*herdr\\*" (buffer-name))))
 
-(defun ml/herdr--pane-text (beg end)
+(defun ml/herdr--pane-segments (beg end anchor)
+  "Return (FROM . TO) for each line of BEG..END, cut to the pane at ANCHOR.
+Herdr draws its sidebar and pane splits with │.  Copy and the region
+highlight both use these segments, so what is shown is what is copied."
+  ;; shortcut: a │ in pane text left of ANCHOR (e.g. a table) is taken as the
+  ;; border; read pane rows with `herdr pane read' if this bites.
+  (let ((lcol (save-excursion
+                (goto-char anchor)
+                (and (search-backward "│" (line-beginning-position) t)
+                     (current-column))))
+        (rcol (save-excursion
+                (goto-char anchor)
+                (and (search-forward "│" (line-end-position) t)
+                     (1- (current-column)))))
+        segs)
+    (save-excursion
+      (goto-char beg)
+      (while (let* ((l (and lcol (ml/herdr--column-pos lcol)))
+                    (r (and rcol (ml/herdr--column-pos rcol)))
+                    (from (max beg (cond (l (1+ l))
+                                         (lcol (save-excursion
+                                                 (move-to-column (1+ lcol))
+                                                 (point)))
+                                         (t (line-beginning-position)))))
+                    (to (min end (cond (r)
+                                       (rcol (save-excursion
+                                               (move-to-column rcol)
+                                               (point)))
+                                       (t (line-end-position))))))
+               (push (cons from (max from to)) segs)
+               (and (zerop (forward-line 1)) (< (point) end)))))
+    (nreverse segs)))
+
+(defun ml/herdr--pane-text (beg end &optional anchor)
   "Return text BEG..END; in the *herdr* TUI, keep only the pane column.
-Herdr draws its sidebar and pane splits with │, and a scrollbar (▕ or ▐)
-before the right edge.  The pane is the one at the region start, or at
-point when no region is active."
+Each line also loses the scrollbar (▕ or ▐) and trailing blanks.  The pane
+is the one at ANCHOR, else at the region start, else at point."
   (if (not (ml/herdr--tui-buffer-p))
       (buffer-substring-no-properties beg end)
-    ;; shortcut: a │ in pane text left of point (e.g. a table) is taken as the
-    ;; border; read pane rows with `herdr pane read' if this bites.
-    (let* ((anchor (if (use-region-p) beg (point)))
-           (lcol (save-excursion
-                   (goto-char anchor)
-                   (and (search-backward "│" (line-beginning-position) t)
-                        (current-column))))
-           (rcol (save-excursion
-                   (goto-char anchor)
-                   (and (search-forward "│" (line-end-position) t)
-                        (1- (current-column)))))
-           lines)
-      (save-excursion
-        (goto-char beg)
-        (while (let* ((l (and lcol (ml/herdr--column-pos lcol)))
-                      (r (and rcol (ml/herdr--column-pos rcol)))
-                      (from (max beg (cond (l (1+ l))
-                                           (lcol (save-excursion
-                                                   (move-to-column (1+ lcol))
-                                                   (point)))
-                                           (t (line-beginning-position)))))
-                      (to (min end (cond (r)
-                                         (rcol (save-excursion
-                                                 (move-to-column rcol)
-                                                 (point)))
-                                         (t (line-end-position)))))
-                      (s (if (< from to) (buffer-substring-no-properties from to) "")))
-                 (push (replace-regexp-in-string "\\`│\\|[ \t\u00a0]*[▕▐]?[ \t\u00a0│]*\\'" "" s)
-                       lines)
-                 (and (zerop (forward-line 1)) (< (point) end)))))
-      (string-join (nreverse lines) "\n"))))
+    (mapconcat
+     (lambda (seg)
+       (replace-regexp-in-string "\\`│\\|[ \t\u00a0]*[▕▐]?[ \t\u00a0│]*\\'" ""
+                                 (buffer-substring-no-properties (car seg) (cdr seg))))
+     (ml/herdr--pane-segments beg end (or anchor (if (use-region-p) beg (point))))
+     "\n")))
 
 (defun ml/herdr--text-at-point ()
   "Return the region's pane text, or the line's without a leading ❯ or ⏺.
@@ -93,18 +100,46 @@ agent in its tab; with none or several, return nil."
     (message "Copied: %s" (truncate-string-to-width text 60 nil nil "…"))))
 (global-set-key (kbd "C-c W") #'ml/herdr-copy-pane-text)
 
-(defun ml/herdr--copy-pane-region (orig &rest args)
-  "Run ORIG with ARGS, then replace the copied region with its pane text.
-So copy mode (SPC to start, RET to copy) in *herdr* drops the sidebar.
-Other buffers keep Ghostel's own copy, which joins soft-wrapped lines."
-  (let ((text (and (use-region-p)
-                   (ml/herdr--tui-buffer-p)
-                   (ml/herdr--pane-text (region-beginning) (region-end)))))
-    (apply orig args)
-    (when text
-      (kill-new text t))))
-(with-eval-after-load 'ghostel
-  (advice-add 'ghostel-readonly-copy :around #'ml/herdr--copy-pane-region))
+(defun ml/herdr--filter-buffer-substring (orig beg end delete)
+  "Return BEG..END as pane text; call ORIG with the same args to delete.
+Every copy path (`kill-ring-save', copy mode RET and M-w, a mouse drag
+with `mouse-drag-copy-region') reads text through this filter."
+  (if delete
+      (funcall orig beg end delete)
+    (ml/herdr--pane-text beg end beg)))
+
+(defun ml/herdr--highlight-region (start end window rol)
+  "Highlight START..END in WINDOW line by line, cut to the pane at START.
+Delete the old highlight ROL first.  Return (ml/herdr . OVERLAYS), tagged
+like `rectangle-mark-mode' does, for `redisplay-highlight-region-function'."
+  (funcall redisplay-unhighlight-region-function rol)
+  (cons 'ml/herdr
+        (mapcar (lambda (seg)
+                  (let ((ov (make-overlay (car seg) (cdr seg))))
+                    (overlay-put ov 'window window)
+                    (overlay-put ov 'face 'region)
+                    (overlay-put ov 'priority '(nil . 100))
+                    ov))
+                (ml/herdr--pane-segments start end start))))
+
+(defun ml/herdr--unhighlight-region (orig rol)
+  "Delete a tagged ROL from `ml/herdr--highlight-region', else call ORIG.
+Global, because redisplay may drop the highlight from another buffer."
+  (if (eq (car-safe rol) 'ml/herdr)
+      (mapc #'delete-overlay (cdr rol))
+    (funcall orig rol)))
+(add-function :around (default-value 'redisplay-unhighlight-region-function)
+              #'ml/herdr--unhighlight-region)
+
+(defun ml/herdr--setup-tui-buffer ()
+  "In *herdr*, cut copies and the region highlight to the pane.
+Other Ghostel buffers keep Ghostel's own copy, which joins soft-wrapped lines."
+  (when (ml/herdr--tui-buffer-p)
+    (add-function :around (local 'filter-buffer-substring-function)
+                  #'ml/herdr--filter-buffer-substring)
+    (setq-local redisplay-highlight-region-function #'ml/herdr--highlight-region)))
+;; `herdr--create-buffer' names the buffer before it calls `ghostel-mode'.
+(add-hook 'ghostel-mode-hook #'ml/herdr--setup-tui-buffer)
 
 (when (executable-find "herdr")
   (use-package herdr
