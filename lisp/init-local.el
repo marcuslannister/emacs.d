@@ -411,6 +411,8 @@ This moves its load time out of startup.  A batch run, such as
 (init-local--require-when-idle 'init-local-gtd 1)
 
 (require 'init-local-shell)
+;; After init-local-shell: herdr.el requires ghostel, which must be configured first.
+(require 'init-local-herdr)
 
 (require 'init-local-kp)
 
