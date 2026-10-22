@@ -97,12 +97,12 @@ only when the `herdr` binary exists, and it adds these keys:
 
 | Key | Command | Result |
 |-----|---------|--------|
-| `C-c m` | `herdr-menu` | Herdr transient menu |
-| `C-c M` | `ml/herdr-send-raw` | Type the region or line into an agent, with no code fence; `C-u` also presses Enter (`herdr pane run`) |
+| `C-c m` | `ml/herdr-send-raw` | Type the region or line into an agent, with no code fence; `C-u` also presses Enter (`herdr pane run`). When the focused pane is not an agent and its tab has one agent, sends there without a prompt, else asks; then focuses the agent |
+| `C-c M` | `herdr-menu` | Herdr transient menu |
 | `C-c W` | `ml/herdr-copy-pane-text` | Copy the region or line without the sidebar, borders, or scrollbar |
 | `RET` in Ghostel copy mode | advice on `ghostel-readonly-copy` | In `*herdr*`, copy only the pane text |
 
-For a whole line (no region), `C-c M` and `C-c W` also remove a leading
+For a whole line (no region), `C-c m` and `C-c W` also remove a leading
 Claude Code `❯` or `⏺` marker, so `❯ ! cmd` is sent as `! cmd`. Tests:
 `tests/init-local-herdr-tests.el`.
 
@@ -115,9 +115,9 @@ Reasons for each choice:
   when `herdr.el` loads (its `:set`, herdr.el:153-162), so with a deferred
   package the key would not exist until another herdr command ran. `:bind`
   makes an autoload. `C-c` is already in the default
-  `ghostel-keymap-exceptions` (`ghostel.el:609-610`), so `C-c m` also reaches
-  Emacs from inside `*herdr*` in semi-char mode. No other `C-c m` binding
-  exists in `lisp/` (`rg 'C-c m' lisp/`).
+  `ghostel-keymap-exceptions` (`ghostel.el:609-610`), so `C-c m` and `C-c M`
+  also reach Emacs from inside `*herdr*` in semi-char mode. No other binding
+  for them exists in `lisp/` (`rg 'C-c [mM]' lisp/`).
 - No `herdr-mode` hook: README.org:47 uses `:hook (after-init . herdr-mode)`,
   but that loads `ghostel` at startup (herdr.el:46) and starts a 2-second poll
   that spawns `herdr api snapshot` each time (herdr.el:897-928). Add it only if
@@ -167,11 +167,12 @@ personal overrides in `lisp/init-local.el`").
 
 ## Open questions
 
-- Does the Hel leader (`SPC m`) reach a plain global `C-c m` binding, or must
-  the key also go in `hel-keymap-global-set` in `lisp/init-local-hel.el`
-  (like `C-c g h` at line 131)? Unverified.
+- Hel leader: answered. `SPC <key>` runs the global `C-c <key>` binding
+  (`external-packages/hel-leader/hel-leader.el:198-202`), but
+  `hel-leader-meta-prefix` is `"m"`, so `SPC m` starts an `M-` key. `SPC M`
+  and `SPC W` work only in Ghostel Emacs mode (`M-e`); `C-c` keys are simpler.
 - Does the transient repeat key work with a two-key sequence such as
-  `C-c m`? `herdr--menu-repeat-key` uses the invoking keys
+  `C-c M`? `herdr--menu-repeat-key` uses the invoking keys
   (herdr.el:1074-1080, 1130-1140). Unverified; README examples use `C-9`.
 - Do you want `herdr-mode` (poll, mode-line, notifications) on at startup?
 - Default agent kind: keep `"claude"`, or use another kind from

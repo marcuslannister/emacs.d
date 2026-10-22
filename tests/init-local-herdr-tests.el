@@ -82,6 +82,26 @@
     (search-forward "Ran")
     (should (equal (ml/herdr--text-at-point) "Ran 1 shell command"))))
 
+(ert-deftest init-local-herdr-tab-mate-pane ()
+  (let ((snap '((panes . (((pane_id . "w:p1") (tab_id . "w:t1") (focused . t))
+                          ((pane_id . "w:p2") (tab_id . "w:t1") (focused . :false))))
+                (agents . (((pane_id . "w:p2") (tab_id . "w:t1"))
+                           ((pane_id . "w:p9") (tab_id . "w:t2")))))))
+    ;; One agent beside the focused terminal pane: use it.
+    (should (equal (ml/herdr--tab-mate-pane snap) "w:p2"))
+    ;; Two agents in the tab: ambiguous, so let the user pick.
+    (push '((pane_id . "w:p3") (tab_id . "w:t1")) (alist-get 'agents snap))
+    (should-not (ml/herdr--tab-mate-pane snap))
+    ;; Focused pane is an agent beside another agent: do not guess.
+    (should-not (ml/herdr--tab-mate-pane
+                 '((panes . (((pane_id . "w:p1") (tab_id . "w:t1") (focused . t)
+                              (agent . "claude"))))
+                   (agents . (((pane_id . "w:p1") (tab_id . "w:t1"))
+                              ((pane_id . "w:p2") (tab_id . "w:t1")))))))
+    ;; No focused pane: nothing to compare against.
+    (should-not (ml/herdr--tab-mate-pane '((panes . (((pane_id . "w:p1") (tab_id . "w:t1"))))
+                                           (agents . (((pane_id . "w:p2") (tab_id . "w:t1")))))))))
+
 (ert-deftest init-local-herdr-copy-advice-replaces-kill ()
   (init-local-herdr-tests--with-screen init-local-herdr-tests--screen
     (goto-char (point-min))
