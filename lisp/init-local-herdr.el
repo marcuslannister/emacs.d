@@ -70,21 +70,19 @@ Claude Code marks prompts with ❯ and replies with ⏺; a whole-line send of
       "\\`[ \t\u00a0]*[❯⏺][ \t\u00a0]*" ""
       (ml/herdr--pane-text (line-beginning-position) (line-end-position))))))
 
-(defun ml/herdr--tab-mate-pane (snap)
-  "Return the pane id of the only agent in the tab of SNAP's focused pane.
-SNAP is the `snapshot' object of `herdr api snapshot'.  Return nil when the
-focused pane is itself an agent (the user may mean it, not its neighbour),
-or when that tab has no other agent, or more than one."
-  (let* ((here (seq-find (lambda (p) (eq (alist-get 'focused p) t))
-                         (alist-get 'panes snap)))
-         (mates (and here
-                     (not (alist-get 'agent here))
-                     (seq-filter
-                      (lambda (a)
-                        (and (equal (alist-get 'tab_id a) (alist-get 'tab_id here))
-                             (not (equal (alist-get 'pane_id a) (alist-get 'pane_id here)))))
-                      (alist-get 'agents snap)))))
-    (and (= (length mates) 1) (alist-get 'pane_id (car mates)))))
+(defun ml/herdr--target-pane (snap)
+  "Return the pane id to send to without asking, or nil to let the user pick.
+SNAP is the `snapshot' object of `herdr api snapshot'.  A focused agent pane
+is its own target.  From a focused terminal pane, the target is the only
+agent in its tab; with none or several, return nil."
+  (let ((here (seq-find (lambda (p) (eq (alist-get 'focused p) t))
+                        (alist-get 'panes snap))))
+    (cond ((null here) nil)
+          ((alist-get 'agent here) (alist-get 'pane_id here))
+          (t (let ((mates (seq-filter
+                           (lambda (a) (equal (alist-get 'tab_id a) (alist-get 'tab_id here)))
+                           (alist-get 'agents snap))))
+               (and (= (length mates) 1) (alist-get 'pane_id (car mates))))))))
 
 (defun ml/herdr-copy-pane-text ()
   "Copy the region, or the line at point, without the herdr sidebar."
@@ -120,18 +118,18 @@ Other buffers keep Ghostel's own copy, which joins soft-wrapped lines."
       "Send the region, or the line at point, to an agent as typed text.
 Unlike `herdr-send-region', add no code fence, so \"! cmd\" stays a Claude
 Code bash command.  With prefix arg SUBMIT, also press Enter.
-The agent is the only other agent in the focused pane's tab, if there is
-one; else pick it.  Then focus that agent."
+The agent is the focused pane when it is an agent, else the only agent in
+the focused pane's tab; otherwise pick it.  Then focus that agent."
       (interactive "P")
       ;; shortcut: uses herdr.el private helpers; re-check after package upgrades.
       (let ((text (ml/herdr--text-at-point)))
         (when (string-empty-p text)
           (user-error "Nothing to send"))
         (let* ((json (herdr--snapshot-sync))
-               (mate (ml/herdr--tab-mate-pane
-                      (alist-get 'snapshot (alist-get 'result json))))
-               (agent (or (and mate
-                               (seq-find (lambda (a) (equal (alist-get 'pane-id a) mate))
+               (target (ml/herdr--target-pane
+                        (alist-get 'snapshot (alist-get 'result json))))
+               (agent (or (and target
+                               (seq-find (lambda (a) (equal (alist-get 'pane-id a) target))
                                          (herdr--extract-agents json)))
                           (herdr--pick-agent "Send raw to agent: "))))
           (unless (zerop (call-process herdr-executable nil nil nil "pane"

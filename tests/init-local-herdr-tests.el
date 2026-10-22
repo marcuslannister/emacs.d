@@ -82,25 +82,29 @@
     (search-forward "Ran")
     (should (equal (ml/herdr--text-at-point) "Ran 1 shell command"))))
 
-(ert-deftest init-local-herdr-tab-mate-pane ()
-  (let ((snap '((panes . (((pane_id . "w:p1") (tab_id . "w:t1") (focused . t))
-                          ((pane_id . "w:p2") (tab_id . "w:t1") (focused . :false))))
-                (agents . (((pane_id . "w:p2") (tab_id . "w:t1"))
-                           ((pane_id . "w:p9") (tab_id . "w:t2")))))))
-    ;; One agent beside the focused terminal pane: use it.
-    (should (equal (ml/herdr--tab-mate-pane snap) "w:p2"))
-    ;; Two agents in the tab: ambiguous, so let the user pick.
-    (push '((pane_id . "w:p3") (tab_id . "w:t1")) (alist-get 'agents snap))
-    (should-not (ml/herdr--tab-mate-pane snap))
-    ;; Focused pane is an agent beside another agent: do not guess.
-    (should-not (ml/herdr--tab-mate-pane
-                 '((panes . (((pane_id . "w:p1") (tab_id . "w:t1") (focused . t)
-                              (agent . "claude"))))
-                   (agents . (((pane_id . "w:p1") (tab_id . "w:t1"))
-                              ((pane_id . "w:p2") (tab_id . "w:t1")))))))
-    ;; No focused pane: nothing to compare against.
-    (should-not (ml/herdr--tab-mate-pane '((panes . (((pane_id . "w:p1") (tab_id . "w:t1"))))
-                                           (agents . (((pane_id . "w:p2") (tab_id . "w:t1")))))))))
+(defun init-local-herdr-tests--snap (focused &rest agents)
+  "Snapshot of tab w:t1: FOCUSED pane alist, then AGENTS as (PANE . TAB)."
+  `((panes . (,focused))
+    (agents . ,(mapcar (lambda (a) `((pane_id . ,(car a)) (tab_id . ,(cdr a)))) agents))))
+
+(ert-deftest init-local-herdr-target-pane ()
+  (let ((term '((pane_id . "w:p1") (tab_id . "w:t1") (focused . t)))
+        (claude '((pane_id . "w:p1") (tab_id . "w:t1") (focused . t) (agent . "claude"))))
+    ;; Focused terminal, one agent in its tab: send there.
+    (should (equal (ml/herdr--target-pane
+                    (init-local-herdr-tests--snap term '("w:p2" . "w:t1") '("w:p9" . "w:t2")))
+                   "w:p2"))
+    ;; Focused terminal, two agents in its tab: ambiguous, so the user picks.
+    (should-not (ml/herdr--target-pane
+                 (init-local-herdr-tests--snap term '("w:p2" . "w:t1") '("w:p3" . "w:t1"))))
+    ;; Focused Claude pane, even beside another agent: send to itself.
+    (should (equal (ml/herdr--target-pane
+                    (init-local-herdr-tests--snap claude '("w:p1" . "w:t1") '("w:p2" . "w:t1")))
+                   "w:p1"))
+    ;; No focused pane: the user picks.
+    (should-not (ml/herdr--target-pane
+                 (init-local-herdr-tests--snap (assq-delete-all 'focused (copy-alist term))
+                                               '("w:p2" . "w:t1"))))))
 
 (ert-deftest init-local-herdr-copy-advice-replaces-kill ()
   (init-local-herdr-tests--with-screen init-local-herdr-tests--screen
