@@ -54,7 +54,7 @@ point when no region is active."
                                                  (point)))
                                          (t (line-end-position)))))
                       (s (if (< from to) (buffer-substring-no-properties from to) "")))
-                 (push (replace-regexp-in-string "\\`│\\|[ \t ]*[▕▐]?[ \t │]*\\'" "" s)
+                 (push (replace-regexp-in-string "\\`│\\|[ \t\u00a0]*[▕▐]?[ \t\u00a0│]*\\'" "" s)
                        lines)
                  (and (zerop (forward-line 1)) (< (point) end)))))
       (string-join (nreverse lines) "\n"))))
@@ -67,7 +67,7 @@ Claude Code marks prompts with ❯ and replies with ⏺; a whole-line send of
    (if (use-region-p)
        (ml/herdr--pane-text (region-beginning) (region-end))
      (replace-regexp-in-string
-      "\\`[ \t ]*[❯⏺][ \t ]*" ""
+      "\\`[ \t\u00a0]*[❯⏺][ \t\u00a0]*" ""
       (ml/herdr--pane-text (line-beginning-position) (line-end-position))))))
 
 (defun ml/herdr--tab-mate-pane (snap)

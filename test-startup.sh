@@ -1,4 +1,9 @@
 #!/bin/sh -e
+# A literal no-break space is invisible in review and easy to lose in an edit.
+if grep -rl --include='*.el' "$(printf '\302\240')" lisp tests; then
+  echo "Literal U+00A0 in the files above; write it as \\u00a0 in Lisp strings." >&2
+  exit 1
+fi
 echo "Attempting startup..."
 ${EMACS:=emacs} -nw --batch \
                 --eval '(progn
