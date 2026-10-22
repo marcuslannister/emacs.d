@@ -53,6 +53,10 @@ appears as added/modified/untracked — for untracked files `git diff` shows not
    codes match the args; destructive commands behave under batch where relevant.
 9. **Generated/state files** — flag any hand-edit to `custom.el`, `*.elc`, `recentf.eld`,
    `*.session`, or `*.db`; these are runtime-owned.
+10. **Advice scope** — for each `advice-add` on another package's function, name one buffer
+    or mode outside the intended one where that function also runs, and state what the
+    advice does there. Flag advice that changes behaviour there without a guard (for
+    example a `*herdr*`-only copy fix that rewrote copies in every Ghostel buffer).
 
 ## Verification (optional, when warranted)
 
