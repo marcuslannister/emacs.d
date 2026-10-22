@@ -70,6 +70,22 @@ Claude Code marks prompts with ❯ and replies with ⏺; a whole-line send of
       "\\`[ \t ]*[❯⏺][ \t ]*" ""
       (ml/herdr--pane-text (line-beginning-position) (line-end-position))))))
 
+(defun ml/herdr--tab-mate-pane (snap)
+  "Return the pane id of the only agent in the tab of SNAP's focused pane.
+SNAP is the `snapshot' object of `herdr api snapshot'.  Return nil when the
+focused pane is itself an agent (the user may mean it, not its neighbour),
+or when that tab has no other agent, or more than one."
+  (let* ((here (seq-find (lambda (p) (eq (alist-get 'focused p) t))
+                         (alist-get 'panes snap)))
+         (mates (and here
+                     (not (alist-get 'agent here))
+                     (seq-filter
+                      (lambda (a)
+                        (and (equal (alist-get 'tab_id a) (alist-get 'tab_id here))
+                             (not (equal (alist-get 'pane_id a) (alist-get 'pane_id here)))))
+                      (alist-get 'agents snap)))))
+    (and (= (length mates) 1) (alist-get 'pane_id (car mates)))))
+
 (defun ml/herdr-copy-pane-text ()
   "Copy the region, or the line at point, without the herdr sidebar."
   (interactive)
@@ -97,23 +113,32 @@ Other buffers keep Ghostel's own copy, which joins soft-wrapped lines."
     :ensure t
     :vc (:url "https://github.com/baongoc124/emacs-herdr" :rev :newest)
     ;; :bind, not `herdr-menu-key': that option binds only after herdr.el loads.
-    :bind (("C-c m" . herdr-menu)
-           ("C-c M" . ml/herdr-send-raw))
+    :bind (("C-c m" . ml/herdr-send-raw)
+           ("C-c M" . herdr-menu))
     :config
     (defun ml/herdr-send-raw (&optional submit)
       "Send the region, or the line at point, to an agent as typed text.
 Unlike `herdr-send-region', add no code fence, so \"! cmd\" stays a Claude
-Code bash command.  With prefix arg SUBMIT, also press Enter."
+Code bash command.  With prefix arg SUBMIT, also press Enter.
+The agent is the only other agent in the focused pane's tab, if there is
+one; else pick it.  Then focus that agent."
       (interactive "P")
       ;; shortcut: uses herdr.el private helpers; re-check after package upgrades.
       (let ((text (ml/herdr--text-at-point)))
         (when (string-empty-p text)
           (user-error "Nothing to send"))
-        (let ((pane (alist-get 'pane-id (herdr--pick-agent "Send raw to agent: "))))
+        (let* ((json (herdr--snapshot-sync))
+               (mate (ml/herdr--tab-mate-pane
+                      (alist-get 'snapshot (alist-get 'result json))))
+               (agent (or (and mate
+                               (seq-find (lambda (a) (equal (alist-get 'pane-id a) mate))
+                                         (herdr--extract-agents json)))
+                          (herdr--pick-agent "Send raw to agent: "))))
           (unless (zerop (call-process herdr-executable nil nil nil "pane"
-                                       (if submit "run" "send-text") pane text))
+                                       (if submit "run" "send-text")
+                                       (alist-get 'pane-id agent) text))
             (user-error "herdr refused the text (agent gone?)"))
-          (herdr))))))
+          (herdr--show-agent agent))))))
 
 (provide 'init-local-herdr)
 ;;; init-local-herdr.el ends here
