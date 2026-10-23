@@ -150,14 +150,14 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
         (set-frame-parameter frame 'ghostel--frame-refocused nil)))))
 
 (defun ml/ghostel-smart-paste ()
-  "Paste clipboard text, or send Alt+V when the clipboard has an image.
+  "Paste clipboard text, or send Ctrl+V when the clipboard has an image.
 Images take priority when the clipboard offers both image and text formats."
   (interactive)
   (if (and (display-graphic-p)
            (seq-some (lambda (type)
                        (string-prefix-p "image/" (symbol-name type)))
                      (gui-get-selection 'CLIPBOARD 'TARGETS)))
-      (ghostel-send-key "v" "alt")
+      (ghostel-send-key "v" "ctrl")
     (ghostel-yank)))
 
 (defun ml/ghostel-bind-terminal-keys (&rest _)
