@@ -149,6 +149,24 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
       (when (frame-parameter frame 'ghostel--frame-refocused)
         (set-frame-parameter frame 'ghostel--frame-refocused nil)))))
 
+(defun ml/ghostel-smart-paste ()
+  "Paste clipboard text, or send Alt+V when the clipboard has an image.
+Images take priority when the clipboard offers both image and text formats."
+  (interactive)
+  (if (and (display-graphic-p)
+           (seq-some (lambda (type)
+                       (string-prefix-p "image/" (symbol-name type)))
+                     (gui-get-selection 'CLIPBOARD 'TARGETS)))
+      (ghostel-send-key "v" "alt")
+    (ghostel-yank)))
+
+(defun ml/ghostel-bind-smart-paste (&rest _)
+  "Bind smart paste in Ghostel terminal-input maps, including after rebuilds."
+  (dolist (map (list ghostel-semi-char-mode-map ghostel-char-mode-map))
+    ;; Karabiner maps physical Ctrl+V to Cmd+V on macOS.
+    (dolist (key '("C-v" "s-v"))
+      (define-key map (kbd key) #'ml/ghostel-smart-paste))))
+
 ;; M-1..M-9 select tab-bar tabs globally (see `init-local.el').  Ghostel's
 ;; semi-char mode binds every M-<printable> to the terminal, so those keys never
 ;; reach Emacs inside a terminal buffer.  Register them as keymap exceptions
@@ -166,6 +184,9 @@ SRC-X / SRC-Y / SRC-W / SRC-H / PIXEL-W / PIXEL-H match
      (append ghostel-keymap-exceptions
              (seq-remove (lambda (key) (member key ghostel-keymap-exceptions))
                          keys))))
+  (ml/ghostel-bind-smart-paste)
+  (advice-add 'ghostel--rebuild-semi-char-keymap
+              :after #'ml/ghostel-bind-smart-paste)
   (when (fboundp 'ghostel--kitty-check-source-rect)
     (advice-add 'ghostel--kitty-check-source-rect
                 :override #'ml/ghostel-kitty-check-source-rect))
