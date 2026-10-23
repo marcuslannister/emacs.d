@@ -10,7 +10,7 @@
                      (file-name-directory load-file-name)))
   (dolist (name '(init-ghostel-cursor-sync init-ghostel-speed-up
                   ml/ghostel-sync-hel ml/shell-enable-ghostel-comint
-                  ml/ghostel-smart-paste ml/ghostel-bind-smart-paste))
+                  ml/ghostel-smart-paste ml/ghostel-bind-terminal-keys))
     (goto-char (point-min))
     (search-forward (format "(defun %s " name))
     (beginning-of-line)
@@ -52,15 +52,17 @@
 (defvar ghostel-char-mode-map)
 
 (ert-deftest init-ghostel-smart-paste-bindings ()
-  "Both terminal-input modes bind Ctrl+V and Cmd+V without changing global keys."
+  "Terminal-input maps bind paste and semi-char Emacs keys without changing global keys."
   (let ((ghostel-semi-char-mode-map (make-sparse-keymap))
         (ghostel-char-mode-map (make-sparse-keymap))
         (global-paste (lookup-key (current-global-map) (kbd "s-v"))))
     (dotimes (_ 2)
-      (ml/ghostel-bind-smart-paste)
+      (ml/ghostel-bind-terminal-keys)
       (dolist (map (list ghostel-semi-char-mode-map ghostel-char-mode-map))
         (dolist (key '("C-v" "s-v"))
-          (should (eq (lookup-key map (kbd key)) #'ml/ghostel-smart-paste)))))
+          (should (eq (lookup-key map (kbd key)) #'ml/ghostel-smart-paste))))
+      (should (eq (lookup-key ghostel-semi-char-mode-map (kbd "M-c"))
+                  #'ghostel-copy-mode)))
     (should (eq (lookup-key (current-global-map) (kbd "s-v")) global-paste))))
 
 (ert-deftest init-ghostel-steady-cursor-and-focus ()

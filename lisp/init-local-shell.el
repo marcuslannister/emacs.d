@@ -160,8 +160,14 @@ Images take priority when the clipboard offers both image and text formats."
       (ghostel-send-key "v" "alt")
     (ghostel-yank)))
 
-(defun ml/ghostel-bind-smart-paste (&rest _)
-  "Bind smart paste in Ghostel terminal-input maps, including after rebuilds."
+(defun ml/ghostel-bind-terminal-keys (&rest _)
+  "Bind Ghostel terminal-input keys, including after semi-char map rebuilds.
+A rebuild makes `ghostel-semi-char-mode-map' again from
+`ghostel-keymap-exceptions' and drops `use-package' :bind keys."
+  (pcase-dolist (`(,key . ,cmd) '(("M-c" . ghostel-copy-mode)
+                                  ("M-e" . ghostel-emacs-mode)
+                                  ("M-t" . ml/ghostel-split-new)))
+    (define-key ghostel-semi-char-mode-map (kbd key) cmd))
   (dolist (map (list ghostel-semi-char-mode-map ghostel-char-mode-map))
     ;; Karabiner maps physical Ctrl+V to Cmd+V on macOS.
     (dolist (key '("C-v" "s-v"))
@@ -184,9 +190,9 @@ Images take priority when the clipboard offers both image and text formats."
      (append ghostel-keymap-exceptions
              (seq-remove (lambda (key) (member key ghostel-keymap-exceptions))
                          keys))))
-  (ml/ghostel-bind-smart-paste)
+  (ml/ghostel-bind-terminal-keys)
   (advice-add 'ghostel--rebuild-semi-char-keymap
-              :after #'ml/ghostel-bind-smart-paste)
+              :after #'ml/ghostel-bind-terminal-keys)
   (when (fboundp 'ghostel--kitty-check-source-rect)
     (advice-add 'ghostel--kitty-check-source-rect
                 :override #'ml/ghostel-kitty-check-source-rect))
@@ -218,11 +224,7 @@ Images take priority when the clipboard offers both image and text formats."
                  ghostel-download-module
                  ghostel-reload-module)
       :hook (ghostel-mode . ml/ghostel-sync-hel)
-      :bind (:map ghostel-semi-char-mode-map
-                  ("M-c" . ghostel-copy-mode)
-                  ("M-e" . ghostel-emacs-mode)
-                  ("M-t" . ml/ghostel-split-new)
-                  :map ghostel-mode-map
+      :bind (:map ghostel-mode-map
                   ("M-c" . ghostel-copy-mode)
                   ("M-e" . ghostel-emacs-mode)
                   ("M-t" . ml/ghostel-split-new))
@@ -324,11 +326,7 @@ Images take priority when the clipboard offers both image and text formats."
                             dir))
         (setq ghostel-module-directory dir)))
     :hook (ghostel-mode . ml/ghostel-sync-hel)
-    :bind (:map ghostel-semi-char-mode-map
-                ("M-c" . ghostel-copy-mode)
-                ("M-e" . ghostel-emacs-mode)
-                ("M-t" . ml/ghostel-split-new)
-                :map ghostel-mode-map
+    :bind (:map ghostel-mode-map
                 ("M-c" . ghostel-copy-mode)
                 ("M-e" . ghostel-emacs-mode)
                 ("M-t" . ml/ghostel-split-new))
