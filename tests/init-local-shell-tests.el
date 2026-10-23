@@ -9,11 +9,59 @@
    (expand-file-name "../lisp/init-local-shell.el"
                      (file-name-directory load-file-name)))
   (dolist (name '(init-ghostel-cursor-sync init-ghostel-speed-up
-                  ml/ghostel-sync-hel ml/shell-enable-ghostel-comint))
+                  ml/ghostel-sync-hel ml/shell-enable-ghostel-comint
+                  ml/ghostel-smart-paste ml/ghostel-bind-smart-paste))
     (goto-char (point-min))
     (search-forward (format "(defun %s " name))
     (beginning-of-line)
     (eval (read (current-buffer)) t)))
+
+(ert-deftest init-ghostel-smart-paste-selects-clipboard-format ()
+  "Send Alt+V for images; keep normal Ghostel text paste otherwise."
+  (pcase-dolist (`(,targets ,image)
+                 '(([UTF8_STRING] nil)
+                   ([image/png] t)
+                   ([image/tiff] t)
+                   ([UTF8_STRING image/png] t)
+                   (nil nil)))
+    (let (sent yanked)
+      (cl-letf (((symbol-function 'display-graphic-p) (lambda (&rest _) t))
+                ((symbol-function 'gui-get-selection)
+                 (lambda (selection target)
+                   (should (eq selection 'CLIPBOARD))
+                   (should (eq target 'TARGETS))
+                   targets))
+                ((symbol-function 'ghostel-send-key)
+                 (lambda (&rest args) (setq sent args)))
+                ((symbol-function 'ghostel-yank) (lambda () (setq yanked t))))
+        (ml/ghostel-smart-paste)
+        (should (equal sent (and image '("v" "alt"))))
+        (should (eq yanked (not image)))))))
+
+(ert-deftest init-ghostel-smart-paste-in-tty ()
+  "TTY Emacs keeps text paste without querying an unavailable GUI clipboard."
+  (let (yanked)
+    (cl-letf (((symbol-function 'display-graphic-p) (lambda (&rest _) nil))
+              ((symbol-function 'gui-get-selection)
+               (lambda (&rest _) (ert-fail "Unexpected GUI clipboard query")))
+              ((symbol-function 'ghostel-yank) (lambda () (setq yanked t))))
+      (ml/ghostel-smart-paste)
+      (should yanked))))
+
+(defvar ghostel-semi-char-mode-map)
+(defvar ghostel-char-mode-map)
+
+(ert-deftest init-ghostel-smart-paste-bindings ()
+  "Both terminal-input modes bind Ctrl+V and Cmd+V without changing global keys."
+  (let ((ghostel-semi-char-mode-map (make-sparse-keymap))
+        (ghostel-char-mode-map (make-sparse-keymap))
+        (global-paste (lookup-key (current-global-map) (kbd "s-v"))))
+    (dotimes (_ 2)
+      (ml/ghostel-bind-smart-paste)
+      (dolist (map (list ghostel-semi-char-mode-map ghostel-char-mode-map))
+        (dolist (key '("C-v" "s-v"))
+          (should (eq (lookup-key map (kbd key)) #'ml/ghostel-smart-paste)))))
+    (should (eq (lookup-key (current-global-map) (kbd "s-v")) global-paste))))
 
 (ert-deftest init-ghostel-steady-cursor-and-focus ()
   "Ordinary and IDE terminals use a steady block; other buffers keep blinking."
