@@ -170,9 +170,8 @@ selection starts inside a line.
   builds use that ID (`CFBundleIdentifier`). Click-to-show uses `emacsclient`
   (herdr.el:879-884); `init.el` starts the server.
 - **No overlap with vterm, eat, or tmux**: `init-terminals` (eat) is disabled
-  (`init.el:170`), and `lisp/` has no vterm or tmux setup. `C-c a` holds
-  Claude Code IDE keys (`lisp/init-local-hel.el:357-359`); Herdr is a separate
-  runner, and both can coexist.
+  (`init.el:170`), and `lisp/` has no vterm or tmux setup. Herdr is a separate
+  runner. Run `claude` in a Ghostel terminal.
 - **Young package.** Version 0.1.0, 2 stars, rapid commits. An unpinned `:vc`
   install follows the default branch.
 
