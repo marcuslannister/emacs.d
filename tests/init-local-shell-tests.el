@@ -17,7 +17,7 @@
     (eval (read (current-buffer)) t)))
 
 (ert-deftest init-ghostel-smart-paste-selects-clipboard-format ()
-  "Send Alt+V for images; keep normal Ghostel text paste otherwise."
+  "Send Ctrl+V for images; keep normal Ghostel text paste otherwise."
   (pcase-dolist (`(,targets ,image)
                  '(([UTF8_STRING] nil)
                    ([image/png] t)
@@ -35,7 +35,7 @@
                  (lambda (&rest args) (setq sent args)))
                 ((symbol-function 'ghostel-yank) (lambda () (setq yanked t))))
         (ml/ghostel-smart-paste)
-        (should (equal sent (and image '("v" "alt"))))
+        (should (equal sent (and image '("v" "ctrl"))))
         (should (eq yanked (not image)))))))
 
 (ert-deftest init-ghostel-smart-paste-in-tty ()
