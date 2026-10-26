@@ -1,0 +1,12 @@
+# Privacy guard backstop: secret scan from agent-scripts (ADR-0011).
+name: Privacy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  gitleaks:
+    uses: marcuslannister/agent-scripts/.github/workflows/gitleaks.yml@main
