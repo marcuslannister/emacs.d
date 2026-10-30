@@ -120,6 +120,32 @@
       (goto-char (point-min))
       (should (equal kill-ring '("⏺ The test failed\n\n  Ran 1 shell command"))))))
 
+(unless (fboundp 'ghostel-readonly-copy)
+  ;; Like Ghostel's: copy only an active region.  `defun' keeps the advice.
+  (defun ghostel-readonly-copy ()
+    (when (use-region-p)
+      (kill-ring-save (region-beginning) (region-end)))))
+
+(ert-deftest init-local-herdr-copy-mode-copies-line-without-region ()
+  ;; M-c M-w with no region copies the pane line, without the ⏺ marker.
+  (init-local-herdr-tests--with-screen init-local-herdr-tests--screen
+    (let ((kill-ring nil)
+          (interprogram-cut-function nil))
+      (goto-char (point-min))
+      (search-forward "The")
+      (ghostel-readonly-copy)
+      (should (equal kill-ring '("The test failed"))))))
+
+(ert-deftest init-local-herdr-copy-mode-other-ghostel-unchanged ()
+  (with-temp-buffer
+    (rename-buffer "*ghostel*" t)
+    (insert "a │ b")
+    (ghostel-mode)
+    (let ((kill-ring nil)
+          (interprogram-cut-function nil))
+      (ghostel-readonly-copy)
+      (should-not kill-ring))))
+
 (ert-deftest init-local-herdr-highlight-stays-in-pane ()
   (init-local-herdr-tests--with-screen init-local-herdr-tests--screen
     (should (eq redisplay-highlight-region-function #'ml/herdr--highlight-region))

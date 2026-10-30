@@ -100,6 +100,13 @@ agent in its tab; with none or several, return nil."
     (message "Copied: %s" (truncate-string-to-width text 60 nil nil "…"))))
 (global-set-key (kbd "C-c W") #'ml/herdr-copy-pane-text)
 
+(defun ml/herdr--copy-line-without-region (&rest _)
+  "In *herdr* copy mode, copy the line when no region is active.
+Ghostel's copy (M-w, RET) copies only a region, so M-c M-w did nothing."
+  (when (and (ml/herdr--tui-buffer-p) (not (use-region-p)))
+    (ml/herdr-copy-pane-text)))
+(advice-add 'ghostel-readonly-copy :before #'ml/herdr--copy-line-without-region)
+
 (defun ml/herdr--filter-buffer-substring (orig beg end delete)
   "Return BEG..END as pane text; call ORIG with the same args to delete.
 Every copy path (`kill-ring-save', copy mode RET and M-w, a mouse drag
