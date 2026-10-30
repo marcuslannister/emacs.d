@@ -17,7 +17,8 @@
      (let ((dir (file-name-directory file)))
        (not (or (string-match-p "/.stversions/" dir)
                 (string-suffix-p "/gtd/inbox.org" file)))))
-   (directory-files-recursively org-directory "\\.org$")))
+   (and (file-directory-p org-directory) ; absent in CI and on other machines
+        (directory-files-recursively org-directory "\\.org$"))))
 
 (setq org-agenda-files (init-local-org-agenda-files))
 

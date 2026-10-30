@@ -96,19 +96,23 @@
 
 ;; auto-save
 (add-to-list 'load-path "~/github/auto-save/") ; add auto-save to your load-path
-(require 'auto-save)
-(auto-save-enable)
+;; Skip it when the checkout is missing (CI, other machines).
+(when (require 'auto-save nil t)
+  (auto-save-enable)
 
-(setq auto-save-silent t)   ; quietly save
-;; (setq auto-save-delete-trailing-whitespace t)  ; automatically delete spaces at the end of the line when saving
+  (setq auto-save-silent t)   ; quietly save
+  ;; (setq auto-save-delete-trailing-whitespace t)  ; automatically delete spaces at the end of the line when saving
 
-;;; custom predicates if you don't want auto save.
-;;; disable auto save mode when current filetype is an gpg file.
-(setq auto-save-disable-predicates
-      '((lambda ()
-          (string-suffix-p
-           "gpg"
-           (file-name-extension (buffer-name)) t))))
+  ;;; custom predicates if you don't want auto save.
+  ;;; disable auto save mode when current filetype is an gpg file.
+  (setq auto-save-disable-predicates
+        '((lambda ()
+            (string-suffix-p
+             "gpg"
+             (file-name-extension (buffer-name)) t)))))
+(unless (featurep 'auto-save)
+  (display-warning 'init-local "auto-save is missing: buffers will NOT be saved automatically.
+Clone manateelazycat/auto-save to ~/github/auto-save/ and restart Emacs." :warning))
 
 (use-package ws-butler
   :ensure t
