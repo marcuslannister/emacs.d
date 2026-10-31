@@ -15,6 +15,6 @@ for job in $(gh run view "$run" --json jobs --jq '.jobs[] | select(.conclusion =
     [ "$(wc -l <"$log")" -gt 20 ] && break
     sleep 10
   done
-  rg -m3 -A3 'Debugger entered|##\[error\]|^Error:' "$log" | cut -c1-300 || echo "no error line found in $log"
+  rg -m3 -A3 'Debugger entered|Z Error:|##\[error\]' "$log" | cut -c1-300 || echo "no error line found in $log"
   find "$log" -delete
 done
