@@ -505,10 +505,14 @@ load."
 ;; covers a missing feature file, not an error signalled while loading one.
 ;; With nothing downstream, a broken Anvil clone costs the AI module alone.
 ;; Idle load also keeps a broken Anvil clone from aborting startup.
-(init-local--require-when-idle 'init-local-ai 2)
-;; anvil-stdio.sh calls this through emacsclient.  An MCP client that connects
-;; before the idle timer fires loads Anvil at once instead of failing.
-(autoload 'anvil-server-process-jsonrpc "init-local-ai")
+(if (file-directory-p (expand-file-name "external-packages/anvil.el" user-emacs-directory))
+    (progn
+      (init-local--require-when-idle 'init-local-ai 2)
+      ;; anvil-stdio.sh calls this through emacsclient.  An MCP client that connects
+      ;; before the idle timer fires loads Anvil at once instead of failing.
+      (autoload 'anvil-server-process-jsonrpc "init-local-ai"))
+  (display-warning 'init-local "external-packages/anvil.el is missing: Anvil and the AI module are disabled.
+Clone zawatton/anvil.el into ~/.emacs.d/external-packages/anvil.el and restart Emacs." :warning))
 
 (provide 'init-local)
 ;;; init-local.el ends here
