@@ -164,13 +164,15 @@ If OTHER-WINDOW is non-nil, open the directory in another window."
   (interactive)
   (insert (format-time-string "%Y%m%dT%H%M")))
 
-(rg-define-search rg-search-everything
-  "Search files including hidden and ignore"
-  :query ask
-  :format literal
-  :files "everything"
-  :flags ("--hidden" "--no-ignore")
-  :menu ("Search" "hn" "Everything"))
+;; `init-grep' loads rg only when the rg binary exists.
+(when (featurep 'rg)
+  (rg-define-search rg-search-everything
+    "Search files including hidden and ignore"
+    :query ask
+    :format literal
+    :files "everything"
+    :flags ("--hidden" "--no-ignore")
+    :menu ("Search" "hn" "Everything")))
 
 (require 'init-local-denote)
 
