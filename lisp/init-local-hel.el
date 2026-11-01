@@ -164,6 +164,8 @@
     "C-c o o" #'org-open-at-point
     "C-c o e" #'init-local-gtd-engage
     "C-c o k" #'init-local-gtd-clarify-item
+    "C-c o n" #'init-local-append-review-capture
+    "C-c o u" #'init-local-append-review-to-top
     ;; Org GTD.  Keep this group discoverable under o g; the single-key
     ;; `org-goto' binding therefore lives at o G above.
     "C-c o g c" #'org-gtd-capture
@@ -418,6 +420,8 @@ manual selection is searched as-is instead of being replaced."
     "C-c o d"   "Insert deadline"
     "C-c o s"   "Insert schedule"
     "C-c o r"   "Refile"
+    "C-c o n"   "Append note"
+    "C-c o u"   "Note to top"
     "C-c o p"   "Change priority"
     "C-c o G"   "Lookup location"
     "C-c o o"   "Open at point"
