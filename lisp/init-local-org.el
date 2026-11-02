@@ -7,6 +7,11 @@
 ;; Only `ol-info' stays; the other link types are not used here.
 (setq org-modules '(ol-info))
 
+;; Capture and refile set a bookmark at the last note, and Emacs shows a
+;; fringe mark at each bookmark.  The goto-last commands use a marker first.
+(setq org-capture-bookmark nil
+      org-refile-bookmark nil)
+
 (setq org-directory "~/org/"
       org-default-notes-file (expand-file-name "gtd/inbox.org" org-directory))
 
