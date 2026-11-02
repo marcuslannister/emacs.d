@@ -13,7 +13,11 @@
 (use-package etaf-md-preview
   :ensure t
   :vc (:url "https://github.com/emacs-taf/etaf-md-preview")
-  :commands etaf-md-preview-open)
+  :commands etaf-md-preview-open
+  :config
+  ;; ebox remaps self-insert, so j and k beep. n and p scroll.
+  (define-key etaf-md-preview-mode-map (kbd "j") #'ebox-scroll-down)
+  (define-key etaf-md-preview-mode-map (kbd "k") #'ebox-scroll-up))
 
 ;; package-vc puts only lisp/ on `load-path', but each root file (etaf.el,
 ;; ebox.el, ...) sets up lisp/ itself and must be found at the package root.
