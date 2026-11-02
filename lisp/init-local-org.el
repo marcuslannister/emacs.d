@@ -9,8 +9,7 @@
 
 ;; Capture and refile set a bookmark at the last note, and Emacs shows a
 ;; fringe mark at each bookmark.  The goto-last commands use a marker first.
-(setq org-capture-bookmark nil
-      org-refile-bookmark nil)
+(setq org-bookmark-names-plist nil)
 
 (setq org-directory "~/org/"
       org-default-notes-file (expand-file-name "gtd/inbox.org" org-directory))
