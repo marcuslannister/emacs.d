@@ -26,6 +26,7 @@ Emacs 29.1 or newer; older Emacs versions start without it.
 | `SPC e` | Eval, Eshell, and Ediff commands |
 | `SPC g` | Git, translation, and Ghostel commands |
 | `SPC j` | Journal commands |
+| `SPC n` | Append-and-review note and Blinko commands (see [`append-and-review-cheatsheet.md`](append-and-review-cheatsheet.md)) |
 | `SPC o` | Org commands |
 | `SPC o i c` / `C-c o i c` | Create or retrieve the current Org heading ID |
 | `SPC s` | Search commands |

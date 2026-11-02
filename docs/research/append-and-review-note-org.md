@@ -82,7 +82,7 @@ Source abbreviations:
 
 ## 3. Minimal config
 
-This config uses the shipped version in `lisp/init-local-append-review.el`: capture template `a` into `~/org/append-and-review.org`, Hel `C-c o n` to capture, and `C-c o u` to move the heading at point to the top. Tests are in `tests/init-local-append-review-tests.el`. The generic example below uses other keys.
+This config uses the shipped version in `lisp/init-local-append-review.el`: capture template `a` into the `Inbox` section of `~/org/notes.org`, Hel `C-c n n` to capture, `C-c n o` to open the file, and `C-c n u` to move the heading at point to the top of a section (Today or Inbox). Tests are in `tests/init-local-append-review-tests.el`. The generic example below uses other keys.
 
 ```elisp
 ;; One note file. Relative names resolve against `org-directory'.

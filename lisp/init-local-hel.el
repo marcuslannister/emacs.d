@@ -147,6 +147,9 @@
     "C-c n b" #'blinko-post-buffer
     "C-c n r" #'blinko-post-region
     "C-c n p" #'blinko-post-content
+    "C-c n n" #'init-local-append-review-capture
+    "C-c n o" #'init-local-append-review-open
+    "C-c n u" #'init-local-append-review-to-top
 
     ;; Org.
     "C-c c"   #'init-local-gtd-command-center
@@ -164,8 +167,6 @@
     "C-c o o" #'org-open-at-point
     "C-c o e" #'init-local-gtd-engage
     "C-c o k" #'init-local-gtd-clarify-item
-    "C-c o n" #'init-local-append-review-capture
-    "C-c o u" #'init-local-append-review-to-top
     ;; Org GTD.  Keep this group discoverable under o g; the single-key
     ;; `org-goto' binding therefore lives at o G above.
     "C-c o g c" #'org-gtd-capture
@@ -405,10 +406,13 @@ manual selection is searched as-is instead of being replaced."
     "C-c j n" "Create an entry"
     "C-c j t" "Entry with todos"
     "C-c j o" "Open current journal"
-    "C-c n"   "blinko"
-    "C-c n b" "Post buffer"
-    "C-c n r" "Post region"
-    "C-c n p" "Post content"
+    "C-c n"   "notes"
+    "C-c n b" "Blinko: post buffer"
+    "C-c n r" "Blinko: post region"
+    "C-c n p" "Blinko: post content"
+    "C-c n n" "Append note"
+    "C-c n o" "Open notes"
+    "C-c n u" "Note to top"
     "C-c c"     "GTD"
     "C-c o"     "org"
     "C-c o a"   "Agenda"
@@ -420,8 +424,6 @@ manual selection is searched as-is instead of being replaced."
     "C-c o d"   "Insert deadline"
     "C-c o s"   "Insert schedule"
     "C-c o r"   "Refile"
-    "C-c o n"   "Append note"
-    "C-c o u"   "Note to top"
     "C-c o p"   "Change priority"
     "C-c o G"   "Lookup location"
     "C-c o o"   "Open at point"
