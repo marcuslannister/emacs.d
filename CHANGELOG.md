@@ -7,6 +7,7 @@ continuously, so changes land under "Unreleased".
 ## Unreleased
 
 ### Added
+- Hel `SPC n r t` and `SPC n r i` refile the note at point to the top of `Today` or `Inbox` in `~/org/notes.org` (`init-local-append-review-to-today`, `init-local-append-review-to-inbox`), and `SPC n d` (`init-local-append-review-to-bottom`) asks for a top-level section and moves the note to the bottom of it. Tests are in `tests/init-local-append-review-tests.el`.
 - Hel `SPC n t` adds tags to the note at point (`org-set-tags-command`), and `SPC n s` (`init-local-append-review-show-tag`) opens `~/org/notes.org` and shows only the notes with a tag.
 - Add Karpathy's append-and-review note in the new `lisp/init-local-append-review.el`. Capture template `a` (Hel `C-c n n`) puts a new heading at the top of the `Inbox` section of `~/org/notes.org`. `C-c n u` (`init-local-append-review-to-top`) asks for a top-level section and moves the heading at point, with its subtree, to the top of that section. Hel `C-c n o` opens the file. The Hel `C-c n` prefix is now named "notes" and also holds the Blinko keys. Cheatsheet: `docs/append-and-review-cheatsheet.md`. Research notes are in `docs/research/append-and-review-note-org.md`; tests are in `tests/init-local-append-review-tests.el`.
 - `AGENTS.md` now says that a module needing a machine-local file or folder must skip itself and call `display-warning` when it is absent, and never stop startup.
@@ -24,6 +25,7 @@ continuously, so changes land under "Unreleased".
 - Add `my/hel-new-tab-ghostel`, bound to `SPC t g`, to create a new tab and open a fresh auto-numbered Ghostel terminal in it, and `my/hel-new-ghostel-buffer`, bound to `SPC g n`, for the same fresh terminal in the current tab. Both avoid the leader's prefix-argument trap: `hel-leader--handle-input-event` reads keys itself, so digits after `SPC` feed `digit-argument` a stale `last-command-event` (SPC, 32) and Ghostel receives `*ghostel*<-16>`; the fresh path takes a constant non-numeric prefix instead.
 
 ### Changed
+- Hel Blinko keys: `SPC n b` is now a prefix, and `SPC n b r` runs `blinko-post-region` (was `SPC n r`, which is now the refile prefix). The `SPC n b` (post buffer) and `SPC n p` (post content) keys are removed; use `M-x blinko-post-buffer` and `M-x blinko-post-content`.
 - Skip `uptimes` when `before-init-time` is not a list (`init.el`). On Emacs 32 it is an integer, and `uptimes.el` aborts startup with `Wrong type argument: listp`. The Emacs snapshot CI job failed on this.
 - Add `workflow_dispatch` to the CI and Privacy workflows, so a push that creates no run can be started with `gh workflow run`.
 - Org capture and refile no longer set the `org-capture-last-stored` and `org-refile-last-stored` bookmarks (`org-bookmark-names-plist` is nil in `lisp/init-local-org.el`). Each bookmark put a fringe mark on the last note. The goto-last commands still work in the same session, because they use a marker first.
