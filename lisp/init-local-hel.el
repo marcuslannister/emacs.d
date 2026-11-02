@@ -144,12 +144,13 @@
     "C-c j o" #'denote-journal-new-or-existing-entry
 
     ;; Blinko.
-    "C-c n b" #'blinko-post-buffer
-    "C-c n r" #'blinko-post-region
-    "C-c n p" #'blinko-post-content
+    "C-c n b r" #'blinko-post-region
     "C-c n n" #'init-local-append-review-capture
     "C-c n o" #'init-local-append-review-open
     "C-c n u" #'init-local-append-review-to-top
+    "C-c n d" #'init-local-append-review-to-bottom
+    "C-c n r t" #'init-local-append-review-to-today
+    "C-c n r i" #'init-local-append-review-to-inbox
     "C-c n t" #'org-set-tags-command
     "C-c n s" #'init-local-append-review-show-tag
 
@@ -409,9 +410,12 @@ manual selection is searched as-is instead of being replaced."
     "C-c j t" "Entry with todos"
     "C-c j o" "Open current journal"
     "C-c n"   "notes"
-    "C-c n b" "Blinko: post buffer"
-    "C-c n r" "Blinko: post region"
-    "C-c n p" "Blinko: post content"
+    "C-c n b"   "Blinko"
+    "C-c n b r" "Blinko: post region"
+    "C-c n r" "Refile note"
+    "C-c n r t" "Refile to Today"
+    "C-c n r i" "Refile to Inbox"
+    "C-c n d" "Note to bottom"
     "C-c n n" "Append note"
     "C-c n o" "Open notes"
     "C-c n u" "Note to top"

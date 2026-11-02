@@ -40,6 +40,43 @@
   (should-error (init-local-append-review-tests--move "Inbox" "Today")
                 :type 'user-error))
 
+(defun init-local-append-review-tests--run (command heading &optional target)
+  "Run COMMAND on HEADING in a temp `notes.org'; return the buffer text.
+TARGET is the section a prompting command picks."
+  (let* ((org-directory (make-temp-file "ar" t))
+         (file (expand-file-name "notes.org" org-directory)))
+    (unwind-protect
+        (progn
+          (with-temp-file file (insert "* Today\n** T1\n* Inbox\n** A\n** B\n"))
+          (with-current-buffer (find-file-noselect file)
+            (goto-char (point-min))
+            (re-search-forward (concat "^\\*+ " heading "$"))
+            (beginning-of-line)
+            (cl-letf (((symbol-function 'completing-read)
+                       (lambda (_prompt coll &rest _)
+                         (car (seq-find (lambda (c) (string-prefix-p target (car c))) coll)))))
+              (funcall command))
+            (prog1 (buffer-string)
+              (set-buffer-modified-p nil)
+              (kill-buffer))))
+      (delete-directory org-directory t))))
+
+(ert-deftest init-local-append-review-to-bottom ()
+  (should (equal (init-local-append-review-tests--run
+                  #'init-local-append-review-to-bottom "A" "Inbox")
+                 "* Today\n** T1\n* Inbox\n** B\n** A\n"))
+  (should (equal (init-local-append-review-tests--run
+                  #'init-local-append-review-to-bottom "A" "Today")
+                 "* Today\n** T1\n** A\n* Inbox\n** B\n")))
+
+(ert-deftest init-local-append-review-to-today-and-inbox ()
+  (should (equal (init-local-append-review-tests--run
+                  #'init-local-append-review-to-today "B")
+                 "* Today\n** B\n** T1\n* Inbox\n** A\n"))
+  (should (equal (init-local-append-review-tests--run
+                  #'init-local-append-review-to-inbox "T1")
+                 "* Today\n* Inbox\n** T1\n** A\n** B\n")))
+
 (ert-deftest init-local-append-review-capture-lands-on-top-of-inbox ()
   (let* ((org-directory (make-temp-file "ar" t))
          (file (expand-file-name "notes.org" org-directory)))
