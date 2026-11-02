@@ -13,6 +13,7 @@
 (declare-function org-refile "org-refile")
 (declare-function org-capture "org-capture")
 (declare-function org-current-level "org")
+(declare-function org-match-sparse-tree "org")
 
 (defvar init-local-append-review-file "notes.org"
   "Append-and-review note file, relative to `org-directory'.")
@@ -28,6 +29,12 @@
   "Open `init-local-append-review-file'."
   (interactive)
   (find-file (expand-file-name init-local-append-review-file org-directory)))
+
+(defun init-local-append-review-show-tag ()
+  "Open `init-local-append-review-file' and show only the notes with a tag."
+  (interactive)
+  (init-local-append-review-open)
+  (call-interactively #'org-match-sparse-tree))
 
 (defun init-local-append-review-capture ()
   "Capture a new note at the top of the inbox section."

@@ -31,6 +31,12 @@ Code is in `lisp/init-local-append-review.el`. Keys are in
 | `SPC n o` | `init-local-append-review-open` | Open `~/org/notes.org`. |
 | `SPC n n` | `init-local-append-review-capture` | Capture a new note at the top of `Inbox`. |
 | `SPC n u` | `init-local-append-review-to-top` | Select a section, then move the note at point to its top. |
+| `SPC n t` | `org-set-tags-command` | Add or change the tags of the note at point. Separate tags with `:`. |
+| `SPC n s` | `init-local-append-review-show-tag` | Open `~/org/notes.org` and show only the notes with a tag. To go back, press `S-TAB` until all notes show, and `C-c C-c` on a heading clears the highlight. |
+
+Put tags on notes, not on `* Today` or `* Inbox`: a section tag passes down to
+every note under it. `SPC o m` (`org-tags-view`) searches a tag in all agenda
+files.
 
 In the capture buffer, `C-c C-c` saves the note and `C-c C-k` cancels it.
 Capture template key `a` also works from `org-capture`.

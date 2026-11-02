@@ -150,6 +150,8 @@
     "C-c n n" #'init-local-append-review-capture
     "C-c n o" #'init-local-append-review-open
     "C-c n u" #'init-local-append-review-to-top
+    "C-c n t" #'org-set-tags-command
+    "C-c n s" #'init-local-append-review-show-tag
 
     ;; Org.
     "C-c c"   #'init-local-gtd-command-center
@@ -413,6 +415,8 @@ manual selection is searched as-is instead of being replaced."
     "C-c n n" "Append note"
     "C-c n o" "Open notes"
     "C-c n u" "Note to top"
+    "C-c n t" "Add tag"
+    "C-c n s" "Show tag"
     "C-c c"     "GTD"
     "C-c o"     "org"
     "C-c o a"   "Agenda"
