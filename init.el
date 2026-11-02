@@ -179,8 +179,14 @@
 (maybe-require-package 'shfmt)
 
 (when (maybe-require-package 'uptimes)
-  (setq-default uptimes-keep-count 200)
-  (add-hook 'after-init-hook (lambda () (require 'uptimes))))
+  ;; uptimes-float-time expects the old time list. Emacs 32 passes an integer.
+  (if (listp before-init-time)
+      (progn
+        (setq-default uptimes-keep-count 200)
+        (add-hook 'after-init-hook (lambda () (require 'uptimes))))
+    (display-warning
+     'init
+     "uptimes skipped: before-init-time is not a list, so uptimes.el aborts startup")))
 
 (when (fboundp 'global-eldoc-mode)
   (add-hook 'after-init-hook 'global-eldoc-mode))
