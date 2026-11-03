@@ -20,6 +20,11 @@
 ;; load happens so it applies to early-init.el's own re-loads on next start.
 (setq load-prefer-newer t)
 
+;; Windows: use the MSYS2 MINGW64 libgccjit for native compilation.  Must run
+;; before `package-initialize' below.  See lib/windows-native-comp.el.
+(when (eq system-type 'windows-nt)
+  (load (expand-file-name "lib/windows-native-comp" user-emacs-directory) t t))
+
 (defun sanityinc/tui-session-p ()
   "Return non-nil for an interactive terminal-only startup."
   (and (not noninteractive)
