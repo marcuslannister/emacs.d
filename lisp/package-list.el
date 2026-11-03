@@ -12,19 +12,6 @@
                          :tag "v1.4.1"
                          :main "anvil.el")
 
-;; Windows only: init-local-shell.el loads this fork via :load-path on Windows
-;; (the only fork shipping a working Windows native runtime); Mac/Linux use the
-;; MELPA `ghostel' instead.  Must NOT register off-Windows: async-installer would
-;; clone it and put its `lisp/' ahead of the MELPA package on `load-path',
-;; loading the stale v0.31.0 fork whose module downloader 404s (it fetches a
-;; Windows `.tar.xz' bundle that dakra's releases do not ship for macOS/Linux).
-;; external-packages/ is gitignored and not committed.
-(when (eq system-type 'windows-nt)
-  (async-installer-git-add "https://github.com/kiennq/ghostel.git"
-                           :tag "v0.53.0.153.ac7349"
-                           :subdir "lisp"
-                           :main "ghostel.el"))
-
 ;; Hel: Helix-style modal editing.  v0.13.0 now contains the fixes this was
 ;; pinned to a commit for (multiple-cursors keys lost on a major-mode change,
 ;; three scroll fixes, a search variable used out of scope, a duplicated

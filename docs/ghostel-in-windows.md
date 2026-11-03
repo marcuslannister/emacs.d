@@ -1,4 +1,6 @@
-# HANDOFF — Ghostel native module on Windows (kiennq fork migration)
+# Ghostel native module on Windows (kiennq fork migration, historical)
+
+Historical. Windows now uses MELPA ghostel (dakra v0.60.0 or later), which ships the Windows module. The config no longer reads `ghostel-module/` on Windows.
 
 ## Goal
 Get Ghostel (Emacs terminal emulator) working on Windows. Symptom: `M-x ghostel`

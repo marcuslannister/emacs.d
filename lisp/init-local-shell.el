@@ -74,8 +74,8 @@ start selecting, keep moving to extend, RET to copy and exit, q or
 C-g to cancel."
   :keymap ml/ghostel-copy-vi-mode-map)
 
-;; Hel conflicts with ghostel's terminal-input modes; this helper is shared by
-;; both the Windows (kiennq fork) and Mac/Linux (MELPA) ghostel setups below.
+;; Hel conflicts with ghostel's terminal-input modes; the ghostel setup below
+;; runs this helper after each input-mode change.
 (defun ml/ghostel-sync-hel (&rest _)
   "Sync editing modes to ghostel's input mode.
 In semi-char/char modes Hel swallows ESC and the leader key, so the
@@ -201,147 +201,62 @@ A rebuild makes `ghostel-semi-char-mode-map' again from
   (advice-add 'ghostel-mouse-press-or-copy-mode
               :before #'ml/ghostel-expire-focus-flag))
 
-(if IS-WINDOWS
-    ;; Windows: use the kiennq fork (https://github.com/kiennq/ghostel) rather
-    ;; than the MELPA package -- only the fork ships a working Windows native
-    ;; runtime (dyn-loader-module + conpty-module).  Cloned + pinned via
-    ;; async-installer:
-    ;;   (async-installer-git-add "https://github.com/kiennq/ghostel.git"
-    ;;     :tag "v0.53.0.153.ac7349" :subdir "lisp" :main "ghostel.el")
-    ;;   M-x async-installer-git-install-all-interactive  ; clones to external-packages/
-    (use-package ghostel
-      :ensure nil
-      :commands (ghostel
-                 ghostel-project
-                 ghostel-other
-                 ghostel-next
-                 ghostel-previous
-                 ghostel-project-next
-                 ghostel-project-previous
-                 ghostel-list-buffers
-                 ghostel-project-list-buffers
-                 ghostel-exec
-                 ghostel-download-module
-                 ghostel-reload-module)
-      :hook (ghostel-mode . ml/ghostel-sync-hel)
-      :bind (:map ghostel-mode-map
-                  ("M-c" . ghostel-copy-mode)
-                  ("M-e" . ghostel-emacs-mode)
-                  ("M-t" . ml/ghostel-split-new))
-      :init
-      ;; Put the kiennq checkout on `load-path' at runtime, gated by the
-      ;; enclosing `IS-WINDOWS' `if'.  Do NOT use use-package `:load-path' for
-      ;; this: its handler mutates `load-path' at macro-expansion time, and
-      ;; Emacs expands *both* branches of the `if' when this file loads -- so a
-      ;; `:load-path' here leaks the fork onto Mac/Linux, where it lands at the
-      ;; front of `load-path' and shadows the MELPA `ghostel' (dakra).
-      (add-to-list 'load-path
-                   (expand-file-name "external-packages/ghostel/lisp"
-                                     user-emacs-directory))
-      ;; Use the kiennq fork's Windows runtime, not upstream dakra's latest
-      ;; module.  Keep it outside the elpa tree so package refreshes do not
-      ;; replace the working DLL bundle.
-      (setq ghostel-module-directory
-            (expand-file-name "ghostel-module/" user-emacs-directory))
-      (setq ghostel-github-release-url "https://github.com/kiennq/ghostel/releases")
-      ;; Default ghostel-shell is $SHELL/cmdproxy (cmd.exe).  Prefer PowerShell
-      ;; 7: it is a native Windows program, so it reports native C:\ paths (no
-      ;; MSYS /c/... translation) -- which is what Claude Code and the native
-      ;; git/rg it spawns expect.  No OSC-133 shell integration (pwsh is not
-      ;; bash/zsh/fish), an acceptable trade for path correctness.
-      (when (file-exists-p "C:/Program Files/PowerShell/7/pwsh.exe")
-        (setq ghostel-shell
-              '("C:/Program Files/PowerShell/7/pwsh.exe" "-NoLogo")))
-      ;; Escape hatch: launch a Git Bash terminal on demand for unix-y
-      ;; interactive work.  ghostel--detect-shell recognizes "bash", so shell
-      ;; integration (OSC-133 prompt markers, directory tracking) applies.
-      ;; Resolves bash.exe from $PATH -- make sure Git Bash's usr/bin (the real
-      ;; bash.exe, NOT git-bash.exe, a mintty GUI launcher) is on $PATH.
-      ;; -l login, -i interactive.
-      (defun ml/ghostel-bash ()
-        "Open a Ghostel terminal running Git Bash (bash.exe from `$PATH')."
-        (interactive)
-        (if-let* ((bash (executable-find "bash")))
-            (let ((ghostel-shell (list bash "-l" "-i")))
-              (ghostel))
-          (user-error "bash not found on $PATH -- add Git Bash's usr/bin to $PATH")))
-      :config
-      (defconst ml/ghostel-windows-release-version "0.53.0.153.ac7349"
-        "Kiennq release tag that matches the pinned Windows Ghostel runtime.")
-
-      (defun ml/ghostel-module-download-url (orig &optional version)
-        "Use the pinned kiennq Windows release for Ghostel module downloads."
-        (if (and IS-WINDOWS
-                 (string= version ghostel--minimum-module-version))
-            (when-let* ((asset-name (ghostel--module-asset-name)))
-              (format "%s/download/v%s/%s"
-                      ghostel-github-release-url
-                      ml/ghostel-windows-release-version
-                      asset-name))
-          (funcall orig version)))
-
-      (advice-add 'ghostel--module-download-url
-                  :around #'ml/ghostel-module-download-url)
-
-      (defun ml/ghostel-exec-windows-conpty (orig buffer program &optional args)
-        "Use Ghostel's Windows ConPTY backend for local `ghostel-exec'."
-        (if (or (not IS-WINDOWS)
-                (not (buffer-live-p buffer))
-                (file-remote-p (buffer-local-value 'default-directory buffer)))
-            (funcall orig buffer program args)
-          (ghostel--load-module t)
-          (when (and (buffer-local-value 'ghostel--process buffer)
-                     (process-live-p (buffer-local-value 'ghostel--process buffer)))
-            (user-error "Buffer %s already has a running ghostel process"
-                        (buffer-name buffer)))
-          (let* ((window (get-buffer-window buffer t))
-                 (height (if window
-                             (max 1 (with-selected-window window
-                                      (floor (window-screen-lines))))
-                           24))
-                 (width (if window
-                            (max 1 (window-max-chars-per-line window))
-                          80))
-                 (program (or (executable-find program) program)))
-            (with-current-buffer buffer
-              (let ((ghostel-shell (cons program args))
-                    (ghostel-shell-integration nil))
-                (ghostel--init-buffer buffer height width)
-                (ghostel--start-process))))))
-      (advice-add 'ghostel-exec :around #'ml/ghostel-exec-windows-conpty)
-      (dolist (fn '(ghostel-semi-char-mode
-                    ghostel-char-mode
-                    ghostel-emacs-mode
-                    ghostel-copy-mode
-                    ghostel-readonly-exit))
-        (advice-add fn :after #'ml/ghostel-sync-hel)))
-  ;; Mac/Linux: MELPA ghostel (dakra).  Load a patched native module from
-  ;; `ghostel-module/' when present; see docs/ghostel-module.md.
-  (use-package ghostel
-    :ensure t
-    :init
+;; MELPA ghostel (dakra) on all systems.  Since v0.60.0 dakra ships the Windows
+;; module and ConPTY assets, and `ghostel-exec' uses the native PTY, so Windows
+;; needs no fork.  Mac/Linux load a patched native module from
+;; `ghostel-module/' when present; see docs/ghostel-module.md.  Windows skips
+;; it: that folder can still hold the old fork DLL, which loads with no functions.
+(use-package ghostel
+  :ensure t
+  ;; dakra has no autoload cookie for these.
+  :commands (ghostel-exec ghostel-other ghostel-download-module)
+  :init
+  (unless IS-WINDOWS
     (let ((dir (expand-file-name "ghostel-module/" user-emacs-directory)))
       (when (file-exists-p (expand-file-name
                             (concat "ghostel-module" module-file-suffix)
                             dir))
-        (setq ghostel-module-directory dir)))
-    :hook (ghostel-mode . ml/ghostel-sync-hel)
-    :bind (:map ghostel-mode-map
-                ("M-c" . ghostel-copy-mode)
-                ("M-e" . ghostel-emacs-mode)
-                ("M-t" . ml/ghostel-split-new))
-    :config
-    (dolist (fn '(ghostel-semi-char-mode
-                  ghostel-char-mode
-                  ghostel-emacs-mode
-                  ghostel-copy-mode
-                  ghostel-readonly-exit))
-      (advice-add fn :after #'ml/ghostel-sync-hel))
-    (when-let* ((lib (locate-library "ghostel"))
-                (script (expand-file-name "etc/shell/ghostel.zsh"
-                                          (file-name-directory lib))))
-      (when (file-readable-p script)
-        (setenv "GHOSTEL_SH_INTEGRATION" script)))))
+        (setq ghostel-module-directory dir))))
+  (when IS-WINDOWS
+    ;; Default ghostel-shell is $SHELL/cmdproxy (cmd.exe).  Prefer PowerShell
+    ;; 7: it is a native Windows program, so it reports native C:\ paths (no
+    ;; MSYS /c/... translation) -- which is what Claude Code and the native
+    ;; git/rg it spawns expect.  No OSC-133 shell integration (pwsh is not
+    ;; bash/zsh/fish), an acceptable trade for path correctness.
+    (when (file-exists-p "C:/Program Files/PowerShell/7/pwsh.exe")
+      (setq ghostel-shell
+            '("C:/Program Files/PowerShell/7/pwsh.exe" "-NoLogo")))
+    ;; Escape hatch: launch a Git Bash terminal on demand for unix-y
+    ;; interactive work.  ghostel--detect-shell recognizes "bash", so shell
+    ;; integration (OSC-133 prompt markers, directory tracking) applies.
+    ;; Resolves bash.exe from $PATH -- make sure Git Bash's usr/bin (the real
+    ;; bash.exe, NOT git-bash.exe, a mintty GUI launcher) is on $PATH.
+    ;; -l login, -i interactive.
+    (defun ml/ghostel-bash ()
+      "Open a Ghostel terminal running Git Bash (bash.exe from `$PATH')."
+      (interactive)
+      (if-let* ((bash (executable-find "bash")))
+          (let ((ghostel-shell (list bash "-l" "-i")))
+            (ghostel))
+        (user-error "bash not found on $PATH -- add Git Bash's usr/bin to $PATH"))))
+  :hook (ghostel-mode . ml/ghostel-sync-hel)
+  :bind (:map ghostel-mode-map
+              ("M-c" . ghostel-copy-mode)
+              ("M-e" . ghostel-emacs-mode)
+              ("M-t" . ml/ghostel-split-new))
+  :config
+  (dolist (fn '(ghostel-semi-char-mode
+                ghostel-char-mode
+                ghostel-emacs-mode
+                ghostel-copy-mode
+                ghostel-readonly-exit))
+    (advice-add fn :after #'ml/ghostel-sync-hel))
+  (when-let* (((not IS-WINDOWS))
+              (lib (locate-library "ghostel"))
+              (script (expand-file-name "etc/shell/ghostel.zsh"
+                                        (file-name-directory lib))))
+    (when (file-readable-p script)
+      (setenv "GHOSTEL_SH_INTEGRATION" script))))
 
 ;; Give `shell-mode' Ghostel's libghostty VT parser instead of comint's
 ;; `ansi-color-process-output' regex; see ghostel-comint.el for what that buys.
@@ -350,8 +265,8 @@ A rebuild makes `ghostel-semi-char-mode-map' again from
 ;; comint-derived buffer, including ielm, js-comint, and the SQL and Python
 ;; REPLs, where font-lock is the point and ANSI colour is nearly absent.
 ;;
-;; `require': the Windows kiennq checkout comes from async-installer rather
-;; than package.el, so it has no generated autoload for `ghostel-comint-mode'.
+;; `require': it loads ghostel and its native module, so the `fboundp' check
+;; below sees the native entry point.
 ;;
 ;; `fboundp': the module is downloaded on demand, so a fresh elpa dir has the
 ;; Lisp and no module.  `ghostel-comint-filter' calls the native entry point

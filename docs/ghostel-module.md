@@ -1,6 +1,6 @@
 # Ghostel native module (local adjustWidth patch)
 
-Mac/Linux only. Windows keeps the kiennq runtime.
+Mac/Linux only. Windows uses the dakra release module (v0.60.0 or later).
 
 ## Why
 
