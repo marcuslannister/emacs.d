@@ -116,6 +116,13 @@
     (ibuffer-mode . material-icons-ibuffer-icons-mode)
     :init
     (setq material-icons-size 22)
+    ;; The package runs tar on load, and Windows tar will not extract through
+    ;; a symlinked ~/.emacs.d.  Extract first from the real path.
+    (when-let* ((IS-WINDOWS)
+                (lib (locate-library "material-icons-core")))
+      (let ((default-directory (file-truename (file-name-directory lib))))
+        (unless (file-exists-p "icons")
+          (call-process "tar" nil nil nil "-xzf" "icons.tar.gz"))))
     (with-eval-after-load 'speedbar
       (material-icons-speedbar-icons-mode 1))))
 
