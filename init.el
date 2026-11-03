@@ -202,8 +202,10 @@
 
 ;; Allow access from emacsclient. Start early so later init failures
 ;; cannot prevent the server from running, but leave existing servers alone.
+;; Only t means running: a stale TCP server file (Windows, after a crash)
+;; gives :other, and `server-start' replaces it.
 (require 'server)
-(unless (server-running-p)
+(unless (eq (server-running-p) t)
   (server-start))
 
 ;; Variables configured via the interactive 'customize' interface
