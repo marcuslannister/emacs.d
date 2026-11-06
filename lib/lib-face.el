@@ -75,7 +75,9 @@
   ;; Last so CJK 'symbol and nerd ranges do not steal U+2600-U+26FF.
   (cl-loop for font in EMOJI-FONTS
            when (find-font (font-spec :name font))
-           return (let ((spec (font-spec :family font :size FONT-SIZE))
+           ;; No :size: a fixed size ignores `height' display specs, so ghostel
+           ;; cannot shrink wide emoji into their 2 cells and borders shift.
+           return (let ((spec (font-spec :family font))
                         (sets (delete nil (delete-dups (list t (frame-parameter nil 'font))))))
                     (dolist (fs sets)
                       (set-fontset-font fs 'emoji spec nil 'prepend)
@@ -89,8 +91,7 @@
                       ;; as the main emoji font it breaks "🇭🇰" into boxed "H" "K".
                       (when (find-font (font-spec :name "Fluent Emoji Flat"))
                         (dolist (c (string-to-list "🔌🤖🧠📁🌿🪟🔢📦💸🕒👤💊🌐🔥🔎🎯✨🧰📝🔁🔄📊"))
-                          (set-fontset-font fs c (font-spec :family "Fluent Emoji Flat"
-                                                            :size FONT-SIZE)
+                          (set-fontset-font fs c (font-spec :family "Fluent Emoji Flat")
                                             nil 'prepend)))))))
 
 (defun +suggest-other-faces (func &rest args)
