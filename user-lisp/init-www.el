@@ -118,15 +118,15 @@
   ;; emacs.d-nn: removed the upstream author's SMTP server, port, stream type,
   ;; and user.  Set your own in user-lisp/custom.el.
   :config
+  ;; emacs.d-nn: removed the call to `my-switch-google-mail' that ran here.  It
+  ;; overwrote the server that user-lisp/custom.el sets.
   (defun my-switch-qq-mail ()
     (interactive)
     (setq smtpmail-smtp-server "smtp.qq.com"))
 
   (defun my-switch-google-mail ()
     (interactive)
-    (setq smtpmail-smtp-server "smtp.gmail.com"))
-
-  (my-switch-google-mail))
+    (setq smtpmail-smtp-server "smtp.gmail.com")))
 
 (use-package gnus
   :ensure nil
