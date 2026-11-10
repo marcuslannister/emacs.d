@@ -18,7 +18,7 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - Do not copy code from the Purcell-derived files of the earlier configuration. This fork is GPL-3.0. Write the same idea again in your own words.
 
 ## Build, Test, and Development Commands
-- `./test-startup.sh`: loads the config in batch Emacs, in the order of `startup.el`. It runs the startup hooks and the Base's deferred hooks, then prints the startup warnings. `EMACS=/path/to/emacs ./test-startup.sh` uses another binary.
+- `./test-startup.sh`: loads the config in batch Emacs, in the order of `startup.el`. It runs the startup hooks and the Base's deferred hooks, then prints the startup warnings. `EMACS=/path/to/emacs ./test-startup.sh` uses another binary. The checks that run after startup live in `tests/startup/checks.el`, not in the script: a subfolder, so the CI loop over `tests/*.el` does not run it as an ERT file. Add a new startup check there.
 - `emacs -Q --batch -l tests/<file>.el -f ert-run-tests-batch-and-exit`: run one ERT file. A module brings its tests in the same commit. A test that needs an installed package (the `async-installer` tests) reads it from `elpa/`, so run `./test-startup.sh` first.
 - A test that stubs a function with `cl-letf` must load that function's file first. `display-warning` and `package-vc-install` start as autoloads, and their first call replaces the stub.
 - To try the fork next to another Emacs, start a separate process: `open -n -a Emacs --args --init-directory ~/Projects/emacs.d-nn`. Never load fork files into another Emacs session.

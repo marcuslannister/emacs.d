@@ -1,0 +1,153 @@
+;;; checks.el --- Checks that run after the startup of test-startup.sh  -*- lexical-binding: t; -*-
+
+;; test-startup.sh loads this file in the batch Emacs that has just started the
+;; config.  Each check needs the real load order, so a unit test cannot do it.
+;; A failed check signals an error.  This file is not an ERT file: it lives in a
+;; subfolder, so the `tests/*.el' loop of the CI does not run it under `emacs -Q'.
+
+;;; Code:
+
+(declare-function hel-switch-state "hel")
+(declare-function my/async-installer-install-missing "init-local-async-installer")
+(declare-function my/async-installer-pin-at-target-p "init-local-async-installer")
+(defvar async-installer-git-list)
+(defvar async-installer-git-native-compile)
+(defvar my/hel-leader-bindings)
+(defvar hel-state)
+
+;; The case guard must be on before any command runs.
+(unless (advice-member-p 'my/case-guard 'upcase-region)
+  (error "The case guard is not active"))
+
+;; Trailing whitespace is trimmed per mode, never on every save: that rewrites
+;; files we only open.
+(when (memq 'delete-trailing-whitespace (default-value 'before-save-hook))
+  (error "before-save-hook trims whitespace in every buffer"))
+;; ...and only in programming buffers, by edited line.
+(unless (memq 'ws-butler-mode prog-mode-hook)
+  (error "ws-butler is not on prog-mode-hook"))
+(when (memq 'ws-butler-mode text-mode-hook)
+  (error "ws-butler is on text-mode-hook"))
+
+;; The pinned Git packages must be present at their pinned targets.
+;; async-installer clones them in the background, and batch Emacs would exit
+;; before the clones finish, so wait here.  Otherwise a green run would prove
+;; nothing about the pins.
+(unless (fboundp 'my/async-installer-install-missing)
+  (error "The Git pin installer is not loaded"))
+(setq async-installer-git-native-compile nil)
+(my/async-installer-install-missing t)
+(unless (equal (sort (mapcar (lambda (pin) (file-name-base (plist-get pin :repo)))
+                             async-installer-git-list)
+                     #'string<)
+               '("anvil.el" "hel" "hel-leader" "org-gtd.el"))
+  (error "The pin list is wrong: %S" async-installer-git-list))
+(dolist (pin async-installer-git-list)
+  (unless (my/async-installer-pin-at-target-p pin)
+    (error "Git package %s is not at its pinned target" (plist-get pin :repo))))
+
+;; Hel runs after startup and the pins are in place.  Every leader key must run
+;; a defined command, in both states that have the leader.  This catches a key
+;; that still points at a removed or not yet ported command.
+(unless (and (boundp 'my/hel-leader-bindings) my/hel-leader-bindings)
+  (error "The Hel leader table is not loaded"))
+(unless (and (featurep 'hel) (bound-and-true-p hel-mode))
+  (error "Hel is not active after startup"))
+(dolist (state '(normal emacs))
+  (with-temp-buffer
+    (text-mode)
+    (hel-switch-state state)
+    (dolist (binding my/hel-leader-bindings)
+      (let ((key (car binding))
+            (command (cdr binding)))
+        (unless (fboundp command)
+          (error "Leader key %s runs an undefined command %S" key command))
+        (unless (eq (key-binding (kbd key)) command)
+          (error "Leader key %s in %s state runs %S, not %S"
+                 key state (key-binding (kbd key)) command))))))
+
+;; B binds these keys globally.  Hel binds none of the first four in any state,
+;; so B keeps them.  C-w is the Hel window map in normal and emacs state.  In
+;; insert state, in a text buffer, Hel deletes a word backward.
+(with-temp-buffer
+  (text-mode)
+  (dolist (state '(normal insert emacs))
+    (hel-switch-state state)
+    (dolist (pair '(("C-a" . back-to-indentation)
+                    ("C-v" . yank)
+                    ("C-z" . undo)
+                    ("M-w" . my-copy)))
+      (unless (eq (key-binding (kbd (car pair))) (cdr pair))
+        (error "%s in %s state runs %S, not %S" (car pair) state
+               (key-binding (kbd (car pair))) (cdr pair))))
+    (let ((expected (if (eq state 'insert) 'hel-delete-backward-word 'hel-window-map)))
+      (unless (eq (key-binding (kbd "C-w")) expected)
+        (error "C-w in %s state runs %S, not %S" state
+               (key-binding (kbd "C-w")) expected)))))
+
+;; The one-key case commands of Hel stay off.  Without Hel binding, a key may
+;; fall through to a global command, which is fine unless it changes case.
+(with-temp-buffer
+  (text-mode)
+  (hel-switch-state 'normal)
+  (dolist (key '("`" "M-`" "~" "g u" "g U"))
+    (let ((command (key-binding (kbd key))))
+      (when (and (symbolp command) command
+                 (string-match-p "upcase\\|downcase\\|invert-case" (symbol-name command)))
+        (error "Hel key %s still changes case: %S" key command)))))
+
+;; Dired starts in normal state, so h j k l move.
+(require 'dired)
+(let ((buf (dired-noselect temporary-file-directory)))
+  (unwind-protect
+      (with-current-buffer buf
+        (unless (and (eq hel-state 'normal)
+                     (eq (key-binding (kbd "j")) 'hel-next-line))
+          (error "Dired does not start in Hel normal state: %S %S"
+                 hel-state (key-binding (kbd "j")))))
+    (when (buffer-live-p buf) (kill-buffer buf))))
+
+;; The Hel state shows in the mode line of B.
+(with-temp-buffer
+  (emacs-lisp-mode)
+  (unless (member '(:eval (my/hel-mode-line-state)) mode-line-format)
+    (error "The Hel state is not in the mode line")))
+
+;; During the port, the server of this fork has its own name, because all
+;; servers of one user share one socket folder, and the earlier configuration
+;; owns the default name.  Anvil is off: loading anvil.el only defines things,
+;; and the MCP tools wait for the anvil-enable command.
+(unless (equal (bound-and-true-p my/server-name) "nn")
+  (error "The server name is not nn: %S" (bound-and-true-p my/server-name)))
+(when (bound-and-true-p my/anvil-enabled)
+  (error "Anvil is on by default"))
+(when (and (featurep 'anvil) (bound-and-true-p anvil--enabled))
+  (error "Anvil is enabled after startup"))
+
+;; JIT native compilation is on everywhere.  Windows is the exception: the
+;; helper turns it off, with a warning, when no MINGW64 toolchain is found.
+(princ (format "Native compilation: available=%S jit=%S\n"
+               (and (fboundp 'native-comp-available-p) (native-comp-available-p))
+               (and (boundp 'native-comp-jit-compilation) native-comp-jit-compilation)))
+(when (and (fboundp 'native-comp-available-p)
+           (native-comp-available-p)
+           (not (eq system-type 'windows-nt)))
+  (unless native-comp-jit-compilation
+    (error "native-comp-jit-compilation is off")))
+
+;; C-x C-u is one slip from C-x u (undo), and it upcases mark-to-point with no
+;; prompt.
+(with-temp-buffer
+  (when (key-binding (kbd "C-x C-u"))
+    (error "C-x C-u should be unbound, got %S" (key-binding (kbd "C-x C-u")))))
+
+(when inhibit-message
+  (error "inhibit-message is still set; warnings stay hidden"))
+
+;; display-warning keeps its text in this buffer even when the echo area is
+;; quiet.
+(when-let* ((buf (get-buffer "*Warnings*")))
+  (princ (format "Warnings during startup:\n%s\n"
+                 (with-current-buffer buf (buffer-string)))))
+
+;;; checks.el ends here
