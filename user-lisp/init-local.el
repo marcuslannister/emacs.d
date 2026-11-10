@@ -26,6 +26,10 @@
 (require 'init-local-hel)
 (my/hel-setup)
 
+;; Org.  The module adds leader keys, so it loads after Hel.  Loading it registers
+;; deferred `use-package' forms and a few functions; Org itself loads on first use.
+(require 'init-local-org)
+
 (require 'init-local-server)
 (my/server-start)
 
