@@ -27,7 +27,14 @@
         process-adaptive-read-buffering t
         read-process-output-max (* 4 1024 1024)
         redisplay-skip-fontification-on-input t
-        load-path-filter-function #'load-path-filter-cache-directory-files
+        ;; emacs.d-nn: set the filter only when the functions it calls are
+        ;; loaded.  It calls `regexp-opt' and `seq-filter'.  If one of them is
+        ;; still an autoload, `load' runs the filter again, and the call
+        ;; repeats until "Lisp nesting exceeds `max-lisp-eval-depth'".  The
+        ;; Emacs 31.1 build that Nix makes (our Ubuntu CI) fails this way.
+        load-path-filter-function (and (featurep 'regexp-opt)
+                                       (featurep 'seq)
+                                       #'load-path-filter-cache-directory-files)
         long-line-threshold 1000
         large-hscroll-threshold 1000
         bidi-inhibit-bpa t
