@@ -34,6 +34,7 @@
 (require 'init-local-append-review)
 (require 'init-local-gtd)
 (my/gtd-setup)
+(require 'init-local-denote)
 
 (require 'init-local-server)
 (my/server-start)
