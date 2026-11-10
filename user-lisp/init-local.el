@@ -20,6 +20,10 @@
 ;; `load-path'.  It warns and goes on if `async-installer' is not available.
 (my/async-installer-setup)
 
+;; Modal editing must be ready before the first key press.
+(require 'init-local-hel)
+(my/hel-setup)
+
 (require 'init-local-server)
 (my/server-start)
 

@@ -73,6 +73,78 @@ ${EMACS:=emacs} --batch --init-directory . \
                                 (unless (my/async-installer-pin-at-target-p pin)
                                   (error "Git package %s is not at its pinned target"
                                          (plist-get pin :repo))))
+                              ;; Hel runs after startup and the pins are in place. Every
+                              ;; leader key must run a defined command, in both states
+                              ;; that have the leader. This catches a key that still
+                              ;; points at a removed or not yet ported command.
+                              (unless (and (boundp (quote my/hel-leader-bindings))
+                                           my/hel-leader-bindings)
+                                (error "The Hel leader table is not loaded"))
+                              (unless (and (featurep (quote hel))
+                                           (bound-and-true-p hel-mode))
+                                (error "Hel is not active after startup"))
+                              (dolist (state (quote (normal emacs)))
+                                (with-temp-buffer
+                                  (text-mode)
+                                  (hel-switch-state state)
+                                  (dolist (binding my/hel-leader-bindings)
+                                    (let ((key (car binding))
+                                          (command (cdr binding)))
+                                      (unless (fboundp command)
+                                        (error "Leader key %s runs an undefined command %S"
+                                               key command))
+                                      (unless (eq (key-binding (kbd key)) command)
+                                        (error "Leader key %s in %s state runs %S, not %S"
+                                               key state (key-binding (kbd key)) command))))))
+                              ;; B binds these keys globally. Hel binds none of the
+                              ;; first four in any state, so B keeps them. C-w is the
+                              ;; Hel window map in normal and emacs state. In insert
+                              ;; state, in a text buffer, Hel deletes a word backward.
+                              (with-temp-buffer
+                                (text-mode)
+                                (dolist (state (quote (normal insert emacs)))
+                                  (hel-switch-state state)
+                                  (dolist (pair (quote (("C-a" . back-to-indentation)
+                                                        ("C-v" . yank)
+                                                        ("C-z" . undo)
+                                                        ("M-w" . my-copy))))
+                                    (unless (eq (key-binding (kbd (car pair))) (cdr pair))
+                                      (error "%s in %s state runs %S, not %S" (car pair) state
+                                             (key-binding (kbd (car pair))) (cdr pair))))
+                                  (let ((expected (if (eq state (quote insert))
+                                                      (quote hel-delete-backward-word)
+                                                    (quote hel-window-map))))
+                                    (unless (eq (key-binding (kbd "C-w")) expected)
+                                      (error "C-w in %s state runs %S, not %S" state
+                                             (key-binding (kbd "C-w")) expected)))))
+                              ;; The one-key case commands of Hel stay off. Without
+                              ;; Hel binding, a key may fall through to a global
+                              ;; command, which is fine unless it changes case.
+                              (with-temp-buffer
+                                (text-mode)
+                                (hel-switch-state (quote normal))
+                                (dolist (key (quote ("`" "M-`" "~" "g u" "g U")))
+                                  (let ((command (key-binding (kbd key))))
+                                    (when (and (symbolp command) command
+                                               (string-match-p "upcase\\|downcase\\|invert-case"
+                                                               (symbol-name command)))
+                                      (error "Hel key %s still changes case: %S" key command)))))
+                              ;; Dired starts in normal state, so h j k l move.
+                              (require (quote dired))
+                              (let ((buf (dired-noselect temporary-file-directory)))
+                                (unwind-protect
+                                    (with-current-buffer buf
+                                      (unless (and (eq hel-state (quote normal))
+                                                   (eq (key-binding (kbd "j")) (quote hel-next-line)))
+                                        (error "Dired does not start in Hel normal state: %S %S"
+                                               hel-state (key-binding (kbd "j")))))
+                                  (when (buffer-live-p buf) (kill-buffer buf))))
+                              ;; The Hel state shows in the mode line of B.
+                              (with-temp-buffer
+                                (emacs-lisp-mode)
+                                (unless (member (quote (:eval (my/hel-mode-line-state)))
+                                                mode-line-format)
+                                  (error "The Hel state is not in the mode line")))
                               ;; During the port, the server of this fork has its own name,
                               ;; because all servers of one user share one socket
                               ;; folder, and the earlier configuration owns the

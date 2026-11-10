@@ -29,6 +29,7 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - Name new modules `init-local-<feature>.el`.
 - The Base uses `nn-` for its framework and `my-` for helper commands. The Local layer uses `my/`. Prefix every new function and variable in the Local layer with `my/`.
 - Follow the Concept rules: small modules, built-in features first, a package only if used weekly, deferred loading with no eager `require`. Named exceptions are in the ADR.
+- Leader keys (the Hel leader) live in one table, `my/hel-leader-bindings`. The module that owns a command adds its keys with `my/hel-leader-bind`. A key must not point at a command that this config does not have: `./test-startup.sh` checks every entry.
 - The Base sets `use-package-always-defer t`. A form that must run at startup needs `:demand t`.
 - Write `use-package` forms. Do not add `require-package` or `maybe-require-package`.
 

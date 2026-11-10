@@ -180,6 +180,8 @@ A target that does not exist must fail and leave `.gitcommit' alone."
           (list (list :repo "https://example.invalid/here.git" :tag "v1")
                 (list :repo "https://example.invalid/gone.git" :tag "v1")))
          (my/async-installer--installing nil)
+         (hook-runs 0)
+         (my/async-installer-after-install-hook (list (lambda () (cl-incf hook-runs))))
          cloned)
     (unwind-protect
         (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) "git"))
@@ -192,6 +194,8 @@ A target that does not exist must fail and leave `.gitcommit' alone."
           (should (my/async-installer-install-missing t))
           (should (equal cloned '("https://example.invalid/gone.git")))
           (should (file-directory-p (expand-file-name "gone" tmp)))
+          ;; The hook ran once, when the queue ended.
+          (should (= 1 hook-runs))
           ;; A second call has nothing left to clone.
           (setq cloned nil)
           (should (my/async-installer-install-missing t))

@@ -51,6 +51,10 @@
 (defvar my/async-installer--installing nil
   "Non-nil while a background install runs.")
 
+(defvar my/async-installer-after-install-hook nil
+  "Hook run when a background install of Git packages ends.
+A module whose package may be missing at startup (Hel) adds its activation here.")
+
 ;;;; Repairs to async-installer
 
 (defun my/async-installer-native-compile (dir)
@@ -193,7 +197,9 @@ Return non-nil when every package is present."
         (cl-labels
             ((step ()
                (if (null queue)
-                   (setq my/async-installer--installing nil)
+                   (progn
+                     (setq my/async-installer--installing nil)
+                     (run-hooks 'my/async-installer-after-install-hook))
                  (let ((package (pop queue)))
                    (condition-case err
                        (async-installer-git--install-one
