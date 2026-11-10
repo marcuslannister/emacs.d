@@ -30,6 +30,9 @@ ${EMACS:=emacs} --batch --init-directory . \
                               (run-hooks (quote after-init-hook)
                                          (quote emacs-startup-hook)
                                          (quote window-setup-hook))
+                              ;; Warnings queued during early startup show up
+                              ;; from the command loop, which batch Emacs lacks.
+                              (run-hooks (quote delayed-warnings-hook))
                               ;; The Base defers most modes to these hooks. Run
                               ;; them, so the test loads that code too.
                               (run-hooks (quote nn-first-file-hook)
@@ -50,6 +53,19 @@ ${EMACS:=emacs} --batch --init-directory . \
                                 (error "ws-butler is not on prog-mode-hook"))
                               (when (memq (quote ws-butler-mode) text-mode-hook)
                                 (error "ws-butler is on text-mode-hook"))
+                              ;; JIT native compilation is on everywhere. Windows is
+                              ;; the exception: the helper turns it off, with a
+                              ;; warning, when no MINGW64 toolchain is found.
+                              (princ (format "Native compilation: available=%S jit=%S\n"
+                                             (and (fboundp (quote native-comp-available-p))
+                                                  (native-comp-available-p))
+                                             (and (boundp (quote native-comp-jit-compilation))
+                                                  native-comp-jit-compilation)))
+                              (when (and (fboundp (quote native-comp-available-p))
+                                         (native-comp-available-p)
+                                         (not (eq system-type (quote windows-nt))))
+                                (unless native-comp-jit-compilation
+                                  (error "native-comp-jit-compilation is off")))
                               ;; C-x C-u is one slip from C-x u (undo), and it
                               ;; upcases mark-to-point with no prompt.
                               (with-temp-buffer

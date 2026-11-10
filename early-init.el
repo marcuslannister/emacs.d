@@ -10,6 +10,13 @@
 (load (setq custom-file (expand-file-name "custom.el" user-lisp-directory)) 'noerror)
 (nn-initialize)
 
+;; emacs.d-nn: on Windows, put the MSYS2 MINGW64 toolchain on PATH, or turn
+;; native compilation off with a warning.  This must run before
+;; `package-activate-all', which can start a native compile.  See
+;; docs/windows-setup.md.  The only line the Local layer adds to this file.
+(when _WIN32
+  (load (expand-file-name "init-local-windows-native-comp" user-lisp-directory) nil t))
+
 (use-package emacs
   :ensure nil
   :hook (window-setup . (lambda () (setq inhibit-redisplay nil inhibit-message nil)))
@@ -20,9 +27,10 @@
                 truncate-lines t
                 truncate-partial-width-windows nil)
 
-  (setq native-comp-jit-compilation nil
-        native-comp-deferred-compilation nil
-        native-comp-async-on-battery-power nil
+  ;; emacs.d-nn: removed `native-comp-jit-compilation' and
+  ;; `native-comp-deferred-compilation' (both nil).  JIT is on for every
+  ;; system.  On Windows, init-local-windows-native-comp.el sets up the toolchain.
+  (setq native-comp-async-on-battery-power nil
         process-connection-type nil
         process-adaptive-read-buffering t
         read-process-output-max (* 4 1024 1024)
