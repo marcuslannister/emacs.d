@@ -35,6 +35,7 @@
 (require 'init-local-gtd)
 (my/gtd-setup)
 (require 'init-local-denote)
+(require 'init-local-vulpea)
 
 (require 'init-local-server)
 (my/server-start)
