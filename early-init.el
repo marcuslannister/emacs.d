@@ -31,7 +31,7 @@
         ;; loaded.  It calls `regexp-opt' and `seq-filter'.  If one of them is
         ;; still an autoload, `load' runs the filter again, and the call
         ;; repeats until "Lisp nesting exceeds `max-lisp-eval-depth'".  The
-        ;; Emacs 31.1 build that Nix makes (our Ubuntu CI) fails this way.
+        ;; Emacs 31.1 build that Nix makes (no window system) fails this way.
         load-path-filter-function (and (featurep 'regexp-opt)
                                        (featurep 'seq)
                                        #'load-path-filter-cache-directory-files)

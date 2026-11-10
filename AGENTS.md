@@ -35,7 +35,7 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - A module that needs a tool, file, or folder from this machine (`rg`, `herdr`, `~/github/...`) must skip itself and call `display-warning`. It must never stop startup.
 
 ## Testing
-- Run `./test-startup.sh` before every commit. CI runs it on Ubuntu and Windows with Emacs 31.1.
+- Run `./test-startup.sh` before every commit. CI runs it on macOS and Windows with Emacs 31.1. Both jobs use GUI builds, which are the builds we run.
 - The Base sets `inhibit-message` at startup, so a warning is quiet until `window-setup-hook` runs. `./test-startup.sh` runs that hook and prints `*Warnings*`. Read that output.
 - The test skips `kill-emacs-hook`, so a run does not overwrite the history files in `var/`.
 
