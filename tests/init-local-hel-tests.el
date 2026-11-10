@@ -146,10 +146,38 @@
     (cl-letf (((symbol-function 'my/hel--activate) (lambda () (error "boom")))
               ((symbol-function 'display-warning)
                (lambda (type message &rest _) (push (cons type message) warnings))))
-      (my/hel--activate-after-install))
+      (my/hel--activate-safely))
     (should (= 1 (length warnings)))
     (should (eq 'init-local-hel (car (car warnings))))
     (should (string-match-p "Hel could not start: boom" (cdr (car warnings))))))
+
+(ert-deftest init-local-hel-setup-survives-a-package-that-fails-to-load ()
+  "hel.el may exist while one of its own requires fails: warn, leave Hel off."
+  (let ((my/async-installer-after-install-hook nil)
+        (hel-mode nil)
+        result warnings)
+    (setq warnings
+          (let ((collected nil)
+                (orig-require (symbol-function 'require)))
+            (cl-letf (((symbol-function 'display-warning)
+                       (lambda (type message &rest _) (push (cons type message) collected)))
+                      ((symbol-function 'advice-add) #'ignore)
+                      ((symbol-function 'my/hel--ensure-dependencies) #'ignore)
+                      ((symbol-function 'require)
+                       (lambda (feature &rest args)
+                         (if (eq feature 'hel)
+                             (error "Cannot open load file: pcre2el")
+                           (apply orig-require feature args)))))
+              (setq result (my/hel-setup)))
+            (nreverse collected)))
+    ;; The call returned, Hel is off, one warning names the cause, and the
+    ;; install hook will try again.
+    (should-not hel-mode)
+    (should (= 1 (length warnings)))
+    (should (string-match-p "Hel could not start: Cannot open load file: pcre2el"
+                            (cdr (car warnings))))
+    (should (memq 'my/hel--activate-safely my/async-installer-after-install-hook))
+    (ignore result)))
 
 (ert-deftest init-local-hel-setup-waits-for-the-install-when-hel-is-missing ()
   (let ((my/async-installer-after-install-hook nil))
@@ -157,7 +185,7 @@
               ((symbol-function 'my/hel--ensure-dependencies) #'ignore)
               ((symbol-function 'my/hel--activate) (lambda () nil)))
       (my/hel-setup))
-    (should (memq 'my/hel--activate-after-install my/async-installer-after-install-hook)))
+    (should (memq 'my/hel--activate-safely my/async-installer-after-install-hook)))
   (let ((my/async-installer-after-install-hook nil))
     (cl-letf (((symbol-function 'advice-add) #'ignore)
               ((symbol-function 'my/hel--ensure-dependencies) #'ignore)

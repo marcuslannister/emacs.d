@@ -28,7 +28,7 @@
 (defvar hel-state)
 (defvar hel-leader-ctrl-meta-prefix)
 (defvar hel--cursors-table)
-(defvar nn-mode-line-set)
+(declare-function nn-mode-line-set "init-display")
 (declare-function hel-keymap-global-set "hel-core")
 (declare-function hel-keymap-set "hel-core")
 (declare-function hel-set-initial-state "hel-core")
@@ -262,17 +262,21 @@ Return non-nil when Hel is active.  A second call does nothing."
     (my/hel--configure)
     t)))
 
-(defun my/hel--activate-after-install ()
-  "Activate Hel after a background install, and warn instead of signalling."
+(defun my/hel--activate-safely ()
+  "Activate Hel, and warn instead of signalling when it cannot start.
+A package that is present but fails to load (a dependency that is missing after
+an offline first start) must not stop the startup of the Local layer."
   (condition-case err
       (my/hel--activate)
     (error (display-warning 'init-local-hel
-                            (format "Hel could not start: %s" (error-message-string err))))))
+                            (format "Hel could not start: %s" (error-message-string err)))
+           nil)))
 
 (defun my/hel--ensure-dependencies ()
   "Install the packages that Hel and hel-leader need, from the archives."
   ;; pcre2el puts a disabled `defadvice' on etags' `find-tag-regexp', so
-  ;; loading etags later warned "got redefined".
+  ;; loading etags later warned "got redefined".  This is global and hides the
+  ;; redefinition warning of every `defadvice', as in the earlier configuration.
   (setq ad-redefinition-action 'accept)
   (use-package dash)
   (use-package s)
@@ -281,11 +285,12 @@ Return non-nil when Hel is active.  A second call does nothing."
   (use-package ultra-scroll))
 
 (defun my/hel-setup ()
-  "Start Hel now when its packages exist, and otherwise after the install."
+  "Start Hel now when its packages exist, and otherwise after the install.
+Never signals: a failure warns and Hel stays off."
   (advice-add 'nn-mode-line-set :after #'my/hel--add-mode-line-segment)
   (my/hel--ensure-dependencies)
-  (unless (my/hel--activate)
-    (add-hook 'my/async-installer-after-install-hook #'my/hel--activate-after-install)))
+  (unless (my/hel--activate-safely)
+    (add-hook 'my/async-installer-after-install-hook #'my/hel--activate-safely)))
 
 (provide 'init-local-hel)
 ;;; init-local-hel.el ends here
