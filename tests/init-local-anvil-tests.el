@@ -34,6 +34,11 @@
   (should-not (memq 'org my/anvil-modules))
   (should-not (memq 'org my/anvil-optional-modules)))
 
+(ert-deftest init-local-anvil-modules-leave-worker-out-during-the-port ()
+  "The worker daemons have fixed names, which the earlier configuration uses."
+  (should-not (memq 'worker my/anvil-modules))
+  (should-not (memq 'worker my/anvil-optional-modules)))
+
 (ert-deftest init-local-anvil-setup-does-nothing-when-off ()
   (let ((my/anvil-enabled nil)
         (noninteractive nil)
@@ -142,6 +147,8 @@
             (should started)
             (should-not (memq 'org (nth 0 seen)))
             (should-not (memq 'org (nth 1 seen)))
+            (should-not (memq 'worker (nth 0 seen)))
+            (should-not (memq 'worker (nth 1 seen)))
             (should (memq 'state (nth 1 seen)))
             ;; The state files of the modules land in the state folder.
             (should (equal my/anvil-state-directory (nth 2 seen)))

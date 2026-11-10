@@ -11,7 +11,8 @@
 ;; named in `my/server-name'>.  At cutover, turn it on.
 ;;
 ;; macOS only: Windows does not use Anvil.  The Anvil packages come from
-;; init-local-package-list.el.
+;; init-local-package-list.el.  The `worker' module stays out until cutover (see
+;; `my/anvil-modules').
 ;;; Code:
 
 (defvar anvil-modules)
@@ -31,8 +32,15 @@
 ;; caused repeated Syncthing sync-conflict storms.  Both lists must be set before
 ;; `anvil-enable', which reads them: `anvil-modules' defaults to a list that
 ;; includes `org', and `anvil-optional-modules' defaults to nil.
+;;
+;; `worker' is left out during the port.  Its daemons have fixed names
+;; (anvil-worker-read-1, -read-2, -write-1, -batch-1), with no prefix setting,
+;; and the spawn code skips a worker whose name is already alive.  The earlier
+;; configuration runs exactly those daemons, so this Anvil would attach to them
+;; (they load that configuration's init file), and the reset-pool tool would kill
+;; them by name.  Add `worker' back at cutover, when this config owns them.
 (defconst my/anvil-modules
-  '(worker eval file host git proc fs emacs text clipboard data net)
+  '(eval file host git proc fs emacs text clipboard data net)
   "Anvil modules to load.")
 
 ;; `state' comes before `shell-filter' and `context', which both need its
