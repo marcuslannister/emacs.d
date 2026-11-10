@@ -68,8 +68,8 @@
   (remove-hook 'find-file-hook #'vc-refresh-state)
   (remove-hook 'find-file-hook #'epa-file-find-file-hook)
   :custom
-  (user-full-name "zhaodaniu")
-  (user-mail-address "zhaodaniu1@gmail.com")
+  ;; emacs.d-nn: removed the upstream author's name and mail address.  Set your
+  ;; own `user-full-name' and `user-mail-address' in user-lisp/custom.el.
   (user-lisp-auto-scrape nil)
   (gc-cons-percentage (if noninteractive #x8000000 most-positive-fixnum))
   (gc-cons-threshold (if noninteractive #x8000000 most-positive-fixnum))
@@ -148,10 +148,13 @@
   (package-quickstart-file (expand-file-name "package-quickstart.el" package-user-dir))
   (package-enable-at-startup t)
   (package-install-upgrade-built-in nil)
-  (package-check-signature nil)
+  ;; emacs.d-nn: removed `(package-check-signature nil)'; the Emacs default
+  ;; checks signatures when an archive provides them.
   (package-archives
    '(("gnu-cn"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-     ("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
+     ("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+     ;; emacs.d-nn: added NonGNU ELPA from the same mirror.
+     ("nongnu-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/"))))
 
 (use-package use-package
   :ensure nil

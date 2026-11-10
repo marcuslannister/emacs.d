@@ -115,10 +115,8 @@
   (send-mail-function 'smtpmail-send-it)
   (smtpmail-debug-info t)
   (smtpmail-debug-verb t)
-  (smtpmail-smtp-server "smtp.gmail.com")
-  (smtpmail-smtp-service 465)
-  (smtpmail-stream-type 'ssl)
-  (smtpmail-smtp-user user-mail-address)
+  ;; emacs.d-nn: removed the upstream author's SMTP server, port, stream type,
+  ;; and user.  Set your own in user-lisp/custom.el.
   :config
   (defun my-switch-qq-mail ()
     (interactive)
