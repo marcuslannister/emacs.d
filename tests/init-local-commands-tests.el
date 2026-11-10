@@ -23,7 +23,9 @@
           (with-current-buffer (find-file-noselect file)
             (my/copy-buffer-file-name)
             (kill-buffer))
-          (should (equal file (car kill-ring))))
+          ;; Not `equal': on Windows the visited name can use the short form
+          ;; of the user folder (RUNNER~1), while `make-temp-file' does not.
+          (should (file-equal-p file (car kill-ring))))
       (delete-file file))
     (with-temp-buffer
       (should-error (my/copy-buffer-file-name) :type 'user-error))))
