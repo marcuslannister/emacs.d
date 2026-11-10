@@ -194,7 +194,9 @@
 (use-package whitespace
   :ensure nil
   :hook
-  (before-save . delete-trailing-whitespace)
+  ;; emacs.d-nn: removed `(before-save . delete-trailing-whitespace)'.  It
+  ;; rewrote every file we saved.  user-lisp/init-local-whitespace.el trims only
+  ;; the edited lines, in `prog-mode' buffers.
   (conf-mode
    emacs-lisp-mode
    simpcc-mode c-mode c++-mode

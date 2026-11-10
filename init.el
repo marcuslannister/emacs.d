@@ -20,7 +20,10 @@
     (require 'init-tools)
     (require 'init-www)
     (require 'init-keybind)
-    (require 'init-home))
+    (require 'init-home)
+    ;; emacs.d-nn: the one hook for the Local layer.  It loads last, so it wins
+    ;; every overlap.  See docs/adr/0001-fork-b-as-base.md.
+    (require 'init-local))
 
   (defun nn-font-init ()
     (setq use-default-font-for-symbols nil)

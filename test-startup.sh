@@ -34,6 +34,28 @@ ${EMACS:=emacs} --batch --init-directory . \
                               ;; them, so the test loads that code too.
                               (run-hooks (quote nn-first-file-hook)
                                          (quote nn-first-input-hook))
+                              ;; These checks need the real load order, so a
+                              ;; unit test cannot do them.
+                              ;; The case guard must be on before any command runs.
+                              (unless (advice-member-p (quote my/case-guard)
+                                                       (quote upcase-region))
+                                (error "The case guard is not active"))
+                              ;; Trailing whitespace is trimmed per mode, never
+                              ;; on every save: that rewrites files we only open.
+                              (when (memq (quote delete-trailing-whitespace)
+                                          (default-value (quote before-save-hook)))
+                                (error "before-save-hook trims whitespace in every buffer"))
+                              ;; ...and only in programming buffers, by edited line.
+                              (unless (memq (quote ws-butler-mode) prog-mode-hook)
+                                (error "ws-butler is not on prog-mode-hook"))
+                              (when (memq (quote ws-butler-mode) text-mode-hook)
+                                (error "ws-butler is on text-mode-hook"))
+                              ;; C-x C-u is one slip from C-x u (undo), and it
+                              ;; upcases mark-to-point with no prompt.
+                              (with-temp-buffer
+                                (when (key-binding (kbd "C-x C-u"))
+                                  (error "C-x C-u should be unbound, got %S"
+                                         (key-binding (kbd "C-x C-u")))))
                               (when inhibit-message
                                 (error "inhibit-message is still set; warnings stay hidden"))
                               ;; display-warning keeps its text in this buffer

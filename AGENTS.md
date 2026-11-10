@@ -12,6 +12,7 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - Make only removals and value changes.
 - Mark each hunk with a `;; emacs.d-nn:` comment.
 - The one exception is a single `(require 'init-local)` line in `init.el`. It loads the Local layer. It is also the one eager `require` that the Concept rules allow.
+- `user-lisp/init-local.el` loads each Local module. Load a module there with `require` only if it must be ready before the first command (the case guard, the PATH import). Other modules keep a deferred `use-package` form.
 - Do not copy code from the Purcell-derived files of the earlier configuration. This fork is GPL-3.0. Write the same idea again in your own words.
 
 ## Build, Test, and Development Commands
