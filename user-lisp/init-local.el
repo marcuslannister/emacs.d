@@ -14,6 +14,8 @@
 (require 'init-local-case-guard)
 (require 'init-local-exec-path)
 (require 'init-local-whitespace)
+;; Loading it only registers a deferred `use-package' form for Dired.
+(require 'init-local-dired)
 (require 'init-local-async-installer)
 
 ;; Registers the pinned Git packages and adds the existing clones to
