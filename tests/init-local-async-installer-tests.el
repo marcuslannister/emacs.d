@@ -127,6 +127,21 @@ A target that does not exist must fail and leave `.gitcommit' alone."
     ;; The caller's environment is back afterwards.
     (should (equal "/usr/bin/bash" (getenv "SHELL")))))
 
+(ert-deftest init-local-async-installer-update-skips-async-installer-itself ()
+  "The VC upgrade must not pull async-installer past its pinned commit."
+  (let* ((desc (lambda (name kind)
+                 (package-desc-create :name name :version '(1) :kind kind)))
+         (package-alist
+          (list (list 'async-installer (funcall desc 'async-installer 'vc))
+                (list 'some-vc-package (funcall desc 'some-vc-package 'vc))
+                (list 'archive-package (funcall desc 'archive-package 'tar))))
+         upgraded)
+    (cl-letf (((symbol-function 'package-vc-upgrade)
+               (lambda (pkg-desc) (push (package-desc-name pkg-desc) upgraded))))
+      (my/update-vc-packages))
+    ;; Only the other VC package is upgraded; the archive package is not VC.
+    (should (equal upgraded '(some-vc-package)))))
+
 (ert-deftest init-local-async-installer-pin-at-target-checks-tag-commit-and-branch ()
   (let* ((tmp (make-temp-file "async-git-" t))
          (async-installer-git-install-dir tmp)

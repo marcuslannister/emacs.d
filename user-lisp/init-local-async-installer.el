@@ -273,6 +273,17 @@ cannot be loaded."
 
 ;;;; Update
 
+(defun my/update-vc-packages ()
+  "Upgrade every `package-vc' package except `async-installer'.
+`async-installer' is pinned at `my/async-installer-revision'.  `package-vc-upgrade'
+runs `vc-pull', which could move that checkout past the commit that was read,
+and would show nothing but a demoted error message when it did not."
+  (dolist (package package-alist)
+    (dolist (pkg-desc (cdr package))
+      (when (and (package-vc-p pkg-desc)
+                 (not (eq (package-desc-name pkg-desc) 'async-installer)))
+        (package-vc-upgrade pkg-desc)))))
+
 (defun my/update-all-packages ()
   "Update all installed packages, including async-installer Git packages.
 Clone the Git packages before updating them.  The update pass skips a
@@ -288,7 +299,7 @@ without `.git' fails in the update pass; see
   (async-installer-reload)
   (package-refresh-contents)
   (package-upgrade-all)
-  (package-vc-upgrade-all)
+  (my/update-vc-packages)
   (async-installer-git--install-all
    (lambda (ok ng)
      (message "[async-git] Install done! success=%d, fail=%d" ok ng)
