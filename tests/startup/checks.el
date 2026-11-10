@@ -96,9 +96,12 @@
                  (string-match-p "upcase\\|downcase\\|invert-case" (symbol-name command)))
         (error "Hel key %s still changes case: %S" key command)))))
 
-;; Dired starts in normal state, so h j k l move.
+;; Dired starts in normal state, so h j k l move.  The Base lists with a GNU
+;; only switch, and the BSD ls of a stock macOS makes dired-noselect return
+;; nil.  This check is about the Hel state, so list with plain switches.
 (require 'dired)
-(let ((buf (dired-noselect temporary-file-directory)))
+(let ((buf (let ((dired-listing-switches "-al"))
+             (dired-noselect temporary-file-directory))))
   (unwind-protect
       (with-current-buffer buf
         (unless (and (eq hel-state 'normal)
