@@ -20,6 +20,14 @@
 ;; `load-path'.  It warns and goes on if `async-installer' is not available.
 (my/async-installer-setup)
 
+(require 'init-local-server)
+(my/server-start)
+
+;; Anvil is off during the port: this schedules nothing unless
+;; `my/anvil-enabled' is set.
+(require 'init-local-anvil)
+(my/anvil-setup)
+
 ;; `C-x C-u' is one slip from `C-x u' (undo).  It runs `upcase-region' on the
 ;; text from the mark to point, with no prompt and no message.
 (global-unset-key (kbd "C-x C-u"))

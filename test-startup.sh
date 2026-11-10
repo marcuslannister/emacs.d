@@ -73,6 +73,20 @@ ${EMACS:=emacs} --batch --init-directory . \
                                 (unless (my/async-installer-pin-at-target-p pin)
                                   (error "Git package %s is not at its pinned target"
                                          (plist-get pin :repo))))
+                              ;; During the port, the server of this fork has its own name,
+                              ;; because all servers of one user share one socket
+                              ;; folder, and the earlier configuration owns the
+                              ;; default name. Anvil is off: loading anvil.el only
+                              ;; defines things, and the MCP tools wait for the
+                              ;; anvil-enable command.
+                              (unless (equal (bound-and-true-p my/server-name) "nn")
+                                (error "The server name is not nn: %S"
+                                       (bound-and-true-p my/server-name)))
+                              (when (bound-and-true-p my/anvil-enabled)
+                                (error "Anvil is on by default"))
+                              (when (and (featurep (quote anvil))
+                                         (bound-and-true-p anvil--enabled))
+                                (error "Anvil is enabled after startup"))
                               ;; JIT native compilation is on everywhere. Windows is
                               ;; the exception: the helper turns it off, with a
                               ;; warning, when no MINGW64 toolchain is found.
