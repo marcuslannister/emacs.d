@@ -53,6 +53,26 @@ ${EMACS:=emacs} --batch --init-directory . \
                                 (error "ws-butler is not on prog-mode-hook"))
                               (when (memq (quote ws-butler-mode) text-mode-hook)
                                 (error "ws-butler is on text-mode-hook"))
+                              ;; The pinned Git packages must be present at their
+                              ;; pinned targets. async-installer clones them in the
+                              ;; background, and batch Emacs would exit before the
+                              ;; clones finish, so wait here. Otherwise a green
+                              ;; run would prove nothing about the pins.
+                              (unless (fboundp (quote my/async-installer-install-missing))
+                                (error "The Git pin installer is not loaded"))
+                              (setq async-installer-git-native-compile nil)
+                              (my/async-installer-install-missing t)
+                              (unless (equal (sort (mapcar (lambda (pin)
+                                                             (file-name-base
+                                                              (plist-get pin :repo)))
+                                                           async-installer-git-list)
+                                                   (function string<))
+                                             (quote ("anvil.el" "hel" "hel-leader" "org-gtd.el")))
+                                (error "The pin list is wrong: %S" async-installer-git-list))
+                              (dolist (pin async-installer-git-list)
+                                (unless (my/async-installer-pin-at-target-p pin)
+                                  (error "Git package %s is not at its pinned target"
+                                         (plist-get pin :repo))))
                               ;; JIT native compilation is on everywhere. Windows is
                               ;; the exception: the helper turns it off, with a
                               ;; warning, when no MINGW64 toolchain is found.

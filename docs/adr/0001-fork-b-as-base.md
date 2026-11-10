@@ -9,7 +9,7 @@ The earlier configuration and the Upstream configuration overlap in most areas. 
 
 ## Named exceptions
 
-- **`async-installer`.** It installs the Git packages (`anvil.el`, `hel`, `hel-leader`, `org-gtd`). `package-vc` does not resolve VC dependencies. The earlier update command also refreshes the Anvil bridge script.
+- **`async-installer`.** It installs the Git packages (`anvil.el`, `hel`, `hel-leader`, `org-gtd`). `package-vc` does not resolve VC dependencies. The earlier update command also refreshes the Anvil bridge script. `async-installer` has no licence file, so the fork only uses it, and installs it at one reviewed commit.
 - **JIT native compilation stays on.** The Base turns it off. On macOS, native code parses `ORG-NEWS` 1.6 times faster, and Emacs ships almost no native code of its own. On Windows, the official GNU build has no `libgccjit` and needs the MSYS2 MINGW64 toolchain. A machine with only the UCRT64 toolchain crashes on every native compile (seen on a real Windows machine). A helper puts the MINGW64 toolchain on the `PATH`, or turns native compilation off with a warning when it finds none.
 - **`(require 'init-local)` in `init.el`.** It is a line added to a Base file, and it is an eager `require`. It is the one hook that loads the Local layer.
 - **A `(load ...)` line in `early-init.el`.** It loads the Windows native-compile helper before package activation. `init-local` is too late, because package activation can start a native compile.

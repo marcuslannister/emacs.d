@@ -14,6 +14,11 @@
 (require 'init-local-case-guard)
 (require 'init-local-exec-path)
 (require 'init-local-whitespace)
+(require 'init-local-async-installer)
+
+;; Registers the pinned Git packages and adds the existing clones to
+;; `load-path'.  It warns and goes on if `async-installer' is not available.
+(my/async-installer-setup)
 
 ;; `C-x C-u' is one slip from `C-x u' (undo).  It runs `upcase-region' on the
 ;; text from the mark to point, with no prompt and no message.

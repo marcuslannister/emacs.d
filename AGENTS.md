@@ -7,6 +7,7 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - `user-lisp/init-local*.el`: the Local layer. All new Lisp configuration goes here. Scripts, workflows, tests, and docs live elsewhere.
 - `user-lisp/custom.el`: machine-local values (name, mail, SMTP, `org-directory`). Git ignores it. Never commit it.
 - `elpa/`, `var/`, `eln-cache/`, `tree-sitter/`, `server/`: generated state. Git ignores them. Do not edit them.
+- `var/external-packages/`: the pinned Git packages that `async-installer` clones. The pins (a tag each) are in `user-lisp/init-local-package-list.el`. Do not bump a tag unless the task says so.
 
 ## Changing Base files
 - Make only removals and value changes.
@@ -18,7 +19,8 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 
 ## Build, Test, and Development Commands
 - `./test-startup.sh`: loads the config in batch Emacs, in the order of `startup.el`. It runs the startup hooks and the Base's deferred hooks, then prints the startup warnings. `EMACS=/path/to/emacs ./test-startup.sh` uses another binary.
-- `emacs -Q --batch -l tests/<file>.el -f ert-run-tests-batch-and-exit`: run one ERT file. A module brings its tests in the same commit.
+- `emacs -Q --batch -l tests/<file>.el -f ert-run-tests-batch-and-exit`: run one ERT file. A module brings its tests in the same commit. A test that needs an installed package (the `async-installer` tests) reads it from `elpa/`, so run `./test-startup.sh` first.
+- A test that stubs a function with `cl-letf` must load that function's file first. `display-warning` and `package-vc-install` start as autoloads, and their first call replaces the stub.
 - To try the fork next to another Emacs, start a separate process: `open -n -a Emacs --args --init-directory ~/Projects/emacs.d-nn`. Never load fork files into another Emacs session.
 - A plain `emacs --batch --init-directory DIR` does not load the init files. Use `./test-startup.sh`.
 
