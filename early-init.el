@@ -148,13 +148,18 @@
   (package-quickstart-file (expand-file-name "package-quickstart.el" package-user-dir))
   (package-enable-at-startup t)
   (package-install-upgrade-built-in nil)
-  ;; emacs.d-nn: removed `(package-check-signature nil)'; the Emacs default
-  ;; checks signatures when an archive provides them.
+  ;; emacs.d-nn: the Base sets this to nil on every system.  Now only Windows
+  ;; keeps nil.  Inside Git bash, Emacs finds an MSYS gpg that cannot use
+  ;; Emacs's Windows-style gnupg home, and every install then fails with
+  ;; bad-signature.  Other systems get the Emacs default, `allow-unsigned'.
+  (package-check-signature (if _WIN32 nil 'allow-unsigned))
+  ;; emacs.d-nn: replaced the Tsinghua mirrors with the official archives, and
+  ;; added NonGNU ELPA.  The Tsinghua mirror answers HTTP 403 on one of our
+  ;; Windows machines; the official archives answer on all our machines.
   (package-archives
-   '(("gnu-cn"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-     ("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-     ;; emacs.d-nn: added NonGNU ELPA from the same mirror.
-     ("nongnu-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/"))))
+   '(("gnu"    . "https://elpa.gnu.org/packages/")
+     ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+     ("melpa"  . "https://melpa.org/packages/"))))
 
 (use-package use-package
   :ensure nil
