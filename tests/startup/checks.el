@@ -46,6 +46,14 @@
   (unless (my/async-installer-pin-at-target-p pin)
     (error "Git package %s is not at its pinned target" (plist-get pin :repo))))
 
+;; org-gtd loads in batch Emacs, once its pin is in place, and the module turns it
+;; on.  A leader key that only autoloads it would pass without this check.
+(unless (and (featurep 'org-gtd) (bound-and-true-p org-gtd-mode))
+  (error "org-gtd is not active after startup: %S"
+         (bound-and-true-p my/gtd-unavailable-reason)))
+(unless (advice-member-p 'my/gtd--organize-newest-first 'org-gtd-organize--call)
+  (error "The org-gtd settings were not applied"))
+
 ;; Hel runs after startup and the pins are in place.  Every leader key must run
 ;; a defined command, in both states that have the leader.  This catches a key
 ;; that still points at a removed or not yet ported command.
