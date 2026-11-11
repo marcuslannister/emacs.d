@@ -285,7 +285,7 @@ LEVELS, SPEC and PARENT are passed to ORIG."
 
   (defconst nn-leisure-menu-items
     '("NN Leisure Menu"
-      ["telegram"  telega]
+      ;; emacs.d-nn: removed the telegram entry; telega is not installed.
       ["Read Mail" gnus]
       ["Read Rss"  my-newsticker-show-news]
       ["Send Mail" compose-mail]

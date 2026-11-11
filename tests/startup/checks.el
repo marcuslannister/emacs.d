@@ -14,6 +14,7 @@
 (defvar async-installer-git-native-compile)
 (defvar my/hel-leader-bindings)
 (defvar my/auto-save-directory)
+(defvar nn-leisure-menu-items)
 (defvar nn-first-file-hook)
 (defvar auto-save-timer)
 (defvar hel-state)
@@ -118,6 +119,16 @@
       (error "auto-save exists at %s but is neither on nor waiting" my/auto-save-directory))
   (when (memq 'my/auto-save-setup nn-first-file-hook)
     (error "auto-save is missing, but its hook is set")))
+
+;; The Base Telegram client is removed: its form installed it on every machine, and it fails
+;; to compile on Windows.  Nothing loads it, and the Leisure menu does not name it.
+(when (featurep 'telega)
+  (error "telega is loaded"))
+(when (seq-some (lambda (item) (and (vectorp item) (eq (aref item 1) 'telega)))
+                (bound-and-true-p nn-leisure-menu-items))
+  (error "The Leisure menu still has a telega entry"))
+(unless (bound-and-true-p nn-leisure-menu-items)
+  (error "nn-leisure-menu-items is not bound, so the telega check proves nothing"))
 
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)
