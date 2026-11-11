@@ -38,6 +38,7 @@
 (require 'init-local-vulpea)
 (require 'init-local-themes)
 (require 'init-local-completion)
+(require 'init-local-ghostel)
 
 (require 'init-local-server)
 (my/server-start)
