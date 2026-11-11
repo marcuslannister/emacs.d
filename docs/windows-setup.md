@@ -1,5 +1,32 @@
 # Windows setup
 
+## New Windows PC
+
+On a new Windows 10 or 11 PC, download the setup script and run it. It works in Windows PowerShell 5.1 and in PowerShell 7:
+
+```powershell
+irm https://raw.githubusercontent.com/marcuslannister/emacs.d-nn/refs/heads/main/scripts/windows-setup.ps1 -OutFile windows-setup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File windows-setup.ps1
+```
+
+The URL has `refs/heads/main` because the Upstream has a tag that is also named `main`.
+
+The script does these steps. Each one checks first and skips work that is done, so a second run changes nothing. It prints `done`, `skip`, or `FAILED` with the reason for each step. It never deletes or overwrites, and it does not start Emacs.
+
+- Sets the user variable `HOME` to your user folder, if it is not set. Emacs needs it before `early-init.el` runs. Open a new window after this step.
+- Installs Scoop (with its official installer) when it is missing, and sets the execution policy to `RemoteSigned` for the current user.
+- Adds the Scoop buckets `extras` and `nerd-fonts`.
+- Installs `git`, `emacs`, `ripgrep`, `fd`, and `pwsh`, unless the command is already on `PATH`.
+- Installs MSYS2 and the MINGW64 `gcc` and `libgccjit` (see Native compilation below). If MSYS2 asks for a restart of its shell, the step fails: run the script again.
+- Clones this fork to `~\.emacs.d`, or runs `git pull --ff-only` when it is already the fork. If `~\.emacs.d` exists and is not a clone of the fork, the step fails and the script does not touch the folder: move it yourself.
+- Clones `auto-save` to `~\github\auto-save`.
+- Installs the Scoop font `NerdFontsSymbolsOnly`. MonoLisa is licensed, so the script cannot download it. Run it with `-MonoLisaDir <folder of the .ttf files>` to install it for the current user.
+- Prints a note about Herdr (optional) and the next steps.
+
+Then start Emacs. The first start installs the packages and takes several minutes. Run `M-x ghostel` and pick Download. The server has the default name, so plain `emacsclient` reaches it. Anvil (the AI tools) is not on for Windows yet.
+
+The steps below are the manual way, for a PC where you want to do it by hand.
+
 Use the official GNU Emacs build from Scoop:
 
 ```powershell
@@ -37,4 +64,4 @@ Ghostel comes from MELPA. On the first `M-x ghostel`, pick Download. It fetches 
 
 For Unix-style work, run `M-x my/ghostel-bash`. It starts `bash.exe` from `PATH` as a login shell. Put the `usr/bin` folder of Git for Windows on `PATH` first. Do not use `git-bash.exe`, which opens a separate window.
 
-Herdr is macOS only, so Windows skips it.
+Herdr works on Windows too when the `herdr` program is on `PATH` (the module sets it up on macOS and Windows, and does nothing elsewhere).
