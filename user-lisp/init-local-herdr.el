@@ -5,7 +5,9 @@
 ;; module cuts copies and the region highlight to one pane, because the TUI draws a
 ;; sidebar and pane borders with │, and adds `my/herdr-send-raw'.
 ;;
-;; macOS only.  When the herdr program is missing, the module warns and does nothing.
+;; macOS and Windows (herdr has a Windows build, and herdr.el calls only its CLI).
+;; Other systems, or a missing herdr program: the module does nothing, and warns for a
+;; missing program.
 ;; `herdr-mode' stays off: it polls `herdr api snapshot' every 2 seconds.
 ;; herdr.el requires Ghostel when it loads, so it loads on first use.
 ;;; Code:
@@ -191,9 +193,9 @@ pane; otherwise ask.  Then focus that agent."
 ;;;; Setup
 
 (defun my/herdr-setup ()
-  "Set Herdr up on macOS when the herdr program exists.  Never signals."
+  "Set Herdr up on macOS or Windows when the herdr program exists.  Never signals."
   (cond
-   ((not (eq system-type 'darwin)))
+   ((not (memq system-type '(darwin windows-nt))))
    ((not (executable-find "herdr"))
     (display-warning 'init-local-herdr "The herdr program is not on the PATH; Herdr is off"))
    (t

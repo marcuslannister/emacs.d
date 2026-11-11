@@ -205,8 +205,8 @@
 
 ;;;; Setup
 
-(ert-deftest init-local-herdr-setup-does-nothing-outside-macos ()
-  (let ((system-type 'windows-nt) warned)
+(ert-deftest init-local-herdr-setup-does-nothing-on-other-systems ()
+  (let ((system-type 'gnu/linux) warned)
     (cl-letf (((symbol-function 'display-warning) (lambda (&rest _) (setq warned t))))
       (my/herdr-setup))
     (should-not warned)
@@ -223,7 +223,12 @@
     (should-not init-local-herdr-tests--keys)))
 
 (ert-deftest init-local-herdr-setup-registers-autoloads-and-the-leader-key ()
-  (let ((system-type 'darwin)
+  (dolist (system '(darwin windows-nt))
+    (init-local-herdr-tests--setup-registers system)))
+
+(defun init-local-herdr-tests--setup-registers (system)
+  "Check the setup of Herdr when `system-type' is SYSTEM."
+  (let ((system-type system)
         (init-local-herdr-tests--keys nil)
         (saved-map (copy-keymap global-map))
         (saved-hook ghostel-mode-hook)
