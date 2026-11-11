@@ -70,6 +70,14 @@
   (unless (or (eq bg 'unspecified) (equal bg (modus-themes-get-color-value 'bg-main)))
     (error "The theme draws the fringe in %S, not in the text background" bg)))
 
+;; The music player of the Base is removed.  Its use-package form made the music
+;; browser an autoload on C-c m at startup (the Dired key came only after the package
+;; loaded, so a startup check cannot see it).
+(when (fboundp 'simple-mpv-audio-browse)
+  (error "The simple-mpv commands are still defined at startup"))
+(when (eq (key-binding (kbd "C-c m")) 'simple-mpv-audio-browse)
+  (error "C-c m still runs the simple-mpv music browser"))
+
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)
   (error "marginalia-mode is not on after the first input"))

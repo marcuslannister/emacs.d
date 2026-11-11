@@ -514,13 +514,10 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 
 ;; Extra
 
-(use-package simple-mpv
-  :ensure nil
-  :custom (simple-mpv-debug nil)
-  :bind ("C-c m" . simple-mpv-audio-browse)
-  :config
-  (with-eval-after-load 'dired
-    (keymap-set dired-mode-map "C-c p" #'simple-mpv-play-file)))
+;; emacs.d-nn: the simple-mpv form is removed (the music player is not used).  It
+;; bound C-c m (music browser) and, in Dired, C-c p (play a file).  The files
+;; local/simple-mpv.el and simple-mpv-bridge.ps1 stay, unused, so a later Upstream
+;; change to them gives no merge conflict.  C-c m is now free for Herdr.
 
 (use-package nn-license-template
   :ensure nil
