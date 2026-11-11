@@ -56,17 +56,21 @@ Do nothing when that frame does not exist."
 
 ;; The minibuffer frame is one line high, and the package grows it only for the
 ;; candidate list of fido.  A prompt of several lines (the first-run question of
-;; Ghostel, `read-multiple-choice') then shows only its last line.  Fit the frame to
+;; Ghostel, `read-char-choice') then shows only its last line.  Fit the frame to
 ;; the prompt when a minibuffer opens.  A long line wraps, so count the wrapped lines.
+;; Stop at half the height of the parent, so the frame stays inside it.
 (defun my/minibuffer-frame-fit-prompt (&rest _)
   "Make the minibuffer child frame tall enough for the whole prompt.
-Do nothing when the frame does not exist or the prompt has one line."
+Do nothing when the frame does not exist or the prompt has one line.
+The height stops at half the height of the parent frame."
   (when (and (boundp 'minibuffer-frame--frame) (frame-live-p minibuffer-frame--frame))
     (let* ((width (max 1 (frame-width minibuffer-frame--frame)))
            (lines (apply #'+ (mapcar (lambda (line) (max 1 (ceiling (string-width line) width)))
                                      (split-string (or (minibuffer-prompt) "") "\n")))))
       (when (> lines 1)
-        (set-frame-height minibuffer-frame--frame lines)))))
+        (let ((parent (frame-parent minibuffer-frame--frame)))
+          (set-frame-height minibuffer-frame--frame
+                            (if parent (min lines (max 1 (/ (frame-height parent) 2))) lines)))))))
 
 (with-eval-after-load 'minibuffer-frame
   (advice-add 'minibuffer-frame--init :after #'my/minibuffer-frame-sync-background)
