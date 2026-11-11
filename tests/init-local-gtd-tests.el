@@ -153,7 +153,7 @@
     (unwind-protect
         (progn
           (my/gtd--settings)
-          (should (equal "/tmp/org/gtd/" org-gtd-directory))
+          (should (equal (expand-file-name "gtd/" org-directory) org-gtd-directory))
           (should-not org-gtd-refile-to-any-target)
           (should (equal '(single-action project-heading project-task)
                          org-gtd-refile-prompt-for-types))
