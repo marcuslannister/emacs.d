@@ -141,17 +141,20 @@
     (error "Emacs would skip native compiles as battery power: on-battery-power is %S"
            native-comp-async-on-battery-power)))
 
-;; The tab bar is vim-tab-bar with a number on each tab, and M-1 to M-9 select a tab in every
-;; Hel state.  Ghostel gives those keys back to Emacs.
+;; The tab bar is vim-tab-bar with a number on each tab.  M-1 to M-8 select a tab, M-9 the last
+;; one, and M-0 the previous one (the built-in `tab-bar-select-tab-modifiers'), in every Hel
+;; state.  Ghostel gives those keys back to Emacs.
 (unless (and (bound-and-true-p vim-tab-bar-mode) tab-bar-tab-hints)
   (error "The Vim-style tab bar with tab numbers is not on"))
 (with-temp-buffer
   (text-mode)
   (dolist (state '(normal insert emacs))
     (hel-switch-state state)
-    (dolist (key my/tabs-select-keys)
-      (unless (commandp (key-binding (kbd key)))
-        (error "%s in %s state runs no command: %S" key state (key-binding (kbd key)))))))
+    (dolist (pair `(("M-0" . tab-recent) ("M-1" . tab-bar-select-tab) ("M-8" . tab-bar-select-tab)
+                    ("M-9" . tab-last)))
+      (unless (eq (key-binding (kbd (car pair))) (cdr pair))
+        (error "%s in %s state runs %S, not %S" (car pair) state
+               (key-binding (kbd (car pair))) (cdr pair))))))
 (dolist (key my/tabs-select-keys)
   (unless (member key ghostel-keymap-exceptions)
     (error "Ghostel does not give %s back to Emacs" key)))

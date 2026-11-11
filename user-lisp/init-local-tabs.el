@@ -2,8 +2,12 @@
 ;;; Commentary:
 ;; The tab bar is the built-in `tab-bar', styled by vim-tab-bar (as in the earlier
 ;; configuration): flat tabs that follow the theme, no close or new button, and the
-;; number of each tab before its name.  `M-1' to `M-9' select tab 1 to 9.  A number
-;; higher than the count of tabs selects the last tab.
+;; number of each tab before its name.
+;;
+;; The keys come from the built-in `tab-bar-select-tab-modifiers' set to meta:
+;; `M-1' to `M-8' select tab 1 to 8, `M-9' selects the last tab, and `M-0' selects the
+;; tab used before.  (The earlier configuration made `M-9' select tab 9; the two
+;; differ only with ten or more tabs.)
 ;;
 ;; Ghostel binds every M-<printable> key to the terminal, so these keys would never
 ;; reach Emacs in a terminal buffer.  They are keymap exceptions there.  Char mode
@@ -13,23 +17,16 @@
 (defvar ghostel-keymap-exceptions)
 (declare-function vim-tab-bar-mode "vim-tab-bar")
 
-(defconst my/tabs-select-keys (mapcar (lambda (n) (format "M-%d" n)) (number-sequence 1 9))
-  "The keys that select tab 1 to 9.")
-
-(defun my/tabs-select (number)
-  "Select the tab NUMBER, counted from 1."
-  (tab-bar-select-tab number))
-
-(dotimes (index 9)
-  (let ((number (1+ index)))
-    (keymap-global-set (format "M-%d" number)
-                       (lambda () (interactive) (my/tabs-select number)))))
+(defconst my/tabs-select-keys (mapcar (lambda (n) (format "M-%d" n)) (number-sequence 0 9))
+  "The tab keys that Ghostel must leave to Emacs.")
 
 (defun my/tabs-setup ()
   "Turn on the Vim-style tab bar with the number of each tab.
 The mode sets `tab-bar-tab-hints' to nil, so the hints come after it."
   (vim-tab-bar-mode 1)
-  (setq tab-bar-tab-hints t))
+  (setq tab-bar-tab-hints t)
+  ;; `setopt': the `:set' function of the option defines the keys.
+  (setopt tab-bar-select-tab-modifiers '(meta)))
 
 (use-package vim-tab-bar
   :ensure t
