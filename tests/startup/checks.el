@@ -13,6 +13,9 @@
 (defvar async-installer-git-list)
 (defvar async-installer-git-native-compile)
 (defvar my/hel-leader-bindings)
+(defvar my/auto-save-directory)
+(defvar nn-first-file-hook)
+(defvar auto-save-timer)
 (defvar hel-state)
 
 ;; The case guard must be on before any command runs.
@@ -106,6 +109,15 @@
     (hel-switch-state state)
     (unless (eq (key-binding (kbd "C-r")) 'undo-redo)
       (error "C-r in %s state runs %S, not undo-redo" state (key-binding (kbd "C-r"))))))
+
+;; auto-save is a checkout that CI does not have.  When it is there, it is on or waits for
+;; the first file; when it is missing, the module has warned and added no hook.
+(if (file-directory-p my/auto-save-directory)
+    (unless (or (memq 'my/auto-save-setup nn-first-file-hook)
+                (bound-and-true-p auto-save-timer))
+      (error "auto-save exists at %s but is neither on nor waiting" my/auto-save-directory))
+  (when (memq 'my/auto-save-setup nn-first-file-hook)
+    (error "auto-save is missing, but its hook is set")))
 
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)

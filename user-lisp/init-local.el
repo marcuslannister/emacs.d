@@ -39,6 +39,7 @@
 (require 'init-local-themes)
 (require 'init-local-completion)
 (require 'init-local-undo)
+(require 'init-local-auto-save)
 (require 'init-local-ghostel)
 (require 'init-local-herdr)
 (my/herdr-setup)
