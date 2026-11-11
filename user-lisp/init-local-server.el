@@ -3,8 +3,10 @@
 ;; All Emacs servers of one user share one folder ($TMPDIR/emacs<uid>/, or a
 ;; server file on Windows).  A second server with the same name fails to start
 ;; and leaves the first one running.  The earlier configuration owns the default
-;; name, so during the port this server is named `nn'.  Reach it with
+;; name, so during the port this server is named `nn' on macOS.  Reach it with
 ;; `emacsclient -s nn ...'.  At cutover, set `my/server-name' to "server".
+;; On Windows the earlier configuration no longer runs, so the server there has the
+;; default name "server", and plain `emacsclient' reaches it.
 ;;
 ;; The Base starts no server, so this module starts it.  Batch Emacs and a
 ;; daemon do not start one here: a daemon starts its own.
@@ -14,9 +16,10 @@
 (declare-function server-start "server")
 (declare-function server-running-p "server")
 
-(defcustom my/server-name "nn"
+(defcustom my/server-name (if (eq system-type 'windows-nt) "server" "nn")
   "Name of the Emacs server of this config.
-Set it to \"server\" (the Emacs default) at cutover."
+It is \"server\" (the Emacs default) on Windows, and \"nn\" elsewhere until the
+cutover; then set it to \"server\" everywhere."
   :type 'string
   :group 'server)
 

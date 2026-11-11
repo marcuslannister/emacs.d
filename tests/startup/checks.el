@@ -245,8 +245,10 @@
 ;; servers of one user share one socket folder, and the earlier configuration
 ;; owns the default name.  Anvil is off: loading anvil.el only defines things,
 ;; and the MCP tools wait for the anvil-enable command.
-(unless (equal (bound-and-true-p my/server-name) "nn")
-  (error "The server name is not nn: %S" (bound-and-true-p my/server-name)))
+;; On Windows the earlier configuration no longer runs, so that server has the default name.
+(let ((expected (if (eq system-type 'windows-nt) "server" "nn")))
+  (unless (equal (bound-and-true-p my/server-name) expected)
+    (error "The server name is %S, not %S" (bound-and-true-p my/server-name) expected)))
 (when (bound-and-true-p my/anvil-enabled)
   (error "Anvil is on by default"))
 (when (and (featurep 'anvil) (bound-and-true-p anvil--enabled))
