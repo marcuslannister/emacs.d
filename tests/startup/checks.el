@@ -70,6 +70,16 @@
   (unless (or (eq bg 'unspecified) (equal bg (modus-themes-get-color-value 'bg-main)))
     (error "The theme draws the fringe in %S, not in the text background" bg)))
 
+;; Ghostel loads with no error, and the Local setup is in place.  Loading never starts
+;; the terminal or the download of the native module.  The Base adds to
+;; `project-switch-commands' when Ghostel loads, so this fails if `project' is not
+;; loaded by then: the first M-x ghostel in a fresh session would show no prompt.
+(condition-case err
+    (require 'ghostel)
+  (error (error "Loading ghostel fails: %S" err)))
+(unless (advice-member-p 'my/ghostel-bind-terminal-keys 'ghostel--rebuild-semi-char-keymap)
+  (error "The Local Ghostel setup did not run when Ghostel loaded"))
+
 ;; The music player of the Base is removed.  Its use-package form made the music
 ;; browser an autoload on C-c m at startup (the Dired key came only after the package
 ;; loaded, so a startup check cannot see it).

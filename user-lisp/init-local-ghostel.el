@@ -242,6 +242,16 @@ paints does not flicker through."
               ((file-readable-p script)))
     (setenv "GHOSTEL_SH_INTEGRATION" script)))
 
+;; The Base adds to `project-switch-commands' when Ghostel loads (init-tools.el), but
+;; it loads `project' only on first use.  If Ghostel loads first, that line fails
+;; with a void variable, the setup stops, and the first question of Ghostel (the
+;; module download) never shows.  Load `project' with the first key press, which
+;; comes before any command can load Ghostel.  It is a small library.
+(defun my/ghostel-require-project ()
+  "Load `project', which the Base setup of Ghostel needs when Ghostel loads."
+  (require 'project nil t))
+(add-hook 'nn-first-input-hook #'my/ghostel-require-project)
+
 (add-hook 'window-selection-change-functions #'my/ghostel-cursor-sync)
 (add-hook 'window-buffer-change-functions #'my/ghostel-cursor-sync)
 
