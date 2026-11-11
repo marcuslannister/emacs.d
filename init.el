@@ -51,12 +51,14 @@
                       (set-fontset-font t '(#xe000 . #xf8ff) spec)
                       (set-fontset-font t '(#xf0000 . #xfffff) spec)))
     ;; Extra
-    (cl-loop for font in '("Maple Mono NL NF CN")
+    ;; emacs.d-nn: MonoLisa Nerd Font first.  Maple Mono NL is not installed here, and
+    ;; Apple Symbols then draws box characters with seams.
+    (cl-loop for font in '("MonoLisa Nerd Font" "Maple Mono NL NF CN")
              for spec = (font-spec :family font)
              when (find-font spec)
              return (progn
-                      ;; Box Drawing
-                      (set-fontset-font t '(#x2500 . #x257F) spec)
+                      ;; Box Drawing and Block Elements.  emacs.d-nn: the range was up to #x257F only.
+                      (set-fontset-font t '(#x2500 . #x259F) spec)
                       ;; Geometric Shapes
                       (set-fontset-font t '(#x25A0 . #x25FF) spec)))
     ;; Chinese
