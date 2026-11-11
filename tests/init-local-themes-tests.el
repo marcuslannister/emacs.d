@@ -59,13 +59,42 @@
 
 (ert-deftest init-local-themes-minibuffer-frame-init-is-advised-when-the-package-loads ()
   (defun minibuffer-frame--init ())
+  (defun minibuffer-frame--setup ())
   (unwind-protect
       (progn
         (provide 'minibuffer-frame)
         (should (advice-member-p #'my/minibuffer-frame-sync-background
-                                 'minibuffer-frame--init)))
+                                 'minibuffer-frame--init))
+        (should (advice-member-p #'my/minibuffer-frame-fit-prompt
+                                 'minibuffer-frame--setup)))
     (fmakunbound 'minibuffer-frame--init)
+    (fmakunbound 'minibuffer-frame--setup)
     (setq features (delq 'minibuffer-frame features))))
+
+(defun init-local-themes-tests--fit (prompt width &optional frame-live)
+  "Return the height set for PROMPT in a child frame WIDTH characters wide, or nil."
+  (let ((minibuffer-frame--frame 'child) height)
+    (cl-letf (((symbol-function 'frame-live-p) (lambda (f) (and (eq f 'child) (or frame-live t))))
+              ((symbol-function 'frame-width) (lambda (_) width))
+              ((symbol-function 'minibuffer-prompt) (lambda () prompt))
+              ((symbol-function 'set-frame-height) (lambda (_f h) (setq height h))))
+      (my/minibuffer-frame-fit-prompt))
+    height))
+
+(ert-deftest init-local-themes-minibuffer-frame-fits-a-multi-line-prompt ()
+  (should (= 7 (init-local-themes-tests--fit "Not found.\n\n  [d] one\n  [c] two\n  [s] three\n\nChoice: " 80))))
+
+(ert-deftest init-local-themes-minibuffer-frame-counts-wrapped-lines ()
+  ;; A 25-character line in a 10-wide frame takes 3 lines, and the last line takes 1.
+  (should (= 4 (init-local-themes-tests--fit (concat (make-string 25 ?x) "\nChoice: ") 10))))
+
+(ert-deftest init-local-themes-minibuffer-frame-leaves-a-one-line-prompt-alone ()
+  (should-not (init-local-themes-tests--fit "Find file: " 80))
+  (should-not (init-local-themes-tests--fit nil 80)))
+
+(ert-deftest init-local-themes-minibuffer-frame-fit-skips-a-missing-frame ()
+  (let ((minibuffer-frame--frame nil))
+    (should-not (my/minibuffer-frame-fit-prompt))))
 
 (ert-deftest init-local-themes-toggle-is-on-the-leader-and-not-on-f5 ()
   (should (equal '(("C-c T" . modus-themes-toggle)) init-local-themes-tests--keys)))
