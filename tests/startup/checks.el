@@ -14,6 +14,8 @@
 (defvar async-installer-git-native-compile)
 (defvar my/hel-leader-bindings)
 (defvar my/auto-save-directory)
+(defvar my/tabs-select-keys)
+(defvar ghostel-keymap-exceptions)
 (defvar nn-leisure-menu-items)
 (defvar nn-first-file-hook)
 (defvar auto-save-timer)
@@ -138,6 +140,21 @@
   (when (native--compile-skip-on-battery-p)
     (error "Emacs would skip native compiles as battery power: on-battery-power is %S"
            native-comp-async-on-battery-power)))
+
+;; The tab bar is vim-tab-bar with a number on each tab, and M-1 to M-9 select a tab in every
+;; Hel state.  Ghostel gives those keys back to Emacs.
+(unless (and (bound-and-true-p vim-tab-bar-mode) tab-bar-tab-hints)
+  (error "The Vim-style tab bar with tab numbers is not on"))
+(with-temp-buffer
+  (text-mode)
+  (dolist (state '(normal insert emacs))
+    (hel-switch-state state)
+    (dolist (key my/tabs-select-keys)
+      (unless (commandp (key-binding (kbd key)))
+        (error "%s in %s state runs no command: %S" key state (key-binding (kbd key)))))))
+(dolist (key my/tabs-select-keys)
+  (unless (member key ghostel-keymap-exceptions)
+    (error "Ghostel does not give %s back to Emacs" key)))
 
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)

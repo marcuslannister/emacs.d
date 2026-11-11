@@ -38,6 +38,7 @@
 (require 'init-local-vulpea)
 (require 'init-local-themes)
 (require 'init-local-completion)
+(require 'init-local-tabs)
 (require 'init-local-undo)
 (require 'init-local-auto-save)
 (require 'init-local-ghostel)
