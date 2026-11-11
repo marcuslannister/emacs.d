@@ -48,8 +48,8 @@
 (require 'init-local-server)
 (my/server-start)
 
-;; Anvil is off during the port: this schedules nothing unless
-;; `my/anvil-enabled' is set.
+;; Anvil is on by default on Windows and off elsewhere during the port: this
+;; schedules nothing unless `my/anvil-enabled' is set.
 (require 'init-local-anvil)
 (my/anvil-setup)
 

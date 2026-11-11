@@ -280,7 +280,7 @@ Write-Host "Next steps:"
 Write-Host "  1. Start Emacs. The first start installs the packages and can take several minutes."
 Write-Host "  2. Run M-x ghostel, and pick Download when it asks for the native module."
 Write-Host "  3. Reach the running Emacs from a shell with:  emacsclient -n <file>"
-Write-Host "  4. Anvil (the AI tools) is not on for Windows yet."
+Write-Host "  4. Anvil (the AI tools) starts with Emacs. To point Codex or Claude at it, see the Anvil section of docs/windows-setup.md."
 Write-Host "  5. If HOME was set above, open a new window before you start Emacs."
 
 if ($script:Failures -gt 0) {

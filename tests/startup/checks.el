@@ -243,14 +243,17 @@
 
 ;; During the port, the server of this fork has its own name, because all
 ;; servers of one user share one socket folder, and the earlier configuration
-;; owns the default name.  Anvil is off: loading anvil.el only defines things,
-;; and the MCP tools wait for the anvil-enable command.
-;; On Windows the earlier configuration no longer runs, so that server has the default name.
+;; owns the default name.
+;; On Windows the earlier configuration no longer runs, so that server has the default
+;; name, and Anvil is on by default.  Elsewhere Anvil is off until the cutover.
 (let ((expected (if (eq system-type 'windows-nt) "server" "nn")))
   (unless (equal (bound-and-true-p my/server-name) expected)
     (error "The server name is %S, not %S" (bound-and-true-p my/server-name) expected)))
-(when (bound-and-true-p my/anvil-enabled)
-  (error "Anvil is on by default"))
+(let ((expected (eq system-type 'windows-nt)))
+  (unless (eq expected (and (bound-and-true-p my/anvil-enabled) t))
+    (error "my/anvil-enabled is %S, not %S" (bound-and-true-p my/anvil-enabled) expected)))
+;; Batch Emacs starts no Anvil: loading anvil.el only defines things, and the MCP
+;; tools wait for the anvil-enable command.
 (when (and (featurep 'anvil) (bound-and-true-p anvil--enabled))
   (error "Anvil is enabled after startup"))
 

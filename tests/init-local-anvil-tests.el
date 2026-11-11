@@ -27,8 +27,15 @@
        ,@body)
      (nreverse collected)))
 
-(ert-deftest init-local-anvil-is-off-by-default ()
-  (should-not (eval (car (get 'my/anvil-enabled 'standard-value)))))
+(ert-deftest init-local-anvil-default-is-on-for-windows-only ()
+  "Anvil is off on macOS until the cutover, and on for Windows."
+  (let ((form (car (get 'my/anvil-enabled 'standard-value))))
+    (dolist (case '((darwin . nil) (gnu/linux . nil) (windows-nt . t)))
+      (let ((system-type (car case)))
+        (should (eq (cdr case) (and (eval form) t)))))))
+
+(ert-deftest init-local-anvil-runs-on-macos-and-windows ()
+  (should (equal '(darwin windows-nt) my/anvil-systems)))
 
 (ert-deftest init-local-anvil-modules-leave-org-out ()
   (should-not (memq 'org my/anvil-modules))
@@ -74,10 +81,22 @@
           (should (fboundp 'anvil-server-process-jsonrpc)))
       (fmakunbound 'anvil-server-process-jsonrpc))))
 
-(ert-deftest init-local-anvil-setup-warns-when-on-but-not-macos ()
+(ert-deftest init-local-anvil-setup-schedules-the-start-when-on-windows ()
   (let ((my/anvil-enabled t)
         (noninteractive nil)
         (system-type 'windows-nt)
+        timers)
+    (unwind-protect
+        (cl-letf (((symbol-function 'run-with-idle-timer)
+                   (lambda (&rest args) (push args timers))))
+          (my/anvil-setup)
+          (should (equal timers '((2 nil my/anvil-start)))))
+      (fmakunbound 'anvil-server-process-jsonrpc))))
+
+(ert-deftest init-local-anvil-setup-warns-when-on-but-not-macos-or-windows ()
+  (let ((my/anvil-enabled t)
+        (noninteractive nil)
+        (system-type 'gnu/linux)
         timers warnings)
     (setq warnings
           (init-local-anvil-tests--collecting
@@ -86,10 +105,10 @@
               (my/anvil-setup))))
     (should-not timers)
     (should (= 1 (length warnings)))
-    (should (string-match-p "macOS only" (cdr (car warnings))))))
+    (should (string-match-p "macOS and Windows only" (cdr (car warnings))))))
 
-(ert-deftest init-local-anvil-start-warns-and-goes-on-off-macos ()
-  (let ((system-type 'windows-nt)
+(ert-deftest init-local-anvil-start-warns-and-goes-on-elsewhere ()
+  (let ((system-type 'gnu/linux)
         (anvil--enabled nil)
         warnings)
     (setq warnings
@@ -100,7 +119,7 @@
                        (lambda () (error "Anvil must not start"))))
               (my/anvil-start))))
     (should (= 1 (length warnings)))
-    (should (string-match-p "macOS only" (cdr (car warnings))))))
+    (should (string-match-p "macOS and Windows only" (cdr (car warnings))))))
 
 (ert-deftest init-local-anvil-start-warns-when-the-package-is-missing ()
   (let ((system-type 'darwin)
@@ -118,19 +137,24 @@
     (should (= 1 (length warnings)))
     (should (string-match-p "anvil.el is not installed" (cdr (car warnings))))))
 
-(ert-deftest init-local-anvil-start-enables-without-org-and-keeps-state-in-var ()
+(defun init-local-anvil-tests--start (system bridge-present)
+  "Run `my/anvil-start' on SYSTEM with Anvil stubbed; return a plist of what happened.
+Non-nil BRIDGE-PRESENT puts the bridge script in the bridge folder first.
+The plist has :seen, :started, :installed, :state-dir, :bridge-dir and :outer-dir."
   (let* ((tmp (make-temp-file "anvil-test-" t))
          (my/anvil-state-directory (file-name-as-directory (expand-file-name "state" tmp)))
          (my/anvil-bridge-directory (file-name-as-directory (expand-file-name "bridge" tmp)))
-         (system-type 'darwin)
          (anvil--enabled nil)
          (anvil-modules nil)
          (anvil-optional-modules nil)
          (anvil-server-install-directory nil)
          (outer-dir user-emacs-directory)
-         seen started)
+         seen started installed)
     (unwind-protect
         (let ((orig-require (symbol-function 'require)))
+          (when bridge-present
+            (make-directory my/anvil-bridge-directory t)
+            (write-region "" nil (expand-file-name "anvil-stdio.sh" my/anvil-bridge-directory)))
           (cl-letf (((symbol-function 'require)
                      (lambda (feature &rest args)
                        (if (memq feature '(anvil anvil-server-commands))
@@ -142,21 +166,43 @@
                                         user-emacs-directory
                                         anvil-server-install-directory))))
                     ((symbol-function 'anvil-server-start)
-                     (lambda () (setq started t))))
-            (my/anvil-start)
-            (should started)
-            (should-not (memq 'org (nth 0 seen)))
-            (should-not (memq 'org (nth 1 seen)))
-            (should-not (memq 'worker (nth 0 seen)))
-            (should-not (memq 'worker (nth 1 seen)))
-            (should (memq 'state (nth 1 seen)))
-            ;; The state files of the modules land in the state folder.
-            (should (equal my/anvil-state-directory (nth 2 seen)))
-            (should (equal my/anvil-bridge-directory (nth 3 seen)))
-            (should (file-directory-p my/anvil-state-directory))
-            ;; The caller's value is back afterwards.
-            (should (equal outer-dir user-emacs-directory))))
+                     (lambda () (setq started t)))
+                    ((symbol-function 'anvil-server-install)
+                     (lambda () (setq installed t))))
+            ;; Bind it here only: writing the bridge file above needs the real value.
+            (let ((system-type system))
+              (my/anvil-start))
+            (list :seen seen :started started :installed installed
+                  :state-dir my/anvil-state-directory
+                  :bridge-dir my/anvil-bridge-directory
+                  :state-dir-exists (file-directory-p my/anvil-state-directory)
+                  :outer-dir-kept (equal outer-dir user-emacs-directory))))
       (delete-directory tmp t))))
+
+(ert-deftest init-local-anvil-start-enables-without-org-and-keeps-state-in-var ()
+  (dolist (system '(darwin windows-nt))
+    (let* ((result (init-local-anvil-tests--start system nil))
+           (seen (plist-get result :seen)))
+      (should (plist-get result :started))
+      (should-not (memq 'org (nth 0 seen)))
+      (should-not (memq 'org (nth 1 seen)))
+      (should-not (memq 'worker (nth 0 seen)))
+      (should-not (memq 'worker (nth 1 seen)))
+      (should (memq 'state (nth 1 seen)))
+      ;; The state files of the modules land in the state folder.
+      (should (equal (plist-get result :state-dir) (nth 2 seen)))
+      (should (equal (plist-get result :bridge-dir) (nth 3 seen)))
+      (should (plist-get result :state-dir-exists))
+      ;; The caller's value is back afterwards.
+      (should (plist-get result :outer-dir-kept)))))
+
+(ert-deftest init-local-anvil-start-installs-the-bridge-when-it-is-missing ()
+  (should (plist-get (init-local-anvil-tests--start 'windows-nt nil) :installed)))
+
+(ert-deftest init-local-anvil-start-keeps-an-existing-bridge ()
+  (let ((result (init-local-anvil-tests--start 'windows-nt t)))
+    (should (plist-get result :started))
+    (should-not (plist-get result :installed))))
 
 (ert-deftest init-local-anvil-start-is-idempotent ()
   (let ((anvil--enabled t)

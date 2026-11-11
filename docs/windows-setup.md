@@ -23,7 +23,7 @@ The script does these steps. Each one checks first and skips work that is done, 
 - Installs the Scoop font `NerdFontsSymbolsOnly`. The fork uses Aporetic Sans Mono first on Windows (from https://github.com/protesilaos/aporetic), and MonoLisa second (licensed). The script cannot download them: it tells you if one is missing. Download the font, then run the script with `-FontDir <folder of the .ttf files>` to install it for the current user.
 - Prints a note about Herdr (optional) and the next steps.
 
-Then start Emacs. The first start installs the packages and takes several minutes. Run `M-x ghostel` and pick Download. The server has the default name, so plain `emacsclient` reaches it. Anvil (the AI tools) is not on for Windows yet.
+Then start Emacs. The first start installs the packages and takes several minutes. Run `M-x ghostel` and pick Download. The server has the default name, so plain `emacsclient` reaches it. Anvil (the AI tools) starts with Emacs; see the Anvil section below to point Codex or Claude at it.
 
 The steps below are the manual way, for a PC where you want to do it by hand.
 
@@ -65,3 +65,26 @@ Ghostel comes from MELPA. On the first `M-x ghostel`, pick Download. It fetches 
 For Unix-style work, run `M-x my/ghostel-bash`. It starts `bash.exe` from `PATH` as a login shell. Put the `usr/bin` folder of Git for Windows on `PATH` first. Do not use `git-bash.exe`, which opens a separate window.
 
 Herdr works on Windows too when the `herdr` program is on `PATH` (the module sets it up on macOS and Windows, and does nothing elsewhere).
+
+## Anvil
+
+Anvil gives AI clients (Claude, Codex) tools that run inside Emacs. On Windows it starts by itself a moment after Emacs starts (`my/anvil-enabled` is on there). The `worker` and `org` modules are off.
+
+The clients start a bridge script, `~\.emacs.d\var\anvil-stdio.sh`. Anvil copies it there the first time it runs, and `my/update-all-packages` refreshes it. The server has the default name, so the bridge needs no `--socket` option.
+
+A client cannot run a `.sh` file by itself. Make one small command file for it, for example `~\.local\bin\anvil-stdio.cmd` with `~\.local\bin` on `PATH`:
+
+```bat
+@echo off
+"C:\Program Files\Git\bin\bash.exe" "%USERPROFILE%\.emacs.d\var\anvil-stdio.sh" %*
+```
+
+Then point the client at the command. For Codex, in `~\.codex\config.toml`:
+
+```toml
+[mcp_servers.anvil]
+command = "anvil-stdio.cmd"
+args = ["--server-id=anvil", "--init-function=anvil-enable", "--stop-function=anvil-disable"]
+```
+
+The clients need a running Emacs: with none, the bridge waits about six seconds and then fails.

@@ -1,18 +1,23 @@
-;;; init-local-anvil.el --- Anvil, the MCP server (off during the port) -*- lexical-binding: t -*-
+;;; init-local-anvil.el --- Anvil, the MCP server -*- lexical-binding: t -*-
 ;;; Commentary:
-;; Anvil gives AI clients (Claude, Codex) tools that run inside this Emacs.  The
-;; earlier configuration owns the MCP clients during the port, so Anvil is off
-;; here: `my/anvil-enabled' is nil, and loading anvil.el alone only defines
-;; things.  The tools exist only after `anvil-enable'.
+;; Anvil gives AI clients (Claude, Codex) tools that run inside this Emacs.
+;; Loading anvil.el alone only defines things.  The tools exist only after
+;; `anvil-enable'.
 ;;
-;; To test it: set `my/anvil-enabled' in user-lisp/custom.el (or run
-;; M-x my/anvil-start), then run the bridge script that
-;; M-x anvil-server-install writes to var/ with --socket=<socket of the server
-;; named in `my/server-name'>.  At cutover, turn it on.
+;; Anvil runs on macOS and Windows (`my/anvil-systems').  It is on by default on
+;; Windows, where the earlier configuration no longer runs.  On macOS the earlier
+;; configuration owns the MCP clients during the port, so Anvil is off there:
+;; `my/anvil-enabled' is nil.  At cutover, turn it on.
 ;;
-;; macOS only: Windows does not use Anvil.  The Anvil packages come from
-;; init-local-package-list.el.  The `worker' module stays out until cutover (see
-;; `my/anvil-modules').
+;; The MCP clients start the bridge script var/anvil-stdio.sh.  Anvil starts a
+;; moment after startup and copies the script there when it is missing.  On macOS,
+;; to test it: set `my/anvil-enabled' in user-lisp/custom.el (or run M-x
+;; my/anvil-start), then run the bridge with --socket=<socket of the server named
+;; in `my/server-name'>.  On Windows the server has the default name, so the
+;; bridge needs no --socket option.
+;;
+;; The Anvil packages come from init-local-package-list.el.  The `worker' module
+;; stays out until cutover (see `my/anvil-modules').
 ;;; Code:
 
 (defvar anvil-modules)
@@ -21,9 +26,14 @@
 (defvar anvil--enabled)
 (declare-function anvil-enable "anvil")
 (declare-function anvil-server-start "anvil-server-commands")
+(declare-function anvil-server-install "anvil-server-commands")
 
-(defcustom my/anvil-enabled nil
-  "Non-nil starts Anvil a moment after startup."
+(defconst my/anvil-systems '(darwin windows-nt)
+  "Values of `system-type' on which Anvil runs.")
+
+(defcustom my/anvil-enabled (eq system-type 'windows-nt)
+  "Non-nil starts Anvil a moment after startup.
+On by default on Windows, and off elsewhere until the cutover."
   :type 'boolean
   :group 'tools)
 
@@ -68,8 +78,9 @@ Warn and do nothing when Anvil cannot run here.  A second call does nothing."
   (interactive)
   (cond
    ((bound-and-true-p anvil--enabled))
-   ((not (eq system-type 'darwin))
-    (display-warning 'init-local-anvil "Anvil runs on macOS only here, so it is not started"))
+   ((not (memq system-type my/anvil-systems))
+    (display-warning 'init-local-anvil
+                     "Anvil runs on macOS and Windows only here, so it is not started"))
    ((not (require 'anvil nil t))
     (display-warning 'init-local-anvil
                      "anvil.el is not installed, so Anvil is not started"))
@@ -84,7 +95,10 @@ Warn and do nothing when Anvil cannot run here.  A second call does nothing."
       (require 'anvil-server-commands)
       (setq anvil-server-install-directory my/anvil-bridge-directory)
       (anvil-enable)
-      (anvil-server-start)))))
+      (anvil-server-start)
+      ;; The clients start this script, so it must exist after the first start.
+      (unless (file-exists-p (expand-file-name "anvil-stdio.sh" my/anvil-bridge-directory))
+        (anvil-server-install))))))
 
 (defun my/anvil--early-call (&rest args)
   "Start Anvil, then call the real `anvil-server-process-jsonrpc' with ARGS.
@@ -99,9 +113,9 @@ a missing one.  `my/anvil-start' replaces it with the real definition."
   "Schedule the start of Anvil when `my/anvil-enabled' is non-nil.
 Does nothing in batch Emacs.  When Anvil is off, it loads nothing."
   (when (and my/anvil-enabled (not noninteractive))
-    (if (not (eq system-type 'darwin))
+    (if (not (memq system-type my/anvil-systems))
         (display-warning 'init-local-anvil
-                         "my/anvil-enabled is set, but Anvil runs on macOS only here")
+                         "my/anvil-enabled is set, but Anvil runs on macOS and Windows only here")
       (unless (fboundp 'anvil-server-process-jsonrpc)
         (defalias 'anvil-server-process-jsonrpc #'my/anvil--early-call))
       (run-with-idle-timer 2 nil #'my/anvil-start))))
