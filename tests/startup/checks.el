@@ -61,6 +61,15 @@
 (when (memq 'elegant-world custom-enabled-themes)
   (error "The Base theme elegant-world is still enabled"))
 
+;; The fringe has no background of its own.  Modus draws it darker than the text, and
+;; with the wide fringes of the Base that shows as a band between two windows.
+;; Batch Emacs is a terminal, where `face-background' gives fallback colors, so read
+;; the face spec of the theme.
+(let ((bg (plist-get (cdar (cadr (assq 'modus-operandi-tinted (get 'fringe 'theme-face))))
+                     :background)))
+  (unless (or (eq bg 'unspecified) (equal bg (modus-themes-get-color-value 'bg-main)))
+    (error "The theme draws the fringe in %S, not in the text background" bg)))
+
 ;; F5 starts the debugger of the Base.  The theme toggle is on the leader: C-c T.
 (unless (eq (key-binding (kbd "<f5>")) 'dape)
   (error "F5 runs %S, not dape" (key-binding (kbd "<f5>"))))

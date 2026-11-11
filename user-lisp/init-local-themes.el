@@ -27,6 +27,9 @@
      (fg-heading-2 yellow-cooler)
      (fg-heading-3 cyan-cooler)
      (prose-done fg-dim)
+     ;; The fringe has the text background, so two windows show no darker band
+     ;; between them (the Base has wide fringes).
+     (fringe unspecified)
      (fg-line-number-inactive "gray50")
      (fg-line-number-active fg-main)
      (bg-line-number-inactive unspecified)
