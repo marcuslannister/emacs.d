@@ -5,7 +5,9 @@
 ;; Fonts stay with the Base's `nn-font-init'.
 ;;; Code:
 
+(defvar minibuffer-frame--frame)
 (declare-function modus-themes-get-color-value "modus-themes")
+(declare-function my/hel-leader-bind "init-local-hel")
 
 (use-package modus-themes
   :ensure t
@@ -29,13 +31,30 @@
      (fg-line-number-active fg-main)
      (bg-line-number-inactive unspecified)
      (bg-line-number-active unspecified)))
-  :bind ("<f5>" . modus-themes-toggle)
   :config
   ;; A 256-color terminal maps ANSI color 0 to the background in some terminals
   ;; (Kitty).  #080808 maps exactly to xterm grayscale slot 232 instead.
   (unless (display-graphic-p)
     (setq modus-operandi-tinted-palette-overrides '((fg-main "#080808"))))
   (load-theme 'modus-operandi-tinted :no-confirm))
+
+;; F5 stays with the debugger of the Base (dape).  The theme toggle is on the leader.
+(my/hel-leader-bind "C-c T" #'modus-themes-toggle)
+
+;; The minibuffer frame of the Base takes its background from the `tooltip' face,
+;; which Modus draws in a dark beige.  Give it the editor background, as the
+;; completion popup of the earlier configuration had.  Real tooltips keep `tooltip'.
+(defun my/minibuffer-frame-sync-background (&rest _)
+  "Set the background of the minibuffer child frame to the default background.
+Do nothing when that frame does not exist."
+  (when (and (boundp 'minibuffer-frame--frame) (frame-live-p minibuffer-frame--frame))
+    (set-frame-parameter minibuffer-frame--frame 'background-color
+                         (face-background 'default (frame-parent minibuffer-frame--frame)))))
+
+(with-eval-after-load 'minibuffer-frame
+  (advice-add 'minibuffer-frame--init :after #'my/minibuffer-frame-sync-background))
+;; A theme change (the toggle) must update a frame that already exists.
+(add-hook 'enable-theme-functions #'my/minibuffer-frame-sync-background)
 
 ;; Org TODO words follow the palette.
 (with-eval-after-load 'org

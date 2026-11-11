@@ -61,6 +61,10 @@
 (when (memq 'elegant-world custom-enabled-themes)
   (error "The Base theme elegant-world is still enabled"))
 
+;; F5 starts the debugger of the Base.  The theme toggle is on the leader: C-c T.
+(unless (eq (key-binding (kbd "<f5>")) 'dape)
+  (error "F5 runs %S, not dape" (key-binding (kbd "<f5>"))))
+
 ;; Hel runs after startup and the pins are in place.  Every leader key must run
 ;; a defined command, in both states that have the leader.  This catches a key
 ;; that still points at a removed or not yet ported command.
