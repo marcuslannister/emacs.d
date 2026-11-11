@@ -93,6 +93,20 @@
   (error "TAB in the fido map runs %S, not icomplete-force-complete"
          (keymap-lookup icomplete-fido-mode-map "TAB")))
 
+;; The saved undo history is restored in `find-file-hook', so the mode must be on before
+;; any key press: a file opened first would otherwise lose its history.  C-r is the
+;; built-in redo, in every Hel state that has no window prefix.
+(unless (bound-and-true-p undo-fu-session-global-mode)
+  (error "undo-fu-session-global-mode is not on"))
+(unless (memq 'undo-fu-session--recover-safe find-file-hook)
+  (error "undo-fu-session does not recover the history in find-file-hook"))
+(with-temp-buffer
+  (text-mode)
+  (dolist (state '(normal insert emacs))
+    (hel-switch-state state)
+    (unless (eq (key-binding (kbd "C-r")) 'undo-redo)
+      (error "C-r in %s state runs %S, not undo-redo" state (key-binding (kbd "C-r"))))))
+
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)
   (error "marginalia-mode is not on after the first input"))
