@@ -52,6 +52,12 @@ jobs:
     - name: Check startup
       run: ./test-startup.sh
 
+    # The first run installs the packages. package.el compiles and loads a new
+    # package in the same process, so a command without an autoload looks defined.
+    # The second run starts with the packages installed, like a normal start.
+    - name: Check startup again (packages installed)
+      run: ./test-startup.sh
+
     - name: Run ERT suites
       run: |
         for f in tests/*.el; do
