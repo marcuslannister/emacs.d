@@ -70,6 +70,12 @@
   (unless (or (eq bg 'unspecified) (equal bg (modus-themes-get-color-value 'bg-main)))
     (error "The theme draws the fringe in %S, not in the text background" bg)))
 
+;; marginalia starts with the first key press, and brings the icons with it.
+(unless (bound-and-true-p marginalia-mode)
+  (error "marginalia-mode is not on after the first input"))
+(unless (bound-and-true-p nerd-icons-completion-mode)
+  (error "nerd-icons-completion-mode is not on after the first input"))
+
 ;; F5 starts the debugger of the Base.  The theme toggle is on the leader: C-c T.
 (unless (eq (key-binding (kbd "<f5>")) 'dape)
   (error "F5 runs %S, not dape" (key-binding (kbd "<f5>"))))
