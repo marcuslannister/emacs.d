@@ -20,7 +20,7 @@ The script does these steps. Each one checks first and skips work that is done, 
 - Installs MSYS2 and the MINGW64 `gcc` and `libgccjit` (see Native compilation below). If MSYS2 asks for a restart of its shell, the step fails: run the script again.
 - Clones this fork to `~\.emacs.d`, or runs `git pull --ff-only` when it is already the fork. If `~\.emacs.d` exists and is not a clone of the fork, the step fails and the script does not touch the folder: move it yourself.
 - Clones `auto-save` to `~\github\auto-save`.
-- Installs the Scoop font `NerdFontsSymbolsOnly`. MonoLisa is licensed, so the script cannot download it. Run it with `-MonoLisaDir <folder of the .ttf files>` to install it for the current user.
+- Installs the Scoop font `NerdFontsSymbolsOnly`. The fork uses Aporetic Sans Mono first on Windows (from https://github.com/protesilaos/aporetic), and MonoLisa second (licensed). The script cannot download them: it tells you if one is missing. Download the font, then run the script with `-FontDir <folder of the .ttf files>` to install it for the current user.
 - Prints a note about Herdr (optional) and the next steps.
 
 Then start Emacs. The first start installs the packages and takes several minutes. Run `M-x ghostel` and pick Download. The server has the default name, so plain `emacsclient` reaches it. Anvil (the AI tools) is not on for Windows yet.

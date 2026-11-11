@@ -2,15 +2,17 @@
 #
 # Run it in Windows PowerShell 5.1 or PowerShell 7:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File windows-setup.ps1
-# Optional: -MonoLisaDir <folder with the MonoLisa .ttf files> installs that font for
-# the current user (MonoLisa is licensed, so the script cannot download it).
+# Optional: -FontDir <folder with .ttf files> installs those fonts for the current user.
+# Use it for Aporetic Sans Mono (the default font on Windows, from
+# https://github.com/protesilaos/aporetic) and for MonoLisa (the second choice; it is
+# licensed, so the script cannot download it).
 #
 # Each step checks first and skips work that is done, so a second run changes nothing.
 # It never deletes or overwrites a file or folder, and it does not start Emacs.
 # See docs/windows-setup.md.
 
 param(
-    [string]$MonoLisaDir = ""
+    [string]$FontDir = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -223,33 +225,46 @@ if ($installed -match "NerdFontsSymbolsOnly") {
 
 $fontKeys = @("HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts",
               "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts")
-$monoLisaThere = $false
-foreach ($key in $fontKeys) {
-    if ((Get-ItemProperty $key -ErrorAction SilentlyContinue).PSObject.Properties.Name -match "MonoLisa") {
-        $monoLisaThere = $true
+function Test-FontInstalled {
+    param([string]$Pattern)
+    foreach ($key in $fontKeys) {
+        if ((Get-ItemProperty $key -ErrorAction SilentlyContinue).PSObject.Properties.Name -match $Pattern) {
+            return $true
+        }
     }
+    return $false
 }
-if ($monoLisaThere) {
-    Write-Step "MonoLisa" "skip" "installed"
-} elseif ($MonoLisaDir -ne "") {
-    $files = @(Get-ChildItem -Path $MonoLisaDir -Filter "*.ttf" -ErrorAction SilentlyContinue)
+# The fork uses Aporetic Sans Mono first on Windows, and MonoLisa second.
+if ($FontDir -ne "") {
+    $files = @(Get-ChildItem -Path $FontDir -Filter "*.ttf" -ErrorAction SilentlyContinue)
     if ($files.Count -eq 0) {
-        Write-Step "MonoLisa" "FAILED" "no .ttf files in $MonoLisaDir"
+        Write-Step "fonts from -FontDir" "FAILED" "no .ttf files in $FontDir"
     } else {
         $fontDir = Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Fonts"
         [void](New-Item -ItemType Directory -Force -Path $fontDir)
         $userKey = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+        $count = 0
         foreach ($file in $files) {
             $target = Join-Path $fontDir $file.Name
             if (-not (Test-Path $target)) {
                 Copy-Item -Path $file.FullName -Destination $target
                 New-ItemProperty -Path $userKey -Name ($file.BaseName + " (TrueType)") -Value $target -PropertyType String -Force | Out-Null
+                $count++
             }
         }
-        Write-Step "MonoLisa" "done" "$($files.Count) files for the current user"
+        if ($count -gt 0) { Write-Step "fonts from -FontDir" "done" "$count files for the current user" }
+        else { Write-Step "fonts from -FontDir" "skip" "all files are already there" }
     }
+}
+if (Test-FontInstalled "Aporetic") {
+    Write-Step "Aporetic Sans Mono" "skip" "installed"
 } else {
-    Write-Step "MonoLisa" "skip" "not installed. It is licensed: buy it, then run this script with -MonoLisaDir <folder of the .ttf files>"
+    Write-Step "Aporetic Sans Mono" "skip" "not installed (the default font on Windows). Download it from https://github.com/protesilaos/aporetic, then run this script with -FontDir <folder of the .ttf files>"
+}
+if (Test-FontInstalled "MonoLisa") {
+    Write-Step "MonoLisa" "skip" "installed"
+} else {
+    Write-Step "MonoLisa" "skip" "not installed (the second choice; it is licensed). Optional: run this script with -FontDir <folder of its .ttf files>"
 }
 
 # ---- 9. Herdr --------------------------------------------------------------------
