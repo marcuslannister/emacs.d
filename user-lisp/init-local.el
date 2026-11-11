@@ -39,6 +39,8 @@
 (require 'init-local-themes)
 (require 'init-local-completion)
 (require 'init-local-ghostel)
+(require 'init-local-herdr)
+(my/herdr-setup)
 
 (require 'init-local-server)
 (my/server-start)

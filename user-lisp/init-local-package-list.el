@@ -43,5 +43,14 @@
                          :tag "4.6.1"
                          :main "org-gtd.el")
 
+;; Herdr: control the Herdr agent multiplexer from Emacs.  The repository has no
+;; tags, so the pin is the commit of 2026-10-11 ("Keep polling through a server
+;; outage ...").  It requires ghostel when it loads.  Move the commit deliberately,
+;; and re-check `my/herdr-send-raw' in init-local-herdr.el, which uses private
+;; helpers of the package.
+(async-installer-git-add "https://github.com/baongoc124/emacs-herdr.git"
+                         :commit "e2ea72948207dda981b41f57f6e7a438393e0c7d"
+                         :main "herdr.el")
+
 (provide 'init-local-package-list)
 ;;; init-local-package-list.el ends here

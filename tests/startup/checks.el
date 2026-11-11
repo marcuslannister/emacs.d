@@ -40,7 +40,7 @@
 (unless (equal (sort (mapcar (lambda (pin) (file-name-base (plist-get pin :repo)))
                              async-installer-git-list)
                      #'string<)
-               '("anvil.el" "hel" "hel-leader" "org-gtd.el"))
+               '("anvil.el" "emacs-herdr" "hel" "hel-leader" "org-gtd.el"))
   (error "The pin list is wrong: %S" async-installer-git-list))
 (dolist (pin async-installer-git-list)
   (unless (my/async-installer-pin-at-target-p pin)
