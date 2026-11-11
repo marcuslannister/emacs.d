@@ -30,7 +30,12 @@
   ;; emacs.d-nn: removed `native-comp-jit-compilation' and
   ;; `native-comp-deferred-compilation' (both nil).  JIT is on for every
   ;; system.  On Windows, init-local-windows-native-comp.el sets up the toolchain.
-  (setq native-comp-async-on-battery-power nil
+  ;; emacs.d-nn: `native-comp-async-on-battery-power' is t (the Emacs default).  With the
+  ;; Base value nil, Emacs 31.1 (`native--compile-skip-on-battery-p') skips every JIT
+  ;; compile when it reads "battery power", and it reads "not charging" as that, even on
+  ;; AC power.  nuc (no battery): 67 files stayed in the queue.  The Mac on AC with a
+  ;; full battery (%L "AC", %b "", %B "high"): 188 files queued, 17 .eln files.
+  (setq native-comp-async-on-battery-power t
         process-connection-type nil
         process-adaptive-read-buffering t
         read-process-output-max (* 4 1024 1024)

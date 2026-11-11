@@ -130,6 +130,15 @@
 (unless (bound-and-true-p nn-leisure-menu-items)
   (error "nn-leisure-menu-items is not bound, so the telega check proves nothing"))
 
+;; Emacs 31.1 skips every JIT compile when it reads "battery power", and it reads "not
+;; charging" as that: a desktop with no battery, or a laptop on AC with a full battery.
+;; With `native-comp-async-on-battery-power' nil the compile queue never moves.
+(when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
+  (require 'comp-run)
+  (when (native--compile-skip-on-battery-p)
+    (error "Emacs would skip native compiles as battery power: on-battery-power is %S"
+           native-comp-async-on-battery-power)))
+
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)
   (error "marginalia-mode is not on after the first input"))
