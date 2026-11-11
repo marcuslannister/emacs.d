@@ -54,6 +54,13 @@
 (unless (advice-member-p 'my/gtd--organize-newest-first 'org-gtd-organize--call)
   (error "The org-gtd settings were not applied"))
 
+;; The theme is Modus Operandi Tinted, and the Base theme no longer loads.  Batch
+;; Emacs has no fonts, so this file cannot check them.
+(unless (memq 'modus-operandi-tinted custom-enabled-themes)
+  (error "modus-operandi-tinted is not enabled: %S" custom-enabled-themes))
+(when (memq 'elegant-world custom-enabled-themes)
+  (error "The Base theme elegant-world is still enabled"))
+
 ;; Hel runs after startup and the pins are in place.  Every leader key must run
 ;; a defined command, in both states that have the leader.  This catches a key
 ;; that still points at a removed or not yet ported command.

@@ -60,7 +60,8 @@
                       ;; Geometric Shapes
                       (set-fontset-font t '(#x25A0 . #x25FF) spec)))
     ;; Chinese
-    (cl-loop for font in '("LXGW WenKai Mono" "Sarasa Mono SC"
+    ;; emacs.d-nn: Maple Mono NF CN first.
+    (cl-loop for font in '("Maple Mono NF CN" "LXGW WenKai Mono" "Sarasa Mono SC"
                            "Microsoft YaHei" "DengXian" "Simhei")
              for spec = (font-spec :family font)
              when (find-font spec)
@@ -69,11 +70,13 @@
                       ;; Greek letters
                       (set-fontset-font t '(#x0370 . #x03FF) spec)))
     ;; Default
-    (cl-loop for font in '("IBM Plex Mono"
+    ;; emacs.d-nn: MonoLisa Nerd Font first; height 160 on macOS, 140 elsewhere.
+    (cl-loop for font in '("MonoLisa Nerd Font" "IBM Plex Mono"
                            "JetBrains Mono" "Iosevka SS13" "Cascadia Mono")
              for spec = (font-spec :family font)
              when (find-font spec)
-             return (set-face-attribute 'default nil :family font :height 140))
+             return (set-face-attribute 'default nil :family font
+                                        :height (if (eq system-type 'darwin) 160 140)))
 
     ;; Font Ligature
     ;; (cl-loop for chars in '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==")
@@ -101,4 +104,7 @@
                 'after-init-hook)))
     (add-hook hook #'nn-font-init -100)
     (add-hook hook #'nn-home-init -90)
-    (add-hook hook #'nn-theme-init -90)))
+    ;; emacs.d-nn: the theme hook is removed.  user-lisp/init-local-themes.el loads
+    ;; modus-operandi-tinted.  `nn-theme-init' stays above, unused, so a later
+    ;; Upstream change to it does not conflict.
+    ))
