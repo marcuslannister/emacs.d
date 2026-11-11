@@ -78,6 +78,11 @@
 (when (eq (key-binding (kbd "C-c m")) 'simple-mpv-audio-browse)
   (error "C-c m still runs the simple-mpv music browser"))
 
+;; TAB in fido inserts the selected candidate, and does not open *Completions*.
+(unless (eq (keymap-lookup icomplete-fido-mode-map "TAB") 'icomplete-force-complete)
+  (error "TAB in the fido map runs %S, not icomplete-force-complete"
+         (keymap-lookup icomplete-fido-mode-map "TAB")))
+
 ;; marginalia starts with the first key press, and brings the icons with it.
 (unless (bound-and-true-p marginalia-mode)
   (error "marginalia-mode is not on after the first input"))

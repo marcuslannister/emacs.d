@@ -8,6 +8,7 @@
 (require 'cl-lib)
 (require 'ert)
 (require 'use-package)
+(require 'icomplete)
 
 (let ((use-package-always-defer t)
       (use-package-always-ensure nil)
@@ -37,6 +38,9 @@
       (my/completion-icons-in-minibuffer-only
        #'ignore (lambda (metadata prop) (setq seen (list metadata prop))) 'm 'p))
     (should (equal '(m p) seen))))
+
+(ert-deftest init-local-completion-tab-inserts-the-fido-selection ()
+  (should (eq 'icomplete-force-complete (keymap-lookup icomplete-fido-mode-map "TAB"))))
 
 (provide 'init-local-completion-tests)
 ;;; init-local-completion-tests.el ends here

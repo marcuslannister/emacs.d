@@ -33,5 +33,12 @@ popup shows two icons.  Call ORIG with METADATA and PROP when no minibuffer is c
   (advice-add 'nerd-icons-completion-completion-metadata-get :around
               #'my/completion-icons-in-minibuffer-only))
 
+;; Fido does not bind TAB (its keys are C-M-i and C-j).  TAB then runs
+;; `minibuffer-complete', which opens a *Completions* buffer under the fido list.  Make
+;; TAB insert the selected candidate, as C-M-i does.  The map is active only while fido
+;; runs, so other completion UIs keep their TAB.
+(with-eval-after-load 'icomplete
+  (keymap-set icomplete-fido-mode-map "TAB" #'icomplete-force-complete))
+
 (provide 'init-local-completion)
 ;;; init-local-completion.el ends here
