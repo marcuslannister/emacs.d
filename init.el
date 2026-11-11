@@ -51,9 +51,13 @@
                       (set-fontset-font t '(#xe000 . #xf8ff) spec)
                       (set-fontset-font t '(#xf0000 . #xfffff) spec)))
     ;; Extra
-    ;; emacs.d-nn: MonoLisa Nerd Font first.  Maple Mono NL is not installed here, and
-    ;; Apple Symbols then draws box characters with seams.
-    (cl-loop for font in '("MonoLisa Nerd Font" "Maple Mono NL NF CN")
+    ;; emacs.d-nn: the same first fonts as the default font below.  Maple Mono NL is not
+    ;; installed here, and Apple Symbols then draws box characters with seams.
+    (cl-loop for font in (append (if (eq system-type 'windows-nt)
+                                     '("Aporetic Sans Mono" "MonoLisa Nerd Font")
+                                   '("MonoLisa Nerd Font" "Aporetic Sans Mono"
+                                     "AporeticSansMono Nerd Font"))
+                                 '("Maple Mono NL NF CN"))
              for spec = (font-spec :family font)
              when (find-font spec)
              return (progn
@@ -72,9 +76,15 @@
                       ;; Greek letters
                       (set-fontset-font t '(#x0370 . #x03FF) spec)))
     ;; Default
-    ;; emacs.d-nn: MonoLisa Nerd Font first; height 160 on macOS, 140 elsewhere.
-    (cl-loop for font in '("MonoLisa Nerd Font" "IBM Plex Mono"
-                           "JetBrains Mono" "Iosevka SS13" "Cascadia Mono")
+    ;; emacs.d-nn: Windows: Aporetic Sans Mono, then MonoLisa.  macOS and others: MonoLisa,
+    ;; then Aporetic (on macOS it is installed as the Nerd Font).  Height 160 on macOS,
+    ;; 140 elsewhere.
+    (cl-loop for font in (append (if (eq system-type 'windows-nt)
+                                     '("Aporetic Sans Mono" "MonoLisa Nerd Font")
+                                   '("MonoLisa Nerd Font" "Aporetic Sans Mono"
+                                     "AporeticSansMono Nerd Font"))
+                                 '("IBM Plex Mono" "JetBrains Mono" "Iosevka SS13"
+                                   "Cascadia Mono"))
              for spec = (font-spec :family font)
              when (find-font spec)
              return (set-face-attribute 'default nil :family font
