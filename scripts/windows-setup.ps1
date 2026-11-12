@@ -1,4 +1,4 @@
-# windows-setup.ps1 - set up a new Windows PC for the emacs.d-nn fork.
+# windows-setup.ps1 - set up a new Windows PC for this Emacs configuration.
 #
 # Run it in Windows PowerShell 5.1 or PowerShell 7:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File windows-setup.ps1
@@ -17,7 +17,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $script:Failures = 0
-$ForkUrl = "https://github.com/marcuslannister/emacs.d-nn"
+$ForkUrl = "https://github.com/marcuslannister/emacs.d"
 $AutoSaveUrl = "https://github.com/manateelazycat/auto-save"
 
 function Write-Step {
@@ -188,7 +188,9 @@ if (-not (Test-Command "git")) {
     else { Write-Step "fork" "FAILED" "git clone exit code $code" }
 } elseif (Test-Path (Join-Path $forkDir ".git")) {
     $remote = Get-NativeOutput { git -C $forkDir remote get-url origin }
-    if ($remote -match "marcuslannister/emacs\.d-nn") {
+    # The old name emacs.d-nn counts too: GitHub redirects it, and a clone made before the
+    # rename still has it.  The earlier configuration is emacs.d.old now, and does not match.
+    if ($remote -match 'marcuslannister/emacs\.d(-nn)?(\.git)?/?$') {
         $out = Get-NativeOutput { git -C $forkDir pull --ff-only }
         if ($LASTEXITCODE -ne 0) { Write-Step "fork" "FAILED" "git pull --ff-only: $out" }
         elseif ($out -match "Already up to date") { Write-Step "fork" "skip" "up to date" }
@@ -276,8 +278,8 @@ if (Test-Command "herdr") {
 
 # ---- 10. Anvil bridge command ----------------------------------------------------
 # MCP clients (Codex, Pi, Claude Code) cannot run a .sh file, so they start a small command
-# file that runs the bridge of Anvil with the bash of Git.  Anvil writes the bridge to
-# var\anvil-stdio.sh at its first start.  The command file is never overwritten.
+# file that runs the bridge of Anvil with the bash of Git.  Anvil writes the bridge to the
+# config root (anvil-stdio.sh) at its first start.  The command file is never overwritten.
 function Find-GitBash {
     # git --exec-path prints <Git folder>\<toolchain>\libexec\git-core, so the Git folder is
     # three folders up, and bash.exe is in its bin folder.  Get-Command git does not help:
@@ -308,7 +310,7 @@ if (Test-Path $cmdFile) {
     Write-Step "anvil-stdio.cmd" "skip" "$cmdFile exists, so the script leaves it alone"
 } else {
     $bash = Find-GitBash
-    $bridge = Join-Path $forkDir "var\anvil-stdio.sh"
+    $bridge = Join-Path $forkDir "anvil-stdio.sh"
     if (-not $bash) {
         Write-Step "anvil-stdio.cmd" "FAILED" "no bin\bash.exe next to the Git on PATH. Make the file yourself: see the Anvil section of docs/windows-setup.md"
     } else {

@@ -35,8 +35,10 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 
 ## Configuration and Safety
 - The config needs Emacs 31.1 or later.
-- During the port, the Emacs server is named `nn` on macOS (`my/server-name`; on Windows it has the default name `server`), and Anvil is off on macOS (`my/anvil-enabled`; on Windows it is on). The earlier configuration owns the default server name and the MCP clients on macOS. Keep Anvil's `org` module off. Keep its `worker` module out until cutover: the worker daemons have fixed names, and the earlier configuration runs them. Cutover turns both switches and adds `worker` back.
-- Guard macOS-only code (the PATH import) with `(eq system-type 'darwin)`. Anvil runs on `darwin` and `windows-nt` (`my/anvil-systems`).
+- The Emacs server has the default name `server` (`my/server-name`), so plain `emacsclient` reaches it. Close any other Emacs first (for example the earlier configuration): a second server of the same name does not start.
+- Anvil runs on `darwin` and `windows-nt` (`my/anvil-systems`) and starts by itself (`my/anvil-enabled`). Keep its `org` module off. Its `worker` module is on. The worker daemons have fixed names (`anvil-worker-read-1` and so on), so only one Emacs configuration may run them.
+- The Anvil bridge script `anvil-stdio.sh` lives in the config root, where the MCP clients look for it. Anvil copies it there when it is missing, and `.gitignore` lists it.
+- Guard macOS-only code (the PATH import) with `(eq system-type 'darwin)`.
 - Keep the Base's Windows settings. Every ported module must start on Windows with no error.
 - A module that needs a tool, file, or folder from this machine (`rg`, `herdr`, `~/github/...`) must skip itself and call `display-warning`. It must never stop startup.
 

@@ -2,11 +2,10 @@
 ;;; Commentary:
 ;; All Emacs servers of one user share one folder ($TMPDIR/emacs<uid>/, or a
 ;; server file on Windows).  A second server with the same name fails to start
-;; and leaves the first one running.  The earlier configuration owns the default
-;; name, so during the port this server is named `nn' on macOS.  Reach it with
-;; `emacsclient -s nn ...'.  At cutover, set `my/server-name' to "server".
-;; On Windows the earlier configuration no longer runs, so the server there has the
-;; default name "server", and plain `emacsclient' reaches it.
+;; and leaves the first one running.  This config uses the default name "server",
+;; so plain `emacsclient' reaches it, and the Anvil bridge needs no option.  Close
+;; any other Emacs first (for example a copy of the earlier configuration): it
+;; would keep the name, and this config would warn and start no server.
 ;;
 ;; The Base starts no server, so this module starts it.  Batch Emacs and a
 ;; daemon do not start one here: a daemon starts its own.
@@ -16,10 +15,9 @@
 (declare-function server-start "server")
 (declare-function server-running-p "server")
 
-(defcustom my/server-name (if (eq system-type 'windows-nt) "server" "nn")
+(defcustom my/server-name "server"
   "Name of the Emacs server of this config.
-It is \"server\" (the Emacs default) on Windows, and \"nn\" elsewhere until the
-cutover; then set it to \"server\" everywhere."
+\"server\" is the Emacs default, so plain `emacsclient' reaches it."
   :type 'string
   :group 'server)
 

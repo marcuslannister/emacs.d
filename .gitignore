@@ -4,3 +4,5 @@ server
 tree-sitter
 var
 custom.el
+# emacs.d-nn: the Anvil bridge script. The MCP clients start it from here, and Anvil copies it here.
+/anvil-stdio.sh

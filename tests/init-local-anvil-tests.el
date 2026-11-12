@@ -27,12 +27,12 @@
        ,@body)
      (nreverse collected)))
 
-(ert-deftest init-local-anvil-default-is-on-for-windows-only ()
-  "Anvil is off on macOS until the cutover, and on for Windows."
+(ert-deftest init-local-anvil-default-is-on-where-anvil-runs ()
+  "Anvil is on by default on macOS and Windows, and off elsewhere."
   (let ((form (car (get 'my/anvil-enabled 'standard-value))))
-    (dolist (case '((darwin . nil) (gnu/linux . nil) (windows-nt . t)))
+    (dolist (case '((darwin . t) (windows-nt . t) (gnu/linux . nil)))
       (let ((system-type (car case)))
-        (should (eq (cdr case) (and (eval form) t)))))))
+        (should (eq (cdr case) (eval form)))))))
 
 (ert-deftest init-local-anvil-runs-on-macos-and-windows ()
   (should (equal '(darwin windows-nt) my/anvil-systems)))
@@ -41,10 +41,30 @@
   (should-not (memq 'org my/anvil-modules))
   (should-not (memq 'org my/anvil-optional-modules)))
 
-(ert-deftest init-local-anvil-modules-leave-worker-out-during-the-port ()
-  "The worker daemons have fixed names, which the earlier configuration uses."
-  (should-not (memq 'worker my/anvil-modules))
-  (should-not (memq 'worker my/anvil-optional-modules)))
+(ert-deftest init-local-anvil-modules-include-worker ()
+  "The worker pool is on since the cutover; the earlier configuration no longer runs it."
+  (should (memq 'worker my/anvil-modules)))
+
+(ert-deftest init-local-anvil-bridge-goes-to-the-config-root ()
+  "The MCP clients start anvil-stdio.sh in the config root."
+  (should (equal (expand-file-name user-emacs-directory) my/anvil-bridge-directory)))
+
+(ert-deftest init-local-anvil-worker-init-file-goes-to-the-state-folder ()
+  (should (equal my/anvil-state-directory
+                 (my/anvil--worker-init-in-state-dir (lambda () user-emacs-directory)))))
+
+(ert-deftest init-local-anvil-worker-init-advice-is-added-when-the-module-loads ()
+  (let ((had-feature (featurep 'anvil-worker)))
+    (unwind-protect
+        (progn
+          (defalias 'anvil-worker--generate-init-file #'ignore)
+          (provide 'anvil-worker)
+          (should (advice-member-p #'my/anvil--worker-init-in-state-dir
+                                   'anvil-worker--generate-init-file)))
+      (advice-remove 'anvil-worker--generate-init-file #'my/anvil--worker-init-in-state-dir)
+      (fmakunbound 'anvil-worker--generate-init-file)
+      (unless had-feature
+        (setq features (delq 'anvil-worker features))))))
 
 (ert-deftest init-local-anvil-setup-does-nothing-when-off ()
   (let ((my/anvil-enabled nil)
@@ -186,8 +206,7 @@ The plist has :seen, :started, :installed, :state-dir, :bridge-dir and :outer-di
       (should (plist-get result :started))
       (should-not (memq 'org (nth 0 seen)))
       (should-not (memq 'org (nth 1 seen)))
-      (should-not (memq 'worker (nth 0 seen)))
-      (should-not (memq 'worker (nth 1 seen)))
+      (should (memq 'worker (nth 0 seen)))
       (should (memq 'state (nth 1 seen)))
       ;; The state files of the modules land in the state folder.
       (should (equal (plist-get result :state-dir) (nth 2 seen)))

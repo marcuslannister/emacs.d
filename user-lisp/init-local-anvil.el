@@ -4,20 +4,16 @@
 ;; Loading anvil.el alone only defines things.  The tools exist only after
 ;; `anvil-enable'.
 ;;
-;; Anvil runs on macOS and Windows (`my/anvil-systems').  It is on by default on
-;; Windows, where the earlier configuration no longer runs.  On macOS the earlier
-;; configuration owns the MCP clients during the port, so Anvil is off there:
-;; `my/anvil-enabled' is nil.  At cutover, turn it on.
+;; Anvil runs on macOS and Windows (`my/anvil-systems'), and starts a moment after
+;; startup there (`my/anvil-enabled').
 ;;
-;; The MCP clients start the bridge script var/anvil-stdio.sh.  Anvil starts a
-;; moment after startup and copies the script there when it is missing.  On macOS,
-;; to test it: set `my/anvil-enabled' in user-lisp/custom.el (or run M-x
-;; my/anvil-start), then run the bridge with --socket=<socket of the server named
-;; in `my/server-name'>.  On Windows the server has the default name, so the
-;; bridge needs no --socket option.
+;; The MCP clients start the bridge script anvil-stdio.sh in the config root, where
+;; they always looked for it.  Anvil copies it there when it is missing, and Git
+;; ignores it.  The server has the default name, so the bridge needs no --socket
+;; option.  Only one Emacs may run the worker daemons (see `my/anvil-modules'):
+;; close the earlier configuration first.
 ;;
-;; The Anvil packages come from init-local-package-list.el.  The `worker' module
-;; stays out until cutover (see `my/anvil-modules').
+;; The Anvil packages come from init-local-package-list.el.
 ;;; Code:
 
 (defvar anvil-modules)
@@ -31,9 +27,9 @@
 (defconst my/anvil-systems '(darwin windows-nt)
   "Values of `system-type' on which Anvil runs.")
 
-(defcustom my/anvil-enabled (eq system-type 'windows-nt)
+(defcustom my/anvil-enabled (and (memq system-type my/anvil-systems) t)
   "Non-nil starts Anvil a moment after startup.
-On by default on Windows, and off elsewhere until the cutover."
+On by default on the systems where Anvil runs."
   :type 'boolean
   :group 'tools)
 
@@ -43,14 +39,13 @@ On by default on Windows, and off elsewhere until the cutover."
 ;; `anvil-enable', which reads them: `anvil-modules' defaults to a list that
 ;; includes `org', and `anvil-optional-modules' defaults to nil.
 ;;
-;; `worker' is left out during the port.  Its daemons have fixed names
-;; (anvil-worker-read-1, -read-2, -write-1, -batch-1), with no prefix setting,
-;; and the spawn code skips a worker whose name is already alive.  The earlier
-;; configuration runs exactly those daemons, so this Anvil would attach to them
-;; (they load that configuration's init file), and the reset-pool tool would kill
-;; them by name.  Add `worker' back at cutover, when this config owns them.
+;; `worker' starts four daemons with fixed names (anvil-worker-read-1, -read-2,
+;; -write-1, -batch-1), with no prefix setting.  The spawn code skips a worker
+;; whose name is already alive, and the reset-pool tool kills them by name.  So only
+;; one Emacs configuration may run them: close the earlier configuration first, or
+;; both share the daemons, which load the init file of whichever started them.
 (defconst my/anvil-modules
-  '(eval file host git proc fs emacs text clipboard data net)
+  '(eval file host git proc fs emacs text clipboard data net worker)
   "Anvil modules to load.")
 
 ;; `state' comes before `shell-filter' and `context', which both need its
@@ -64,13 +59,26 @@ On by default on Windows, and off elsewhere until the cutover."
 (defconst my/anvil-state-directory (locate-user-emacs-file "var/anvil/")
   "Folder for the state files of Anvil.")
 
-(defconst my/anvil-bridge-directory (locate-user-emacs-file "var/")
-  "Folder where `anvil-server-install' puts the stdio bridge script.")
+(defconst my/anvil-bridge-directory (expand-file-name user-emacs-directory)
+  "Folder where `anvil-server-install' puts the stdio bridge script.
+It is the config root, where the MCP clients look for it.  .gitignore lists the file.")
 
-;; Anvil writes the script to `user-emacs-directory' by default, which is the
-;; repository root here, and Git does not ignore it.
+;; Anvil's own default is `user-emacs-directory', but `my/anvil-start' binds that
+;; to the state folder while Anvil loads, so the folder is set here.
 (with-eval-after-load 'anvil-server
   (setq anvil-server-install-directory my/anvil-bridge-directory))
+
+;; `anvil-worker--generate-init-file' writes anvil-worker-init.el into
+;; `user-emacs-directory' when a worker spawns, which is after `my/anvil-start' has
+;; returned.  Point it at the state folder, so the config root gets no stray file.
+;; Do not set `anvil-worker-init-file': a non-nil value turns the generation off.
+(defun my/anvil--worker-init-in-state-dir (generate)
+  "Call GENERATE with `user-emacs-directory' set to the Anvil state folder."
+  (let ((user-emacs-directory my/anvil-state-directory))
+    (funcall generate)))
+
+(with-eval-after-load 'anvil-worker
+  (advice-add 'anvil-worker--generate-init-file :around #'my/anvil--worker-init-in-state-dir))
 
 (defun my/anvil-start ()
   "Load Anvil, enable its modules, and start its server.

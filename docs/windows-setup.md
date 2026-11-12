@@ -5,7 +5,7 @@
 On a new Windows 10 or 11 PC, download the setup script and run it. It works in Windows PowerShell 5.1 and in PowerShell 7:
 
 ```powershell
-irm https://raw.githubusercontent.com/marcuslannister/emacs.d-nn/refs/heads/main/scripts/windows-setup.ps1 -OutFile windows-setup.ps1
+irm https://raw.githubusercontent.com/marcuslannister/emacs.d/refs/heads/main/scripts/windows-setup.ps1 -OutFile windows-setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File windows-setup.ps1
 ```
 
@@ -69,15 +69,15 @@ Herdr works on Windows too when the `herdr` program is on `PATH` (the module set
 
 ## Anvil
 
-Anvil gives AI clients (Claude, Codex) tools that run inside Emacs. On Windows it starts by itself a moment after Emacs starts (`my/anvil-enabled` is on there). The `worker` and `org` modules are off.
+Anvil gives AI clients (Claude, Codex) tools that run inside Emacs. It starts by itself a moment after Emacs starts (`my/anvil-enabled` is on). The `worker` module is on: it keeps four helper Emacs daemons with fixed names. The `org` module is off.
 
-The clients start a bridge script, `~\.emacs.d\var\anvil-stdio.sh`. Anvil copies it there the first time it runs, and `my/update-all-packages` refreshes it. The server has the default name, so the bridge needs no `--socket` option.
+The clients start a bridge script, `~\.emacs.d\anvil-stdio.sh`, in the config root. Git ignores it. Anvil copies it there the first time it runs, and `my/update-all-packages` refreshes it. The server has the default name, so the bridge needs no `--socket` option.
 
 A client cannot run a `.sh` file by itself. It needs one small command file, `~\.local\bin\anvil-stdio.cmd`, with `~\.local\bin` on `PATH`. The setup script makes both when they are missing. To make them by hand, write the file:
 
 ```bat
 @echo off
-"C:\Program Files\Git\bin\bash.exe" "%USERPROFILE%\.emacs.d\var\anvil-stdio.sh" %*
+"C:\Program Files\Git\bin\bash.exe" "%USERPROFILE%\.emacs.d\anvil-stdio.sh" %*
 ```
 
 The path of `bash.exe` depends on how Git was installed. The Git for Windows installer puts it at `C:\Program Files\Git\bin\bash.exe`. Scoop's Git puts it at `<Scoop folder>\apps\git\current\bin\bash.exe`. To find it for the Git on your `PATH`, run `git --exec-path` and go up three folders: `bin\bash.exe` is in that folder. Use the full path, not plain `bash`: on some PCs `bash` starts WSL.

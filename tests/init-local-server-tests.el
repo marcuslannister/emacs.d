@@ -31,11 +31,12 @@ look alive.  The result has the `server-name' at each start and the warnings."
       (setq server-name saved-name))
     (list :started started :warnings (nreverse warnings))))
 
-(ert-deftest init-local-server-default-name-is-nn-except-on-windows ()
+(ert-deftest init-local-server-default-name-is-server-on-every-system ()
+  "The default name lets plain `emacsclient' reach the server."
   (let ((form (car (get 'my/server-name 'standard-value))))
-    (dolist (pair '((darwin . "nn") (gnu/linux . "nn") (windows-nt . "server")))
-      (let ((system-type (car pair)))
-        (should (equal (cdr pair) (eval form)))))))
+    (dolist (system '(darwin gnu/linux windows-nt))
+      (let ((system-type system))
+        (should (equal "server" (eval form)))))))
 
 (ert-deftest init-local-server-starts-under-the-configured-name ()
   (let* ((my/server-name "nn")

@@ -241,17 +241,20 @@
   (unless (member '(:eval (my/hel-mode-line-state)) mode-line-format)
     (error "The Hel state is not in the mode line")))
 
-;; During the port, the server of this fork has its own name, because all
-;; servers of one user share one socket folder, and the earlier configuration
-;; owns the default name.
-;; On Windows the earlier configuration no longer runs, so that server has the default
-;; name, and Anvil is on by default.  Elsewhere Anvil is off until the cutover.
-(let ((expected (if (eq system-type 'windows-nt) "server" "nn")))
-  (unless (equal (bound-and-true-p my/server-name) expected)
-    (error "The server name is %S, not %S" (bound-and-true-p my/server-name) expected)))
-(let ((expected (eq system-type 'windows-nt)))
+;; The server has the default name, so plain `emacsclient' reaches it.  Anvil is on
+;; where it runs (macOS and Windows): the worker pool is in, the org module stays
+;; out, and the bridge script goes to the config root.
+(unless (equal (bound-and-true-p my/server-name) "server")
+  (error "The server name is %S, not \"server\"" (bound-and-true-p my/server-name)))
+(let ((expected (and (memq system-type '(darwin windows-nt)) t)))
   (unless (eq expected (and (bound-and-true-p my/anvil-enabled) t))
     (error "my/anvil-enabled is %S, not %S" (bound-and-true-p my/anvil-enabled) expected)))
+(unless (memq 'worker my/anvil-modules)
+  (error "The Anvil worker module is not in my/anvil-modules"))
+(when (or (memq 'org my/anvil-modules) (memq 'org my/anvil-optional-modules))
+  (error "The Anvil org module is on"))
+(unless (equal my/anvil-bridge-directory (expand-file-name user-emacs-directory))
+  (error "The Anvil bridge folder is %S, not the config root" my/anvil-bridge-directory))
 ;; Batch Emacs starts no Anvil: loading anvil.el only defines things, and the MCP
 ;; tools wait for the anvil-enable command.
 (when (and (featurep 'anvil) (bound-and-true-p anvil--enabled))
