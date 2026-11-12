@@ -11,13 +11,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File windows-setup.ps1
 
 The URL has `refs/heads/main` because the Upstream has a tag that is also named `main`.
 
-The script does these steps. Each one checks first and skips work that is done, so a second run changes nothing. It prints `done`, `skip`, or `FAILED` with the reason for each step. It never deletes or overwrites, and it opens no Emacs window (it runs `emacs -Q --batch` once, to look for `libgccjit-0.dll`).
+The script does these steps. Each one checks first and skips work that is done, so a second run changes nothing. It prints `done`, `skip`, or `FAILED` with the reason for each step. It never deletes or overwrites, and it opens no Emacs window.
 
 - Sets the user variable `HOME` to your user folder, if it is not set. Emacs needs it before `early-init.el` runs. Open a new window after this step.
 - Installs Scoop (with its official installer) when it is missing, and sets the execution policy to `RemoteSigned` for the current user.
 - Adds the Scoop buckets `extras` and `nerd-fonts`.
 - Installs `git`, `emacs`, `ripgrep`, `fd`, and `pwsh`, unless the command is already on `PATH`.
-- Installs MSYS2 and the MINGW64 `gcc` and `libgccjit` (see Native compilation below), unless the Emacs on `PATH` already has `libgccjit-0.dll` beside `emacs.exe`: then it skips this step. If MSYS2 asks for a restart of its shell, the step fails: run the script again.
 - Clones this fork to `~\.emacs.d`, or runs `git pull --ff-only` when it is already the fork. If `~\.emacs.d` exists and is not a clone of the fork, the step fails and the script does not touch the folder: move it yourself.
 - Clones `auto-save` to `~\github\auto-save`.
 - Installs the Scoop font `NerdFontsSymbolsOnly`. The fork uses Aporetic Sans Mono first on Windows (from https://github.com/protesilaos/aporetic), and MonoLisa second (licensed). The script cannot download them: it tells you if one is missing. Download the font, then run the script with `-FontDir <folder of the .ttf files>` to install it for the current user.
@@ -36,28 +35,11 @@ scoop install extras/emacs
 
 ## Native compilation
 
-Skip this section if your Emacs is a prebuilt build that bundles `libgccjit` (such as kiennq's), or a build from source with `libgccjit-0.dll` copied beside `emacs.exe`. The setup script checks the Emacs on `PATH` for that file and then installs no MSYS2. The helper described below also does nothing then. A source build whose `libgccjit` stays only in `mingw64\bin` does not count: it still uses the MSYS2 steps.
+On Windows, the fork loads byte code only. `user-lisp/init-local-windows-native-comp.el`, loaded from `early-init.el`, turns off JIT compilation and subr trampolines, and points `native-comp-eln-load-path` to a folder with no `.eln` file. So Emacs loads no `.eln` file, not even the ones that its own build ships. Windows Defender scans each `.eln` file as a DLL when Emacs loads it. On one machine, loading `org`, `org-agenda`, `transient`, and `vc-git` took 8.6 s with `.eln` files and 0.6 s with byte code (see ADR 0001). macOS and Linux keep JIT native compilation.
 
-The official build ships no `libgccjit`. It needs the MSYS2 MINGW64 toolchain. The UCRT64 toolchain does not work: its `libgccjit` crashes every native compile. Git for Windows has no compiler.
+You do not need `libgccjit` or MSYS2 for the fork, and the setup script installs neither.
 
-```powershell
-scoop install msys2
-```
-
-Then open an MSYS2 shell (run `msys2`) and install the MINGW64 compiler and `libgccjit`:
-
-```sh
-pacman -Syu
-pacman -S --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-libgccjit
-```
-
-`pacman -Syu` updates MSYS2 first. If it says to close the shell, close it, open `msys2` again, and run both commands again.
-
-`user-lisp/init-local-windows-native-comp.el`, loaded from `early-init.el`, finds `mingw64/bin` in Scoop's MSYS2, or in any MSYS2 install that has one of its `bin` folders on `PATH` (such as `ucrt64\bin` or `usr\bin`), and puts it first on the `PATH` of Emacs only. If it finds none, it turns native compilation off and shows a warning at startup. Emacs then runs packages as byte code.
-
-To check a machine, start Emacs and look for a `windows-native-comp` warning in `*Warnings*`. No warning means the toolchain was found.
-
-The ERT suites run with `emacs -Q`, which does not load this helper. On a machine whose `PATH` has only the UCRT64 toolchain, a test that stubs or advises a built-in function (such as `file-exists-p` or `upcase-region`) then fails with a `native-compiler-error`. Add `--eval "(setq native-comp-enable-subr-trampolines nil)"` before `-l` to run the suites there.
+The ERT suites run with `emacs -Q`, which does not load this helper. If the `PATH` still has a GCC toolchain from an earlier setup (such as UCRT64 only), a test that stubs or advises a built-in function (such as `file-exists-p` or `upcase-region`) then fails with a `native-compiler-error`. Add `--eval "(setq native-comp-enable-subr-trampolines nil)"` before `-l` to run the suites there.
 
 ## Ghostel
 

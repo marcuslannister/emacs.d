@@ -8,11 +8,10 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - In Dired, `/` jumps to a file (`dired-goto-file`) and `K` kills lines (`dired-do-kill-lines`), in both Hel states. `/` replaces the buffer search there.
 - `SPC z t` (`C-c z t`) runs `zoxide-travel`: pick a ranked directory in the fido list and open it. The key and the package exist only when the `zoxide` program is on `PATH`; without it, startup shows a warning and goes on.
 - The `org-case-check` skill (ported from the Earlier configuration) and the `elisp-reviewer` agent, which checks Emacs Lisp changes against the rules of this fork.
-- `scripts/windows-setup.ps1` skips MSYS2 and the MINGW64 toolchain when the Emacs on `PATH` has `libgccjit-0.dll` beside `emacs.exe`, as a prebuilt build such as kiennq's does.
 - `scripts/windows-setup.ps1` makes `anvil-stdio.cmd` in `~\.local\bin` and puts that folder on the user `PATH`, so MCP clients can start the Anvil bridge on Windows.
 - Anvil runs on Windows too and starts by itself on macOS and Windows. Its `worker` module is on and its `org` module stays off. The bridge script `anvil-stdio.sh` lives in the config root.
 - `scripts/windows-setup.ps1` checks for Aporetic Sans Mono and MonoLisa and can install fonts from a folder (`-FontDir`).
-- `scripts/windows-setup.ps1` and a "New Windows PC" section in `docs/windows-setup.md` set up a new Windows PC: Scoop, programs, the MINGW64 toolchain, the fork, `auto-save`, and fonts.
+- `scripts/windows-setup.ps1` and a "New Windows PC" section in `docs/windows-setup.md` set up a new Windows PC: Scoop, programs, the fork, `auto-save`, and fonts.
 - A Vim-style tab bar with `M-1` to `M-9` for tabs.
 - Herdr (the agent multiplexer) on Windows as well as macOS.
 - A saved undo history (`undo-fu-session`), with `C-r` as the built-in redo.

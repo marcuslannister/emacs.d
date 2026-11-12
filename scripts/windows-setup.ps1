@@ -8,8 +8,7 @@
 # licensed, so the script cannot download it).
 #
 # Each step checks first and skips work that is done, so a second run changes nothing.
-# It never deletes or overwrites a file or folder, and it opens no Emacs window (it runs
-# "emacs -Q --batch" once, to look for libgccjit-0.dll).
+# It never deletes or overwrites a file or folder, and it opens no Emacs window.
 # See docs/windows-setup.md.
 
 param(
@@ -133,69 +132,7 @@ foreach ($program in $programs) {
     }
 }
 
-# ---- 4. MSYS2 and the MINGW64 toolchain -------------------------------------------
-# Native compilation needs libgccjit of the MINGW64 toolchain, not UCRT64: its libgccjit
-# crashes every native compile.  The helper of the fork puts mingw64\bin on the PATH of
-# Emacs only.  Skip all of this when the Emacs on PATH (a prebuilt build such as kiennq's,
-# or a build from source) has libgccjit-0.dll beside emacs.exe: the helper skips then too.
-function Test-EmacsBundlesLibgccjit {
-    if (-not (Test-Command "emacs")) { return $false }
-    # Ask Emacs, not Get-Command: a Scoop shim is not in the Emacs folder.
-    # On any failure the answer is $false, and the MSYS2 steps run as before.
-    try {
-        $dir = Get-NativeOutput { emacs -Q --batch --eval '(princ invocation-directory)' }
-        return ($dir -ne "" -and (Test-Path (Join-Path $dir "libgccjit-0.dll")))
-    } catch {
-        return $false
-    }
-}
-
-function Find-Msys2Root {
-    $candidates = @()
-    $scoopRoot = $env:SCOOP
-    if ([string]::IsNullOrEmpty($scoopRoot)) { $scoopRoot = Join-Path $env:USERPROFILE "scoop" }
-    $candidates += (Join-Path $scoopRoot "apps\msys2\current")
-    $candidates += "C:\msys64"
-    foreach ($entry in ($env:PATH -split ";")) {
-        if ($entry -match "^(.*[\\/]msys[^\\/]*)[\\/](usr|mingw64|ucrt64|clang64|mingw32)[\\/]bin[\\/]?$") {
-            $candidates += $Matches[1]
-        }
-    }
-    foreach ($candidate in $candidates) {
-        if (Test-Path (Join-Path $candidate "usr\bin\bash.exe")) { return $candidate }
-    }
-    return $null
-}
-
-$bundled = Test-EmacsBundlesLibgccjit
-$msysRoot = if ($bundled) { $null } else { Find-Msys2Root }
-if ($bundled) {
-    Write-Step "msys2 + mingw64" "skip" "the Emacs on PATH has libgccjit-0.dll beside emacs.exe"
-} elseif (-not $msysRoot) {
-    $code = Invoke-Native { scoop install msys2 }
-    if ($code -eq 0) { $msysRoot = Find-Msys2Root }
-    if ($msysRoot) { Write-Step "msys2" "done" $msysRoot }
-    else { Write-Step "msys2" "FAILED" "scoop install msys2 did not give an MSYS2 folder" }
-} else {
-    Write-Step "msys2" "skip" $msysRoot
-}
-if ($msysRoot) {
-    $dll = Join-Path $msysRoot "mingw64\bin\libgccjit-0.dll"
-    if (Test-Path $dll) {
-        Write-Step "mingw64 gcc + libgccjit" "skip" "found"
-    } else {
-        $bash = Join-Path $msysRoot "usr\bin\bash.exe"
-        Write-Host "Installing the MINGW64 toolchain; the first MSYS2 start sets up its keyring."
-        # The first update can ask to close the shell and run again, so update first, then
-        # install; run this script again when the check below fails.
-        [void](Invoke-Native { & $bash -lc "pacman -Syu --noconfirm" })
-        $code = Invoke-Native { & $bash -lc "pacman -S --needed --noconfirm mingw-w64-x86_64-gcc mingw-w64-x86_64-libgccjit" }
-        if (Test-Path $dll) { Write-Step "mingw64 gcc + libgccjit" "done" "" }
-        else { Write-Step "mingw64 gcc + libgccjit" "FAILED" "pacman exit code $code; MSYS2 may have asked for a restart, so run this script again" }
-    }
-}
-
-# ---- 6. The fork -----------------------------------------------------------------
+# ---- 4. The fork -----------------------------------------------------------------
 $forkDir = Join-Path $HomeDir ".emacs.d"
 if (-not (Test-Command "git")) {
     Write-Step "fork" "FAILED" "git is not on PATH yet; open a new window and run this script again"
@@ -221,7 +158,7 @@ if (-not (Test-Command "git")) {
     Write-Step "fork" "FAILED" "$forkDir exists and is not a Git clone. Move or rename it yourself, then run this script again. The script never moves it."
 }
 
-# ---- 7. auto-save ----------------------------------------------------------------
+# ---- 5. auto-save ----------------------------------------------------------------
 $autoSaveDir = Join-Path $HomeDir "github\auto-save"
 if (Test-Path $autoSaveDir) {
     Write-Step "auto-save" "skip" $autoSaveDir
@@ -234,7 +171,7 @@ if (Test-Path $autoSaveDir) {
     else { Write-Step "auto-save" "FAILED" "git clone exit code $code" }
 }
 
-# ---- 8. Fonts --------------------------------------------------------------------
+# ---- 6. Fonts --------------------------------------------------------------------
 $installed = Get-NativeOutput { scoop list }
 if ($installed -match "NerdFontsSymbolsOnly") {
     Write-Step "NerdFontsSymbolsOnly" "skip" "installed"
@@ -288,14 +225,14 @@ if (Test-FontInstalled "MonoLisa") {
     Write-Step "MonoLisa" "skip" "not installed (the second choice; it is licensed). Optional: run this script with -FontDir <folder of its .ttf files>"
 }
 
-# ---- 9. Herdr --------------------------------------------------------------------
+# ---- 7. Herdr --------------------------------------------------------------------
 if (Test-Command "herdr") {
     Write-Step "herdr" "skip" "on PATH"
 } else {
     Write-Step "herdr" "skip" "not on PATH. It is optional: install the Windows build of Herdr and put herdr.exe on PATH, then the fork finds it"
 }
 
-# ---- 10. Anvil bridge command ----------------------------------------------------
+# ---- 8. Anvil bridge command -----------------------------------------------------
 # MCP clients (Codex, Pi, Claude Code) cannot run a .sh file, so they start a small command
 # file that runs the bridge of Anvil with the bash of Git.  Anvil writes the bridge to the
 # config root (anvil-stdio.sh) at its first start.  The command file is never overwritten.
@@ -362,7 +299,7 @@ if ((Test-PathEntry $binDir $env:PATH) -or (Test-PathEntry $binDir $rawPath)) {
     Write-Step "PATH $binDir" "done" "added to the user PATH (open a new window)"
 }
 
-# ---- 11. Next steps --------------------------------------------------------------
+# ---- 9. Next steps ---------------------------------------------------------------
 Write-Host ""
 Write-Host "Next steps:"
 Write-Host "  1. Start Emacs. The first start installs the packages and can take several minutes."
