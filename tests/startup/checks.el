@@ -59,6 +59,13 @@
          (bound-and-true-p my/gtd-unavailable-reason)))
 (unless (advice-member-p 'my/gtd--organize-newest-first 'org-gtd-organize--call)
   (error "The org-gtd settings were not applied"))
+;; Every state that org-gtd sets must be a valid Org state, or organizing a Project
+;; fails with "State `NEXT' not valid in this file".
+(with-temp-buffer
+  (org-mode)
+  (dolist (state '("TODO" "NEXT" "WAIT" "DONE" "CNCL"))
+    (unless (member state org-todo-keywords-1)
+      (error "Org does not know the org-gtd state %s: %S" state org-todo-keywords-1))))
 
 ;; The theme is Modus Operandi Tinted, and the Base theme no longer loads.  Batch
 ;; Emacs has no fonts, so this file cannot check them.

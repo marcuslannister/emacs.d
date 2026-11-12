@@ -41,6 +41,9 @@ does not exist."
   ;; mark at each bookmark.  The goto-last commands use a marker first.
   (org-bookmark-names-plist nil)
   (org-use-fast-todo-selection t)
+  ;; org-gtd sets NEXT, WAIT, and CNCL.  Without them here, a clarified Project fails
+  ;; with "State `NEXT' not valid in this file", because no ~/org file has a #+TODO line.
+  (org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAIT(w)" "|" "DONE(d)" "CNCL(c)")))
   (org-startup-folded 'content)
   (org-startup-indented t)
   (org-startup-truncated nil)
