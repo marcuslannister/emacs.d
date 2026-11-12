@@ -8,7 +8,8 @@
 # licensed, so the script cannot download it).
 #
 # Each step checks first and skips work that is done, so a second run changes nothing.
-# It never deletes or overwrites a file or folder, and it does not start Emacs.
+# It never deletes or overwrites a file or folder, and it opens no Emacs window (it runs
+# "emacs -Q --batch" once, to look for libgccjit-0.dll).
 # See docs/windows-setup.md.
 
 param(
@@ -135,7 +136,20 @@ foreach ($program in $programs) {
 # ---- 4. MSYS2 and the MINGW64 toolchain -------------------------------------------
 # Native compilation needs libgccjit of the MINGW64 toolchain, not UCRT64: its libgccjit
 # crashes every native compile.  The helper of the fork puts mingw64\bin on the PATH of
-# Emacs only.
+# Emacs only.  Skip all of this when the Emacs on PATH (a prebuilt build such as kiennq's,
+# or a build from source) has libgccjit-0.dll beside emacs.exe: the helper skips then too.
+function Test-EmacsBundlesLibgccjit {
+    if (-not (Test-Command "emacs")) { return $false }
+    # Ask Emacs, not Get-Command: a Scoop shim is not in the Emacs folder.
+    # On any failure the answer is $false, and the MSYS2 steps run as before.
+    try {
+        $dir = Get-NativeOutput { emacs -Q --batch --eval '(princ invocation-directory)' }
+        return ($dir -ne "" -and (Test-Path (Join-Path $dir "libgccjit-0.dll")))
+    } catch {
+        return $false
+    }
+}
+
 function Find-Msys2Root {
     $candidates = @()
     $scoopRoot = $env:SCOOP
@@ -153,8 +167,11 @@ function Find-Msys2Root {
     return $null
 }
 
-$msysRoot = Find-Msys2Root
-if (-not $msysRoot) {
+$bundled = Test-EmacsBundlesLibgccjit
+$msysRoot = if ($bundled) { $null } else { Find-Msys2Root }
+if ($bundled) {
+    Write-Step "msys2 + mingw64" "skip" "the Emacs on PATH has libgccjit-0.dll beside emacs.exe"
+} elseif (-not $msysRoot) {
     $code = Invoke-Native { scoop install msys2 }
     if ($code -eq 0) { $msysRoot = Find-Msys2Root }
     if ($msysRoot) { Write-Step "msys2" "done" $msysRoot }

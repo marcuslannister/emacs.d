@@ -11,13 +11,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File windows-setup.ps1
 
 The URL has `refs/heads/main` because the Upstream has a tag that is also named `main`.
 
-The script does these steps. Each one checks first and skips work that is done, so a second run changes nothing. It prints `done`, `skip`, or `FAILED` with the reason for each step. It never deletes or overwrites, and it does not start Emacs.
+The script does these steps. Each one checks first and skips work that is done, so a second run changes nothing. It prints `done`, `skip`, or `FAILED` with the reason for each step. It never deletes or overwrites, and it opens no Emacs window (it runs `emacs -Q --batch` once, to look for `libgccjit-0.dll`).
 
 - Sets the user variable `HOME` to your user folder, if it is not set. Emacs needs it before `early-init.el` runs. Open a new window after this step.
 - Installs Scoop (with its official installer) when it is missing, and sets the execution policy to `RemoteSigned` for the current user.
 - Adds the Scoop buckets `extras` and `nerd-fonts`.
 - Installs `git`, `emacs`, `ripgrep`, `fd`, and `pwsh`, unless the command is already on `PATH`.
-- Installs MSYS2 and the MINGW64 `gcc` and `libgccjit` (see Native compilation below). If MSYS2 asks for a restart of its shell, the step fails: run the script again.
+- Installs MSYS2 and the MINGW64 `gcc` and `libgccjit` (see Native compilation below), unless the Emacs on `PATH` already has `libgccjit-0.dll` beside `emacs.exe`: then it skips this step. If MSYS2 asks for a restart of its shell, the step fails: run the script again.
 - Clones this fork to `~\.emacs.d`, or runs `git pull --ff-only` when it is already the fork. If `~\.emacs.d` exists and is not a clone of the fork, the step fails and the script does not touch the folder: move it yourself.
 - Clones `auto-save` to `~\github\auto-save`.
 - Installs the Scoop font `NerdFontsSymbolsOnly`. The fork uses Aporetic Sans Mono first on Windows (from https://github.com/protesilaos/aporetic), and MonoLisa second (licensed). The script cannot download them: it tells you if one is missing. Download the font, then run the script with `-FontDir <folder of the .ttf files>` to install it for the current user.
@@ -35,6 +35,8 @@ scoop install extras/emacs
 ```
 
 ## Native compilation
+
+Skip this section if your Emacs is a prebuilt build that bundles `libgccjit` (such as kiennq's), or a build from source with `libgccjit-0.dll` copied beside `emacs.exe`. The setup script checks the Emacs on `PATH` for that file and then installs no MSYS2. The helper described below also does nothing then. A source build whose `libgccjit` stays only in `mingw64\bin` does not count: it still uses the MSYS2 steps.
 
 The official build ships no `libgccjit`. It needs the MSYS2 MINGW64 toolchain. The UCRT64 toolchain does not work: its `libgccjit` crashes every native compile. Git for Windows has no compiler.
 
