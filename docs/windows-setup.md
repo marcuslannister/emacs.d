@@ -79,12 +79,27 @@ A client cannot run a `.sh` file by itself. Make one small command file for it, 
 "C:\Program Files\Git\bin\bash.exe" "%USERPROFILE%\.emacs.d\var\anvil-stdio.sh" %*
 ```
 
+The path of `bash.exe` depends on how Git was installed. The Git for Windows installer puts it at `C:\Program Files\Git\bin\bash.exe`. Scoop's Git puts it at `<Scoop folder>\apps\git\current\bin\bash.exe`. To find it for the Git on your `PATH`, run `git --exec-path` and go up three folders: `bin\bash.exe` is in that folder. Use the full path, not plain `bash`: on some PCs `bash` starts WSL.
+
 Then point the client at the command. For Codex, in `~\.codex\config.toml`:
 
 ```toml
 [mcp_servers.anvil]
 command = "anvil-stdio.cmd"
-args = ["--server-id=anvil", "--init-function=anvil-enable", "--stop-function=anvil-disable"]
+args = [
+    "--server-id=anvil",
+    "--init-function=anvil-enable",
+    "--stop-function=anvil-disable",
+]
+
+[mcp_servers.anvil.tools.emacs-eval]
+approval_mode = "approve"
+
+[mcp_servers.emacs-eval]
+command = "anvil-stdio.cmd"
+args = ["--server-id=emacs-eval"]
 ```
 
-The clients need a running Emacs: with none, the bridge waits about six seconds and then fails.
+There are two servers because Anvil has two tool sets. `anvil` holds the eval tools (`emacs-eval` and its async partners). `emacs-eval` holds all other tools (files, Git, HTTP, and more). The `approval_mode` line is optional: it lets Codex run `emacs-eval` without asking. Other clients use the same command and arguments in their own config format.
+
+The clients need a running Emacs: with none, the bridge waits about six seconds and then fails. When the bridge of the `anvil` server exits, it runs `anvil-disable`, so Anvil is off until a client connects again. Emacs does not need a restart for that.
