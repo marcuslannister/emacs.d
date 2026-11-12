@@ -225,6 +225,18 @@ manual selection is searched as-is instead of being replaced."
       "j" #'hel-next-line
       "k" #'hel-previous-line
       "l" #'hel-forward-char))
+  ;; Esc in Dired (a special buffer) switches to Emacs state.  There Dired's own j opens
+  ;; "Goto file:" and k kills lines, instead of moving.  The goto prompt is on / in
+  ;; both states, in place of the buffer search, and kill lines is on K.
+  (with-eval-after-load 'dired
+    (hel-keymap-set dired-mode-map :state 'emacs
+      "h" #'hel-backward-char
+      "j" #'hel-next-line
+      "k" #'hel-previous-line
+      "l" #'hel-forward-char)
+    (hel-keymap-set dired-mode-map :state '(normal emacs)
+      "/" #'dired-goto-file
+      "K" #'dired-do-kill-lines))
   (hel-keymap-global-set :state 'normal
     "d" #'hel-delete
     "D" #'my/hel-delete-to-end-of-line
