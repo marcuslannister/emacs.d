@@ -21,6 +21,7 @@ The script does these steps. Each one checks first and skips work that is done, 
 - Clones this fork to `~\.emacs.d`, or runs `git pull --ff-only` when it is already the fork. If `~\.emacs.d` exists and is not a clone of the fork, the step fails and the script does not touch the folder: move it yourself.
 - Clones `auto-save` to `~\github\auto-save`.
 - Installs the Scoop font `NerdFontsSymbolsOnly`. The fork uses Aporetic Sans Mono first on Windows (from https://github.com/protesilaos/aporetic), and MonoLisa second (licensed). The script cannot download them: it tells you if one is missing. Download the font, then run the script with `-FontDir <folder of the .ttf files>` to install it for the current user.
+- Makes `~\.local\bin\anvil-stdio.cmd`, the command that clients use to start the Anvil bridge (see the Anvil section), when it is missing. It writes the full path of the `bash.exe` of the Git on `PATH`. It never overwrites the file. It also adds `~\.local\bin` to the user `PATH` when it is missing. If that `PATH` has `%VARIABLES%`, the script leaves it alone and prints what to do.
 - Prints a note about Herdr (optional) and the next steps.
 
 Then start Emacs. The first start installs the packages and takes several minutes. Run `M-x ghostel` and pick Download. The server has the default name, so plain `emacsclient` reaches it. Anvil (the AI tools) starts with Emacs; see the Anvil section below to point Codex or Claude at it.
@@ -72,7 +73,7 @@ Anvil gives AI clients (Claude, Codex) tools that run inside Emacs. On Windows i
 
 The clients start a bridge script, `~\.emacs.d\var\anvil-stdio.sh`. Anvil copies it there the first time it runs, and `my/update-all-packages` refreshes it. The server has the default name, so the bridge needs no `--socket` option.
 
-A client cannot run a `.sh` file by itself. Make one small command file for it, for example `~\.local\bin\anvil-stdio.cmd` with `~\.local\bin` on `PATH`:
+A client cannot run a `.sh` file by itself. It needs one small command file, `~\.local\bin\anvil-stdio.cmd`, with `~\.local\bin` on `PATH`. The setup script makes both when they are missing. To make them by hand, write the file:
 
 ```bat
 @echo off

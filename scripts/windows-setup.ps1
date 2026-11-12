@@ -274,14 +274,81 @@ if (Test-Command "herdr") {
     Write-Step "herdr" "skip" "not on PATH. It is optional: install the Windows build of Herdr and put herdr.exe on PATH, then the fork finds it"
 }
 
-# ---- 10. Next steps --------------------------------------------------------------
+# ---- 10. Anvil bridge command ----------------------------------------------------
+# MCP clients (Codex, Pi, Claude Code) cannot run a .sh file, so they start a small command
+# file that runs the bridge of Anvil with the bash of Git.  Anvil writes the bridge to
+# var\anvil-stdio.sh at its first start.  The command file is never overwritten.
+function Find-GitBash {
+    # git --exec-path prints <Git folder>\<toolchain>\libexec\git-core, so the Git folder is
+    # three folders up, and bash.exe is in its bin folder.  Get-Command git does not help:
+    # the Scoop shim for git.exe is not in the Git folder.
+    if (-not (Test-Command "git")) { return $null }
+    $exec = Get-NativeOutput { git --exec-path }
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($exec)) { return $null }
+    $root = [IO.Path]::GetFullPath((Join-Path $exec "..\..\.."))
+    # A Scoop version folder goes away at the next update. Its "current" link stays.
+    $current = $root -replace '(\\apps\\git\\)[^\\]+$', '${1}current'
+    if (Test-Path (Join-Path $current "bin\bash.exe")) { $root = $current }
+    $bash = Join-Path $root "bin\bash.exe"
+    if (Test-Path $bash) { return $bash }
+    return $null
+}
+
+function Test-PathEntry {
+    param([string]$Dir, [string]$PathValue)
+    foreach ($entry in ($PathValue -split ";")) {
+        if ($entry.Trim().TrimEnd("\") -ieq $Dir.TrimEnd("\")) { return $true }
+    }
+    return $false
+}
+
+$binDir = Join-Path $HomeDir ".local\bin"
+$cmdFile = Join-Path $binDir "anvil-stdio.cmd"
+if (Test-Path $cmdFile) {
+    Write-Step "anvil-stdio.cmd" "skip" "$cmdFile exists, so the script leaves it alone"
+} else {
+    $bash = Find-GitBash
+    $bridge = Join-Path $forkDir "var\anvil-stdio.sh"
+    if (-not $bash) {
+        Write-Step "anvil-stdio.cmd" "FAILED" "no bin\bash.exe next to the Git on PATH. Make the file yourself: see the Anvil section of docs/windows-setup.md"
+    } else {
+        $text = "@echo off`r`n`"$bash`" `"$bridge`" %*`r`n"
+        if ($text -match '[^\x00-\x7F]') {
+            Write-Step "anvil-stdio.cmd" "FAILED" "a path has characters that are not ASCII. Make the file yourself: see the Anvil section of docs/windows-setup.md"
+        } else {
+            [void](New-Item -ItemType Directory -Force -Path $binDir)
+            [IO.File]::WriteAllText($cmdFile, $text, (New-Object System.Text.ASCIIEncoding))
+            Write-Step "anvil-stdio.cmd" "done" $cmdFile
+        }
+    }
+}
+
+# The clients start the file by its name, so its folder must be on PATH.
+# Read the user PATH as stored. Reading it expanded and writing it back would replace every
+# %VARIABLE% in it with its value. The stored value also shows an entry that a first run of
+# this script added, when this window still has the old PATH.
+$envKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment")
+$rawPath = [string]$envKey.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+$envKey.Close()
+if ((Test-PathEntry $binDir $env:PATH) -or (Test-PathEntry $binDir $rawPath)) {
+    Write-Step "PATH $binDir" "skip" "already on PATH"
+} elseif ($rawPath.Contains("%")) {
+    Write-Step "PATH $binDir" "skip" "your user PATH has %VARIABLES%, so the script leaves it alone. Add $binDir to it yourself, or give the clients the full path $cmdFile"
+} else {
+    $newPath = if ($rawPath -eq "") { $binDir } else { $rawPath.TrimEnd(";") + ";" + $binDir }
+    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+    $env:PATH = $env:PATH.TrimEnd(";") + ";" + $binDir
+    Write-Step "PATH $binDir" "done" "added to the user PATH (open a new window)"
+}
+
+# ---- 11. Next steps --------------------------------------------------------------
 Write-Host ""
 Write-Host "Next steps:"
 Write-Host "  1. Start Emacs. The first start installs the packages and can take several minutes."
 Write-Host "  2. Run M-x ghostel, and pick Download when it asks for the native module."
 Write-Host "  3. Reach the running Emacs from a shell with:  emacsclient -n <file>"
-Write-Host "  4. Anvil (the AI tools) starts with Emacs. To point Codex or Claude at it, see the Anvil section of docs/windows-setup.md."
-Write-Host "  5. If HOME was set above, open a new window before you start Emacs."
+Write-Host "  4. Anvil (the AI tools) starts with Emacs. The clients start $cmdFile. Add the Codex or Pi entries from the Anvil section of docs/windows-setup.md."
+Write-Host "  5. If HOME or PATH was changed above, open a new window before you start Emacs."
 
 if ($script:Failures -gt 0) {
     Write-Host ""
