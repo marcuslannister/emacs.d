@@ -69,7 +69,7 @@ Herdr works on Windows too when the `herdr` program is on `PATH` (the module set
 
 ## Anvil
 
-Anvil gives AI clients (Claude, Codex) tools that run inside Emacs. It starts by itself a moment after Emacs starts (`my/anvil-enabled` is on). The `worker` module is on: it keeps four helper Emacs daemons with fixed names. The `org` module is off.
+Anvil gives AI clients (Claude, Codex) tools that run inside Emacs. It starts by itself a moment after Emacs starts (`my/anvil-enabled` is on). The `worker` module is on: it keeps four helper Emacs daemons with fixed names. An Emacs that runs as administrator gets no worker daemons ("not a safe directory", because Administrators own the server folder), so start Emacs as a normal user. The `org` module is off.
 
 The clients start a bridge script, `~\.emacs.d\anvil-stdio.sh`, in the config root. Git ignores it. Anvil copies it there the first time it runs, and `my/update-all-packages` refreshes it. The server has the default name, so the bridge needs no `--socket` option.
 

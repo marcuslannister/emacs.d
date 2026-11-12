@@ -190,7 +190,9 @@ if (-not (Test-Command "git")) {
     $remote = Get-NativeOutput { git -C $forkDir remote get-url origin }
     # The old name emacs.d-nn counts too: GitHub redirects it, and a clone made before the
     # rename still has it.  The earlier configuration is emacs.d.old now, and does not match.
-    if ($remote -match 'marcuslannister/emacs\.d(-nn)?(\.git)?/?$') {
+    # The URL alone is not enough: a clone of the earlier configuration made from the emacs.d URL
+    # has the same URL. Only this configuration has user-lisp\init-local.el.
+    if (($remote -match 'marcuslannister/emacs\.d(-nn)?(\.git)?/?$') -and (Test-Path (Join-Path $forkDir "user-lisp\init-local.el"))) {
         $out = Get-NativeOutput { git -C $forkDir pull --ff-only }
         if ($LASTEXITCODE -ne 0) { Write-Step "fork" "FAILED" "git pull --ff-only: $out" }
         elseif ($out -match "Already up to date") { Write-Step "fork" "skip" "up to date" }

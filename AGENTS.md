@@ -21,7 +21,7 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - `./test-startup.sh`: loads the config in batch Emacs, in the order of `startup.el`. It runs the startup hooks and the Base's deferred hooks, then prints the startup warnings. `EMACS=/path/to/emacs ./test-startup.sh` uses another binary. The checks that run after startup live in `tests/startup/checks.el`, not in the script: a subfolder, so the CI loop over `tests/*.el` does not run it as an ERT file. Add a new startup check there.
 - `emacs -Q --batch -l tests/<file>.el -f ert-run-tests-batch-and-exit`: run one ERT file. A module brings its tests in the same commit. A test that needs an installed package (the `async-installer` tests) reads it from `elpa/`, so run `./test-startup.sh` first.
 - A test that stubs a function with `cl-letf` must load that function's file first. `display-warning` and `package-vc-install` start as autoloads, and their first call replaces the stub.
-- To try the fork next to another Emacs, start a separate process: `open -n -a Emacs --args --init-directory ~/Projects/emacs.d-nn`. Never load fork files into another Emacs session.
+- Run only one Emacs with this configuration. A second process takes the same server name and the same Anvil worker names, and it breaks the first one. Test a change in batch Emacs (`./test-startup.sh`, the ERT files), not in a second GUI Emacs. Never load fork files into an Emacs session that runs another configuration.
 - A plain `emacs --batch --init-directory DIR` does not load the init files. Use `./test-startup.sh`.
 
 ## Coding Style
