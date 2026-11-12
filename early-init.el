@@ -129,7 +129,8 @@
   (browse-url-chrome-program nil)
   (browse-url-chromium-program nil)
   (browse-url-text-browser nil)
-  (browse-url-browser-function 'eww-browse-url))
+  ;; emacs.d-nn: open links in the system browser, not EWW.
+  (browse-url-browser-function 'browse-url-default-browser))
 
 (use-package env
   :ensure nil
