@@ -5,6 +5,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 ## Unreleased
 
 ### Added
+- In Dired, `/` jumps to a file (`dired-goto-file`) and `K` kills lines (`dired-do-kill-lines`), in both Hel states. `/` replaces the buffer search there.
 - `SPC z t` (`C-c z t`) runs `zoxide-travel`: pick a ranked directory in the fido list and open it. The key and the package exist only when the `zoxide` program is on `PATH`; without it, startup shows a warning and goes on.
 - The `org-case-check` skill (ported from the Earlier configuration) and the `elisp-reviewer` agent, which checks Emacs Lisp changes against the rules of this fork.
 - `scripts/windows-setup.ps1` skips MSYS2 and the MINGW64 toolchain when the Emacs on `PATH` has `libgccjit-0.dll` beside `emacs.exe`, as a prebuilt build such as kiennq's does.
@@ -46,6 +47,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - The fork is set up: the personal identity is out of the Base, and a startup test, CI, and docs are added.
 
 ### Fixed
+- In Dired, `h`, `j`, `k`, and `l` move in Hel Emacs state, where `Esc` goes. Dired's own `j` opened "Goto file:" and did not move down.
 - Organizing a Project in `org-gtd` no longer fails with "State `NEXT' not valid in this file": `org-todo-keywords` is `TODO NEXT WAIT | DONE CNCL`, and a startup check covers it.
 - The cutover review: `scripts/windows-setup.ps1` identifies the fork by `user-lisp\init-local.el` and not only by its URL, the docs say to run only one Emacs, and they warn that an Emacs run as administrator gets no worker daemons.
 - The minibuffer frame fits a multi-line prompt, caps its height, and uses the editor background.
