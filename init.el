@@ -26,7 +26,10 @@
     (require 'init-local))
 
   (defun nn-font-init ()
-    (setq use-default-font-for-symbols nil)
+    ;; emacs.d-nn: use the default monospace font when it has the glyph, so symbols
+    ;; in Ghostel and Herdr stay 1 column wide instead of falling back to proportional
+    ;; Segoe UI Symbol or Apple Symbols.
+    (setq use-default-font-for-symbols t)
 
     ;; Unicode
     (cl-loop for font in '("Segoe UI" "Arial Unicode MS")

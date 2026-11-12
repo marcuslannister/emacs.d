@@ -34,6 +34,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - `./test-startup.sh` loads the config in batch Emacs and runs the checks in `tests/startup/checks.el`. CI runs it on macOS (GUI build) and Windows, and a second time on the installed state.
 
 ### Changed
+- Symbols and punctuation use the default monospace font when it has the glyph (`use-default-font-for-symbols` is `t`; the Base set `nil`), so Ghostel and Herdr keep 1-column symbols instead of falling back to Apple Symbols or Segoe UI Symbol. A glyph that the default font lacks, such as `⎿`, still falls back.
 - The Emacs server has the default name `server`, so plain `emacsclient` reaches it.
 - Aporetic Sans Mono is the first font on Windows, and MonoLisa is the first font on macOS.
 - Tabs use the built-in tab keys.
