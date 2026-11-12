@@ -30,7 +30,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - Hel and `hel-leader`, with one leader table (`my/hel-leader-bindings`) and the Hel state in the mode line.
 - Anvil (AI tools that run inside Emacs), at first off by default.
 - The pinned Git packages install through `async-installer`.
-- JIT native compilation is on, with a helper that finds the MINGW64 `libgccjit` on Windows or turns native compilation off with a warning (ADR 0001).
+- JIT native compilation is on, except on Windows. There a helper turns it off and loads no `.eln` file, because Defender scans each `.eln` file as a DLL and makes loading much slower (ADR 0001).
 - The case guard, the PATH import for macOS, and `ws-butler`; `init.el` loads the Local layer with one `(require 'init-local)` line.
 - `./test-startup.sh` loads the config in batch Emacs and runs the checks in `tests/startup/checks.el`. CI runs it on macOS (GUI build) and Windows, and a second time on the installed state.
 

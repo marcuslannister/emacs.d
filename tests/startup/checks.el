@@ -267,16 +267,22 @@
 (when (and (featurep 'anvil) (bound-and-true-p anvil--enabled))
   (error "Anvil is enabled after startup"))
 
-;; JIT native compilation is on everywhere.  Windows is the exception: the
-;; helper turns it off, with a warning, when no MINGW64 toolchain is found.
+;; JIT native compilation is on everywhere except Windows, where the helper turns it off
+;; and Emacs loads byte code only (Defender scans each .eln file as a DLL; see ADR 0001).
 (princ (format "Native compilation: available=%S jit=%S\n"
                (and (fboundp 'native-comp-available-p) (native-comp-available-p))
                (and (boundp 'native-comp-jit-compilation) native-comp-jit-compilation)))
-(when (and (fboundp 'native-comp-available-p)
-           (native-comp-available-p)
-           (not (eq system-type 'windows-nt)))
-  (unless native-comp-jit-compilation
-    (error "native-comp-jit-compilation is off")))
+(when (featurep 'native-compile)
+  (if (eq system-type 'windows-nt)
+      (progn
+        (when native-comp-jit-compilation
+          (error "native-comp-jit-compilation is on, but Windows loads byte code only"))
+        ;; Loading an .eln file needs no libgccjit, so check the lookup path too.
+        (dolist (dir native-comp-eln-load-path)
+          (when (and (file-directory-p dir) (directory-files-recursively dir "\\.eln\\'"))
+            (error "native-comp-eln-load-path has .eln files in %s" dir))))
+    (when (and (native-comp-available-p) (not native-comp-jit-compilation))
+      (error "native-comp-jit-compilation is off"))))
 
 ;; C-x C-u is one slip from C-x u (undo), and it upcases mark-to-point with no
 ;; prompt.

@@ -29,6 +29,7 @@
 (defvar async-installer-git-list)
 (defvar async-installer-git-install-dir)
 (defvar async-installer-git-native-compile)
+(defvar native-comp-jit-compilation)
 (defvar async-installer-reload-files)
 (defvar user-lisp-directory)
 (defvar nn-first-input-hook)
@@ -252,6 +253,13 @@ On failure, warn and return nil, so that startup goes on."
                                   (error-message-string err)))
          nil))))
 
+(defun my/async-installer--native-compile-p ()
+  "Return non-nil when the Git packages should be native-compiled.
+With JIT off (Windows loads byte code only), no .eln file loads, so compile none."
+  (and (fboundp 'native-comp-available-p)
+       (native-comp-available-p)
+       native-comp-jit-compilation))
+
 (defun my/async-installer-setup ()
   "Make the pinned Git packages available.
 Install `async-installer' if needed, register the packages, and add each
@@ -259,8 +267,7 @@ existing clone to `load-path'.  Warn and return nil when `async-installer'
 cannot be loaded."
   (when (my/async-installer--ensure-package)
     (setq async-installer-git-install-dir (locate-user-emacs-file "var/external-packages")
-          async-installer-git-native-compile (and (fboundp 'native-comp-available-p)
-                                                  (native-comp-available-p))
+          async-installer-git-native-compile (my/async-installer--native-compile-p)
           async-installer-reload-files
           (list (expand-file-name "init-local-package-list.el" user-lisp-directory)))
     (advice-add 'async-installer-git--native-compile

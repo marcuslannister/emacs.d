@@ -10,9 +10,8 @@
 (load (setq custom-file (expand-file-name "custom.el" user-lisp-directory)) 'noerror)
 (nn-initialize)
 
-;; emacs.d-nn: on Windows, put the MSYS2 MINGW64 toolchain on PATH, or turn
-;; native compilation off with a warning.  This must run before
-;; `package-activate-all', which can start a native compile.  See
+;; emacs.d-nn: on Windows, use byte code only (no JIT, no .eln files).  This must
+;; run before `package-activate-all', which loads packages.  See ADR 0001 and
 ;; docs/windows-setup.md.  The only line the Local layer adds to this file.
 (when _WIN32
   (load (expand-file-name "init-local-windows-native-comp" user-lisp-directory) nil t))
@@ -28,8 +27,8 @@
                 truncate-partial-width-windows nil)
 
   ;; emacs.d-nn: removed `native-comp-jit-compilation' and
-  ;; `native-comp-deferred-compilation' (both nil).  JIT is on for every
-  ;; system.  On Windows, init-local-windows-native-comp.el sets up the toolchain.
+  ;; `native-comp-deferred-compilation' (both nil).  JIT is on, except on Windows,
+  ;; where init-local-windows-native-comp.el turns it off and loads no .eln file.
   ;; emacs.d-nn: `native-comp-async-on-battery-power' is t (the Emacs default).  With the
   ;; Base value nil, Emacs 31.1 (`native--compile-skip-on-battery-p') skips every JIT
   ;; compile when it reads "battery power", and it reads "not charging" as that, even on

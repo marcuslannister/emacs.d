@@ -6,6 +6,7 @@
 
 (require 'ert)
 (require 'cl-lib)
+(defvar native-comp-jit-compilation)  ; Keep the `let' below dynamic on any build.
 ;; `display-warning' and `package-vc-install' start as autoloads.  The first
 ;; call of one loads its file, and the real definition then replaces a stub
 ;; set with `cl-letf' (the first test in a process lost its warning this way).
@@ -55,6 +56,14 @@
                     "/tmp/org-gtd.el/test/helpers/processing.el"
                     "/tmp/org-gtd.el/tests/unit/horizons-test.el"))
       (should-not (funcall selector file)))))
+
+(ert-deftest init-local-async-installer-native-compile-only-with-jit ()
+  "With JIT off, the Git packages must not be native-compiled."
+  (let ((native-comp-jit-compilation nil))
+    (should-not (my/async-installer--native-compile-p)))
+  (cl-letf (((symbol-function 'native-comp-available-p) (lambda () t)))
+    (let ((native-comp-jit-compilation t))
+      (should (my/async-installer--native-compile-p)))))
 
 (ert-deftest init-local-async-installer-update-fetches-new-tag ()
   "A tag added upstream after a detached tag checkout must be fetched.
