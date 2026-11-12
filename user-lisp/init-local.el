@@ -44,6 +44,8 @@
 (require 'init-local-ghostel)
 (require 'init-local-herdr)
 (my/herdr-setup)
+(require 'init-local-zoxide)
+(my/zoxide-setup)
 
 (require 'init-local-server)
 (my/server-start)

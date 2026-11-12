@@ -46,9 +46,9 @@
     (should (fboundp command))))
 
 (ert-deftest init-local-hel-leader-has-no-keys-for-removed-packages ()
-  "The consult family, zoxide, pulsar, and translate are not ported."
+  "The consult family, pulsar, and translate are not ported."
   (dolist (binding my/hel-leader-bindings)
-    (should-not (string-match-p "\\`\\(consult\\|zoxide\\|pulsar\\|gt-\\|ekp\\|blinko\\)"
+    (should-not (string-match-p "\\`\\(consult\\|pulsar\\|gt-\\|ekp\\|blinko\\)"
                                 (symbol-name (cdr binding))))))
 
 (ert-deftest init-local-hel-leader-uses-the-fido-replacements ()
