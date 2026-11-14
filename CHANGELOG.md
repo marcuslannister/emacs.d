@@ -5,6 +5,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 ## Unreleased
 
 ### Added
+- `SPC n b r` (`C-c n b r`) posts the region to Blinko, a note server. `M-x my/blinko-post-buffer` and `M-x my/blinko-post-content` post the buffer or typed text. The server and token come from auth-source (`login apikey`); with several such entries, set `my/blinko-endpoint`. The client is the `blinko.el` of the Earlier configuration, rewritten in the Local layer.
 - `SPC g p` (`C-c g p`) proofreads selected text with `llm`; a prefix argument asks for a freer rewrite. The original and suggestion stay together in a merge conflict, with changed words highlighted. Endpoint settings stay in a Git-ignored file, and credentials come from auth-source.
 - `README.org` has the one-time steps that build the `markdown` and `markdown-inline` tree-sitter grammars, so `.md` files open in `markdown-ts-mode`. The Base skips its Markdown setup until both grammars exist, so a new machine had no Markdown styling. Windows needs `scoop install gcc` for the build (see `docs/windows-setup.md`), and `scripts/windows-setup.ps1` prints this as a next step.
 - In Dired, `/` jumps to a file (`dired-goto-file`) and `K` kills lines (`dired-do-kill-lines`), in both Hel states. `/` replaces the buffer search there.
