@@ -6,3 +6,5 @@ var
 custom.el
 # emacs.d-nn: the Anvil bridge script. The MCP clients start it from here, and Anvil copies it here.
 /anvil-stdio.sh
+# Machine-local proofreading endpoint. Credentials stay in auth-source.
+/user-lisp/init-local-proofread-config.el

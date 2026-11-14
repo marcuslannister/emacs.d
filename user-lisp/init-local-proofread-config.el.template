@@ -1,0 +1,20 @@
+;;; init-local-proofread-config.el --- Private endpoint settings -*- lexical-binding: t -*-
+;;; Commentary:
+;; Copy to init-local-proofread-config.el in this folder.  Git ignores that file.
+;; Store the API key in auth-source, not here.  The host and user below must match
+;; the credential entry.  SPC g p sends only the selected text to this endpoint.
+;;; Code:
+
+(setq my/proofread-endpoint-url "https://example.test/v1/"
+      my/proofread-auth-host "example.test"
+      my/proofread-auth-user "apikey"
+      my/proofread-chat-model "MODEL")
+
+;; Optional: use a different model for selected text.
+;; (setq my/proofread-model "OTHER-MODEL")
+;; Optional: retain any endpoint-specific request parameters.
+;; (setq my/proofread-chat-params '((temperature . 0.2)))
+;; For a model unknown to llm, set my/proofread-model-metadata to the arguments
+;; for llm-models-add, as in the Earlier configuration.
+
+;;; init-local-proofread-config.el ends here
