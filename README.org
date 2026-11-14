@@ -86,6 +86,35 @@
   Codeberg mirror is available at
   [[https://codeberg.org/zdn/.emacs.d.git][Codeberg]].
 
+* Markdown grammars
+
+  =.md= files open in =markdown-ts-mode=.  It needs two tree-sitter grammars,
+  =markdown= and =markdown-inline=.  Emacs builds them from source, so you need
+  =git= and a C compiler (=cc=, =gcc=, or =c99=).  Do these steps once on each
+  machine.  Until you do, =.md= files open without Markdown styling.
+
+  First, get a C compiler.  On macOS, run =xcode-select --install=.  On Windows,
+  run =scoop install gcc=; run =scoop uninstall gcc= afterward if you want no
+  compiler on the =PATH=.
+
+  Then paste this into an empty =*scratch*= buffer and run =M-x eval-buffer=:
+
+  #+begin_src emacs-lisp
+  (progn
+    (require 'treesit)
+    (let ((treesit-language-source-alist
+           '((markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
+                       "v0.5.4" "tree-sitter-markdown/src")
+             (markdown-inline "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
+                              "v0.5.4" "tree-sitter-markdown-inline/src"))))
+      (treesit-install-language-grammar 'markdown)
+      (treesit-install-language-grammar 'markdown-inline)))
+  #+end_src
+
+  Last, restart Emacs.  The grammars stay in =~/.emacs.d/tree-sitter=, which Git
+  ignores, so you do not repeat this.  Run it again only if you delete that
+  folder, or if a new Emacs version cannot load the old grammars.
+
 * Preview
 
   #+ATTR_ORG: :width 400

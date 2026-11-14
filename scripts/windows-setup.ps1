@@ -307,6 +307,7 @@ Write-Host "  2. Run M-x ghostel, and pick Download when it asks for the native 
 Write-Host "  3. Reach the running Emacs from a shell with:  emacsclient -n <file>"
 Write-Host "  4. Anvil (the AI tools) starts with Emacs. The clients start $cmdFile. Add the Codex or Pi entries from the Anvil section of docs/windows-setup.md."
 Write-Host "  5. If HOME or PATH was changed above, open a new window before you start Emacs."
+Write-Host "  6. For Markdown styling, run scoop install gcc, then follow the Markdown grammars section of README.org once in Emacs, then restart Emacs. See also the Markdown grammars section of docs/windows-setup.md."
 
 if ($script:Failures -gt 0) {
     Write-Host ""

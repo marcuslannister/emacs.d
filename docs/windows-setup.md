@@ -41,6 +41,10 @@ You do not need `libgccjit` or MSYS2 for the fork, and the setup script installs
 
 The ERT suites run with `emacs -Q`, which does not load this helper. If the `PATH` still has a GCC toolchain from an earlier setup (such as UCRT64 only), a test that stubs or advises a built-in function (such as `file-exists-p` or `upcase-region`) then fails with a `native-compiler-error`. Add `--eval "(setq native-comp-enable-subr-trampolines nil)"` before `-l` to run the suites there.
 
+## Markdown grammars
+
+`.md` files need two tree-sitter grammars, and Emacs builds them from source with a C compiler. The fork installs no compiler, so on each new PC run `scoop install gcc`, then follow the "Markdown grammars" section of `README.org` (a snippet that you run once in Emacs), then restart Emacs. Run `scoop uninstall gcc` afterward if you want no compiler on the `PATH`. The grammars stay in `~\.emacs.d\tree-sitter`.
+
 ## Ghostel
 
 Ghostel comes from MELPA. On the first `M-x ghostel`, pick Download. It fetches the Windows module, `conpty.dll` and OpenConsole into the Ghostel package folder. Do this once for each machine, and again when the package updates.
