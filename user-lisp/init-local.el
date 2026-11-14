@@ -32,6 +32,7 @@
 (require 'init-local-org)
 (require 'init-local-org-norang)
 (require 'init-local-append-review)
+(require 'init-local-blinko)
 (require 'init-local-gtd)
 (my/gtd-setup)
 (require 'init-local-denote)
