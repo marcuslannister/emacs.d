@@ -5,6 +5,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 ## Unreleased
 
 ### Added
+- `README.org` has the one-time steps that build the `markdown` and `markdown-inline` tree-sitter grammars, so `.md` files open in `markdown-ts-mode`. The Base skips its Markdown setup until both grammars exist, so a new machine had no Markdown styling. Windows needs `scoop install gcc` for the build (see `docs/windows-setup.md`), and `scripts/windows-setup.ps1` prints this as a next step.
 - In Dired, `/` jumps to a file (`dired-goto-file`) and `K` kills lines (`dired-do-kill-lines`), in both Hel states. `/` replaces the buffer search there.
 - `SPC z t` (`C-c z t`) runs `zoxide-travel`: pick a ranked directory in the fido list and open it. The key and the package exist only when the `zoxide` program is on `PATH`; without it, startup shows a warning and goes on.
 - The `org-case-check` skill (ported from the Earlier configuration) and the `elisp-reviewer` agent, which checks Emacs Lisp changes against the rules of this fork.
