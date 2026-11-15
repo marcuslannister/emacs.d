@@ -12,50 +12,56 @@
 ;;; Code:
 
 (require 'init-local-case-guard)
-(require 'init-local-exec-path)
-(require 'init-local-whitespace)
-;; Loading it only registers a deferred `use-package' form for Dired.
-(require 'init-local-dired)
-(require 'init-local-async-installer)
+(require 'init-local-tui)
 
-;; Registers the pinned Git packages and adds the existing clones to
-;; `load-path'.  It warns and goes on if `async-installer' is not available.
-(my/async-installer-setup)
+;; A terminal-only session (`emacs -nw') gets Hel only: no server, no Anvil
+;; workers, and no async-installer.  See init-local-tui.el.
+(if (my/tui-session-p)
+    (my/tui-setup)
+  (require 'init-local-exec-path)
+  (require 'init-local-whitespace)
+  ;; Loading it only registers a deferred `use-package' form for Dired.
+  (require 'init-local-dired)
+  (require 'init-local-async-installer)
 
-;; Modal editing must be ready before the first key press.
-(require 'init-local-hel)
-(my/hel-setup)
+  ;; Registers the pinned Git packages and adds the existing clones to
+  ;; `load-path'.  It warns and goes on if `async-installer' is not available.
+  (my/async-installer-setup)
 
-;; Org.  These modules add leader keys, so they load after Hel.  Loading them
-;; registers deferred `use-package' forms and a few functions; Org itself loads on
-;; first use.
-(require 'init-local-org)
-(require 'init-local-org-norang)
-(require 'init-local-append-review)
-(require 'init-local-blinko)
-(require 'init-local-gtd)
-(my/gtd-setup)
-(require 'init-local-denote)
-(require 'init-local-vulpea)
-(require 'init-local-themes)
-(require 'init-local-completion)
-(require 'init-local-proofread)
-(require 'init-local-tabs)
-(require 'init-local-undo)
-(require 'init-local-auto-save)
-(require 'init-local-ghostel)
-(require 'init-local-herdr)
-(my/herdr-setup)
-(require 'init-local-zoxide)
-(my/zoxide-setup)
+  ;; Modal editing must be ready before the first key press.
+  (require 'init-local-hel)
+  (my/hel-setup)
 
-(require 'init-local-server)
-(my/server-start)
+  ;; Org.  These modules add leader keys, so they load after Hel.  Loading them
+  ;; registers deferred `use-package' forms and a few functions; Org itself loads on
+  ;; first use.
+  (require 'init-local-org)
+  (require 'init-local-org-norang)
+  (require 'init-local-append-review)
+  (require 'init-local-blinko)
+  (require 'init-local-gtd)
+  (my/gtd-setup)
+  (require 'init-local-denote)
+  (require 'init-local-vulpea)
+  (require 'init-local-themes)
+  (require 'init-local-completion)
+  (require 'init-local-proofread)
+  (require 'init-local-tabs)
+  (require 'init-local-undo)
+  (require 'init-local-auto-save)
+  (require 'init-local-ghostel)
+  (require 'init-local-herdr)
+  (my/herdr-setup)
+  (require 'init-local-zoxide)
+  (my/zoxide-setup)
 
-;; Anvil is on by default on macOS and Windows: this schedules nothing unless
-;; `my/anvil-enabled' is set.
-(require 'init-local-anvil)
-(my/anvil-setup)
+  (require 'init-local-server)
+  (my/server-start)
+
+  ;; Anvil is on by default on macOS and Windows: this schedules nothing unless
+  ;; `my/anvil-enabled' is set.
+  (require 'init-local-anvil)
+  (my/anvil-setup))
 
 ;; `C-x C-u' is one slip from `C-x u' (undo).  It runs `upcase-region' on the
 ;; text from the mark to point, with no prompt and no message.

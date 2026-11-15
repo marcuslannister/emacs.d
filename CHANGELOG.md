@@ -5,6 +5,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 ## Unreleased
 
 ### Added
+- A terminal-only session (`emacs -nw`) loads only the Base, the case guard, and Hel (`init-local-tui.el`), as the Earlier configuration did. It starts no server, no Anvil workers, and no `async-installer`, so it can run next to Emacs.app.
 - Built-in Which-Key shows Hel leader menus after 1.5 seconds, matching the Earlier configuration. Menu labels describe this fork's commands, including VC, proofreading, Ghostel, and Org GTD.
 - `SPC n b r` (`C-c n b r`) posts the region to Blinko, a note server. `M-x my/blinko-post-buffer` and `M-x my/blinko-post-content` post the buffer or typed text. The server and token come from auth-source (`login apikey`); with several such entries, set `my/blinko-endpoint`. The client is the `blinko.el` of the Earlier configuration, rewritten in the Local layer.
 - `SPC g p` (`C-c g p`) proofreads selected text with `llm`; a prefix argument asks for a freer rewrite. The original and suggestion stay together in a merge conflict, with changed words highlighted. Endpoint settings stay in a Git-ignored file, and credentials come from auth-source.
