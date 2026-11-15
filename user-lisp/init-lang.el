@@ -583,7 +583,7 @@ snippet, or `emmet-expand-yas'/`emmet-expand-line', depending on whether
   :if (treesit-language-available-p 'markdown)
   :mode "\\.md\\'" "/README\\'"
   :hook
-  (markdown-ts-mode . display-fill-column-indicator-mode)
+  ;; emacs.d-nn: the fill-column indicator hook is removed. A long line hides the bar.
   (markdown-ts-mode . markdown-ts-toggle-hide-markup)
   :init
   (add-to-list 'treesit-language-source-alist
