@@ -7,8 +7,8 @@
 ;; The leader keys live in one table, `my/hel-leader-bindings'.  A module that
 ;; owns a command adds its own keys with `my/hel-leader-bind', so a key never
 ;; points at a command this config does not have.  test-startup.sh checks every
-;; entry, in Normal and Emacs state.  The Base has no which-key, so the keys
-;; carry no labels.
+;; entry, in Normal and Emacs state.  Built-in Which-Key shows the available
+;; keys and labels after a prefix, including the Hel leader.
 ;;
 ;; B binds C-a, C-v, C-z, M-w, and C-w globally.  Hel binds none of C-a, C-v,
 ;; C-z, M-w in any state, so those four keep B's meaning, and B's C-v (yank)
@@ -42,6 +42,92 @@
 ;; Hel defaults to a bar in Normal state and a box in Insert state.
 (setq hel-normal-state-cursor-type 'box
       hel-insert-state-cursor-type 'bar)
+
+;;;; Key previews
+
+(use-package which-key
+  :ensure nil
+  :demand t
+  :custom
+  (which-key-idle-delay 1.5)
+  :config
+  (which-key-mode 1)
+  ;; Match the Earlier configuration, but describe the commands this fork uses.
+  (which-key-add-key-based-replacements
+    "C-c :" "M-x"                     "C-c ." "Find file"
+    "C-c ," "Switch buffer"           "C-c ;" "Insert timestamp"
+    "C-c b" "buffer"
+    "C-c b n" "Next buffer"           "C-c b p" "Previous buffer"
+    "C-c b s" "Save buffer"           "C-c b a" "Save all buffers"
+    "C-c b k" "Kill current buffer"   "C-c b o" "Read-only mode"
+    "C-c b m" "View messages"         "C-c b e" "Evaluate buffer"
+    "C-c b r" "Revert buffer"         "C-c b y" "Copy buffer file name"
+    "C-c a" "comment / clock"
+    "C-c a /" "Comment"               "C-c a t" "Update time"
+    "C-c a i" "Start clock"           "C-c a o" "Stop clock"
+    "C-c a p" "punch"
+    "C-c a p i" "Punch in clock"      "C-c a p o" "Punch out clock"
+    "C-c a g" "Go to clock"           "C-c a s" "Switch task"
+    "C-c e" "eval / eshell / ediff"
+    "C-c e e" "Evaluate last sexp"    "C-c e s" "Start Eshell"
+    "C-c e d" "Ediff"                 "C-c e b" "Ediff buffers"
+    "C-c e w" "Ediff current and other window"
+    "C-c d" "edit / denote / dired"
+    "C-c d d" "Kill whole line"       "C-c d w" "Delete trailing whitespace"
+    "C-c d D" "Duplicate line"        "C-c d n" "Create a Denote note"
+    "C-c d r" "Rename Denote file"    "C-c d i" "Dired"
+    "C-c d p" "Show current directory"
+    "C-c g" "git / proofread / ghostel"
+    "C-c g s" "VC status"             "C-c g i" "VC next action"
+    "C-c g d" "Git diff working tree" "C-c g u" "Git push"
+    "C-c g l" "Git log"               "C-c g f" "Git pull"
+    "C-c g p" "Polish region"         "C-c g h" "Ghostel terminal"
+    "C-c g n" "New Ghostel buffer"    "C-c g o" "Ghostel project terminal"
+    "C-c h" "Herdr"                   "C-c h e" "Open Herdr"
+    "C-c p" "project"                 "C-c p p" "Project find file"
+    "C-c j" "Denote journal"
+    "C-c j n" "Create an entry"       "C-c j t" "Entry with open tasks"
+    "C-c j o" "Open current journal"
+    "C-c n" "notes"                   "C-c n r" "refile note"
+    "C-c n r t" "Refile to Today"     "C-c n r i" "Refile to Inbox"
+    "C-c n d" "Note to bottom"        "C-c n n" "Append note"
+    "C-c n o" "Open notes"            "C-c n u" "Note to top"
+    "C-c n t" "Add tag"               "C-c n s" "Show tag"
+    "C-c c" "GTD"                     "C-c o" "Org"
+    "C-c o a" "Agenda"                "C-c o l" "Task list"
+    "C-c o m" "Tags search"           "C-c o v" "View search"
+    "C-c o t" "Change task state"     "C-c o c" "Capture"
+    "C-c o d" "Insert deadline"       "C-c o s" "Insert schedule"
+    "C-c o r" "Refile"                "C-c o p" "Change priority"
+    "C-c o G" "Go to heading"         "C-c o o" "Open at point"
+    "C-c o e" "Engage"                "C-c o k" "Clarify at point"
+    "C-c o g" "Org GTD"
+    "C-c o g c" "Capture to inbox"    "C-c o g e" "Engage"
+    "C-c o g i" "Process inbox"       "C-c o g k" "Clarify at point"
+    "C-c o g m" "Command center"      "C-c o g n" "All next actions"
+    "C-c o g p" "All projects"        "C-c o g s" "Stuck projects"
+    "C-c o g o" "Organize task"       "C-c o g a" "Agenda task menu"
+    "C-c o i" "insert"
+    "C-c o i c" "Create ID"           "C-c o i l" "Insert link"
+    "C-c o i h" "Insert heading"      "C-c o i s" "Insert subheading"
+    "C-c q" "session"
+    "C-c q q" "Quit Emacs"            "C-c q r" "Restart Emacs"
+    "C-c s" "search"                  "C-c s g" "rg"
+    "C-c s g r" "Search with rg"       "C-c s c" "file / text / heading"
+    "C-c s c g" "Search current directory" "C-c s c f" "Project find file"
+    "C-c s c h" "Find heading"        "C-c s b" "Scratch buffer"
+    "C-c t" "tab"
+    "C-c t n" "New tab"               "C-c t c" "Close tab"
+    "C-c t g" "New tab with terminal"
+    "C-c v" "Vulpea"
+    "C-c v f" "Find note"             "C-c v i" "Insert link"
+    "C-c v a" "Add tag"               "C-c v A" "Remove tag"
+    "C-c v u" "Full rescan"           "C-c v b" "Backlinks"
+    "C-c w" "window"
+    "C-c w w" "Other window"          "C-c w o" "Only current window"
+    "C-c w q" "Close current window" "C-c w v" "Split window right"
+    "C-c w h" "Split window below"
+    "C-c z" "zoxide"                  "C-c z t" "Travel to zoxide path"))
 
 ;;;; The leader table
 

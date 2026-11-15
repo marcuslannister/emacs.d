@@ -7,6 +7,7 @@
 
 (require 'ert)
 (require 'cl-lib)
+(require 'use-package)
 ;; `display-warning' starts as an autoload; load it before a test stubs it.
 (require 'warnings)
 
@@ -19,6 +20,20 @@
 
 (load-file (expand-file-name "../user-lisp/init-local-hel.el"
                              (file-name-directory (or load-file-name buffer-file-name))))
+
+;;;; Key previews
+
+(ert-deftest init-local-hel-which-key-matches-the-earlier-configuration ()
+  (should (bound-and-true-p which-key-mode))
+  (should (= which-key-idle-delay 1.5))
+  (dolist (pair '(("C-c b" . "buffer")
+                  ("C-c g" . "git / proofread / ghostel")
+                  ("C-c g p" . "Polish region")
+                  ("C-c g s" . "VC status")
+                  ("C-c s c g" . "Search current directory")))
+    (let ((entry (car (which-key--format-and-replace
+                       (list (cons (car pair) "unlabelled-command"))))))
+      (should (equal (caddr entry) (cdr pair))))))
 
 ;;;; The leader table
 

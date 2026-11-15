@@ -183,6 +183,19 @@
   (error "The Hel leader table is not loaded"))
 (unless (and (featurep 'hel) (bound-and-true-p hel-mode))
   (error "Hel is not active after startup"))
+(unless (and (bound-and-true-p which-key-mode) (= which-key-idle-delay 1.5))
+  (error "Which-Key is not active with the Earlier configuration's delay"))
+(dolist (state '(normal emacs))
+  (with-temp-buffer
+    (text-mode)
+    (hel-switch-state state)
+    (dolist (preview '((nil . "+buffer") (("C-c" "g") . "Polish region")))
+      (let ((hel-leader--keys (car preview))
+            (hel-leader--pending-modifier nil))
+        (unless (seq-find (lambda (entry) (equal (nth 2 entry) (cdr preview)))
+                          (hel-leader--which-key-get-bindings))
+          (error "Hel Which-Key preview in %s state does not show %s"
+                 state (cdr preview)))))))
 (dolist (state '(normal emacs))
   (with-temp-buffer
     (text-mode)
