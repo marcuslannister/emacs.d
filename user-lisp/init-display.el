@@ -314,10 +314,9 @@ Like `colorful--colorize-match', but the prefix also carries a
               `(display ,(my-colorful--svg-img color))))))
       (overlay-put ov 'face nil))))
 
+;; emacs.d-nn: the :hook list (Gnus article, EWW, Org, Markdown) is removed. Run
+;; `M-x olivetti-mode' by hand. The package autoload still loads it.
 (use-package olivetti
-  :hook
-  (gnus-article-mode
-   eww-mode org-mode markdown-ts-mode)
   :custom (olivetti-mode-on-hook nil))
 
 (use-package nn-mode-line
