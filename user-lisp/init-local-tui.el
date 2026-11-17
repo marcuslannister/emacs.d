@@ -11,6 +11,8 @@
 ;; stays off.  Run the GUI Emacs once to install it.
 ;;; Code:
 
+(defvar xterm-extra-capabilities)
+
 (defun my/tui-session-p ()
   "Return non-nil for an interactive, terminal-only start that is not a daemon."
   (and (not noninteractive)
@@ -18,7 +20,11 @@
        (not (display-graphic-p))))
 
 (defun my/tui-setup ()
-  "Add the Hel clones to `load-path' and start Hel."
+  "Add the Hel clones to `load-path', turn on OSC 52 copy, and start Hel."
+  ;; Emacs turns OSC 52 copy on only when the terminal reports it in its DA1 reply.
+  ;; Kitty does; Herdr does not, but it passes the sequence on.  The terminal
+  ;; initialization runs after the init file, so this takes effect.
+  (setq xterm-extra-capabilities '(setSelection))
   (dolist (name '("hel" "hel-leader"))
     (let ((dir (locate-user-emacs-file (concat "var/external-packages/" name))))
       (if (file-directory-p dir)

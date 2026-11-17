@@ -22,5 +22,17 @@
   (should-not (init-local-tui-tests--p nil t nil))
   (should-not (init-local-tui-tests--p nil nil t)))
 
+(defvar xterm-extra-capabilities)
+
+(ert-deftest init-local-tui-setup-turns-on-osc-52-copy ()
+  (let ((xterm-extra-capabilities 'check)
+        (load-path load-path))
+    (cl-letf (((symbol-function 'locate-user-emacs-file)
+               (lambda (&rest _) temporary-file-directory))
+              ((symbol-function 'require) #'ignore)
+              ((symbol-function 'my/hel-setup) #'ignore))
+      (my/tui-setup))
+    (should (equal xterm-extra-capabilities '(setSelection)))))
+
 (provide 'init-local-tui-tests)
 ;;; init-local-tui-tests.el ends here
