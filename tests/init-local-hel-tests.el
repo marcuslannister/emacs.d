@@ -60,6 +60,10 @@
                      my/delete-window my/save-all-buffers))
     (should (fboundp command))))
 
+(ert-deftest init-local-hel-dired-goto-key-has-a-command ()
+  ;; A terminal-only session loads this file, but not init-local-dired.el.
+  (should (fboundp 'my/dired-goto-file-or-folder)))
+
 (ert-deftest init-local-hel-leader-has-no-keys-for-removed-packages ()
   "The consult family, pulsar, and translate are not ported."
   (dolist (binding my/hel-leader-bindings)

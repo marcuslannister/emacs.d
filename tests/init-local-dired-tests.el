@@ -47,5 +47,52 @@ The second value is the number of times the program ran."
 (ert-deftest init-local-dired-skips-the-probe-without-the-option ()
   (should (equal '("-al" 0) (init-local-dired-tests--run "ls" 2 "-al"))))
 
+;;;; Go to a file or its folder
+
+(defun init-local-dired-tests--in-tree (fn)
+  "Call FN with the root of a temporary tree, in a Dired buffer of that root.
+The tree holds a.txt and sub/b.txt.  Then kill its Dired buffers and delete it."
+  (require 'dired)
+  (let ((root (file-name-as-directory (file-truename (make-temp-file "my-dired-" t)))))
+    (unwind-protect
+        (progn
+          (make-directory (expand-file-name "sub" root))
+          (write-region "" nil (expand-file-name "a.txt" root))
+          (write-region "" nil (expand-file-name "sub/b.txt" root))
+          (with-current-buffer (dired-noselect root)
+            (funcall fn root)))
+      (dolist (buffer (buffer-list))
+        (when (string-prefix-p root (buffer-local-value 'default-directory buffer))
+          (kill-buffer buffer)))
+      (delete-directory root t))))
+
+(ert-deftest init-local-dired-goto-opens-the-folder-of-an-unlisted-file ()
+  (init-local-dired-tests--in-tree
+   (lambda (root)
+     (let ((file (expand-file-name "sub/b.txt" root)))
+       (my/dired-goto-file-or-folder file)
+       (should (derived-mode-p 'dired-mode))
+       (should (file-equal-p file (dired-get-filename nil t)))))))
+
+(ert-deftest init-local-dired-goto-stops-at-a-missing-file ()
+  (init-local-dired-tests--in-tree
+   (lambda (root)
+     (let ((buffer (current-buffer)))
+       (should-error (my/dired-goto-file-or-folder (expand-file-name "typo.txt" root))
+                     :type 'user-error)
+       (should-error (my/dired-goto-file-or-folder (expand-file-name "no-such/b.txt" root))
+                     :type 'user-error)
+       (should (eq buffer (current-buffer)))))))
+
+(ert-deftest init-local-dired-goto-keeps-a-killed-line-hidden ()
+  ;; `dired-jump' would read the folder again, and the line would come back.
+  (init-local-dired-tests--in-tree
+   (lambda (root)
+     (let ((file (expand-file-name "a.txt" root)))
+       (dired-goto-file file)
+       (dired-kill-line)
+       (should-error (my/dired-goto-file-or-folder file) :type 'user-error)
+       (should-not (dired-goto-file file))))))
+
 (provide 'init-local-dired-tests)
 ;;; init-local-dired-tests.el ends here

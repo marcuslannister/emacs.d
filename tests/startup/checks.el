@@ -239,10 +239,11 @@
                  (string-match-p "upcase\\|downcase\\|invert-case" (symbol-name command)))
         (error "Hel key %s still changes case: %S" key command)))))
 
-;; Dired starts in Emacs state, and h j k l move.  The listing sorts files and
-;; directories by date, and does not group directories first.  dired-noselect
-;; returns nil when the ls program rejects dired-listing-switches (the BSD ls of
-;; a stock macOS rejects a GNU only option), so say that before anything else fails.
+;; Dired starts in Emacs state, h j k l move, and / goes to a file or its folder.
+;; The listing sorts files and directories by date, and does not group directories
+;; first.  dired-noselect returns nil when the ls program rejects
+;; dired-listing-switches (the BSD ls of a stock macOS rejects a GNU only option), so
+;; say that before anything else fails.
 (require 'dired)
 (unless (string-match-p dired-sort-by-date-regexp dired-listing-switches)
   (error "Dired does not sort by date: %S" dired-listing-switches))
@@ -257,9 +258,10 @@
   (unwind-protect
       (with-current-buffer buf
         (unless (and (eq hel-state 'emacs)
-                     (eq (key-binding (kbd "j")) 'hel-next-line))
-          (error "Dired does not start in Hel Emacs state: %S %S"
-                 hel-state (key-binding (kbd "j")))))
+                     (eq (key-binding (kbd "j")) 'hel-next-line)
+                     (eq (key-binding (kbd "/")) 'my/dired-goto-file-or-folder))
+          (error "Dired does not start in Hel Emacs state with j and /: %S %S %S"
+                 hel-state (key-binding (kbd "j")) (key-binding (kbd "/")))))
     (when (buffer-live-p buf) (kill-buffer buf))))
 
 ;; The Hel state shows in the mode line of B.

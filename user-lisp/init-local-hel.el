@@ -162,6 +162,9 @@ at once."
                    my/delete-window))
   (autoload command "init-local-commands" nil t))
 
+;; / in Dired runs this command.  A terminal-only session does not load its module.
+(autoload 'my/dired-goto-file-or-folder "init-local-dired" nil t)
+
 (my/hel-leader-bind
  ;; Numeric arguments and help.
  "C-c 1" #'digit-argument "C-c 2" #'digit-argument "C-c 3" #'digit-argument
@@ -324,7 +327,7 @@ manual selection is searched as-is instead of being replaced."
       "k" #'hel-previous-line
       "l" #'hel-forward-char)
     (hel-keymap-set dired-mode-map :state '(normal emacs)
-      "/" #'dired-goto-file
+      "/" #'my/dired-goto-file-or-folder
       "K" #'dired-do-kill-lines))
   (hel-keymap-global-set :state 'normal
     "d" #'hel-delete
