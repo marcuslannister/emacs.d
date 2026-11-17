@@ -11,7 +11,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - `SPC n b r` (`C-c n b r`) posts the region to Blinko, a note server. `M-x my/blinko-post-buffer` and `M-x my/blinko-post-content` post the buffer or typed text. The server and token come from auth-source (`login apikey`); with several such entries, set `my/blinko-endpoint`. The client is the `blinko.el` of the Earlier configuration, rewritten in the Local layer.
 - `SPC g p` (`C-c g p`) proofreads selected text with `llm`; a prefix argument asks for a freer rewrite. The original and suggestion stay together in a merge conflict, with changed words highlighted. Endpoint settings stay in a Git-ignored file, and credentials come from auth-source.
 - `README.org` has the one-time steps that build the `markdown` and `markdown-inline` tree-sitter grammars, so `.md` files open in `markdown-ts-mode`. The Base skips its Markdown setup until both grammars exist, so a new machine had no Markdown styling. Windows needs `scoop install gcc` for the build (see `docs/windows-setup.md`), and `scripts/windows-setup.ps1` prints this as a next step.
-- In Dired, `/` jumps to a file (`dired-goto-file`) and `K` kills lines (`dired-do-kill-lines`), in both Hel states. `/` replaces the buffer search there.
+- In Dired, `/` goes to a file (`my/dired-goto-file-or-folder`) and `K` kills lines (`dired-do-kill-lines`), in both Hel states. `/` replaces the buffer search there. When the listing does not have the folder of the file, `/` opens that folder. A missing file, or a line that `K` or omit mode hides, gives an error.
 - `SPC z t` (`C-c z t`) runs `zoxide-travel`: pick a ranked directory in the fido list and open it. The key and the package exist only when the `zoxide` program is on `PATH`; without it, startup shows a warning and goes on.
 - The `org-case-check` skill (ported from the Earlier configuration) and the `elisp-reviewer` agent, which checks Emacs Lisp changes against the rules of this fork.
 - `scripts/windows-setup.ps1` makes `anvil-stdio.cmd` in `~\.local\bin` and puts that folder on the user `PATH`, so MCP clients can start the Anvil bridge on Windows.
@@ -40,6 +40,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - `./test-startup.sh` loads the config in batch Emacs and runs the checks in `tests/startup/checks.el`. CI runs it on macOS (GUI build) and Windows, and a second time on the installed state.
 
 ### Changed
+- Dired starts in Hel Emacs state, so Dired's own `m`, `u`, `d`, `C`, and `R` keys work without `Esc`. `h`, `j`, `k`, and `l` still move, and the leader `SPC` still works.
 - Dired sorts files and directories by modification date, newest first (`-Ahlt --time-style=long-iso`), as in the Earlier configuration. A newer file stays above an older directory. `-A` hides `.` and `..`. The GNU-only `--time-style` is dropped when `ls` rejects it, so a stock macOS `ls` still opens Dired.
 - Olivetti no longer starts by itself in Gnus article, EWW, Org, or Markdown buffers. Run `M-x olivetti-mode` when you want it.
 - Markdown buffers no longer show the fill-column indicator, because a line longer than `fill-column` hid the bar.
@@ -56,7 +57,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - The fork is set up: the personal identity is out of the Base, and a startup test, CI, and docs are added.
 
 ### Fixed
-- In Dired, `h`, `j`, `k`, and `l` move in Hel Emacs state, where `Esc` goes. Dired's own `j` opened "Goto file:" and did not move down.
+- In Dired, `h`, `j`, `k`, and `l` move in Hel Emacs state, the state Dired starts in. Dired's own `j` opened "Goto file:" and did not move down.
 - Organizing a Project in `org-gtd` no longer fails with "State `NEXT' not valid in this file": `org-todo-keywords` is `TODO NEXT WAIT | DONE CNCL`, and a startup check covers it.
 - The cutover review: `scripts/windows-setup.ps1` identifies the fork by `user-lisp\init-local.el` and not only by its URL, the docs say to run only one Emacs, and they warn that an Emacs run as administrator gets no worker daemons.
 - The minibuffer frame fits a multi-line prompt, caps its height, and uses the editor background.
