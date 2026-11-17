@@ -57,6 +57,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - The fork is set up: the personal identity is out of the Base, and a startup test, CI, and docs are added.
 
 ### Fixed
+- Copying in a terminal-only session (`emacs -nw`) inside Herdr reaches the system clipboard. Herdr does not report OSC 52 support, so Emacs never turned copy on; `init-local-tui.el` now turns it on. Kitty and other terminals that pass the sequence work the same.
 - In Dired, `h`, `j`, `k`, and `l` move in Hel Emacs state, the state Dired starts in. Dired's own `j` opened "Goto file:" and did not move down.
 - Organizing a Project in `org-gtd` no longer fails with "State `NEXT' not valid in this file": `org-todo-keywords` is `TODO NEXT WAIT | DONE CNCL`, and a startup check covers it.
 - The cutover review: `scripts/windows-setup.ps1` identifies the fork by `user-lisp\init-local.el` and not only by its URL, the docs say to run only one Emacs, and they warn that an Emacs run as administrator gets no worker daemons.
