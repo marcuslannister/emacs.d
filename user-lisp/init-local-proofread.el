@@ -17,7 +17,9 @@
 
 (use-package llm
   :ensure t
-  :defer t)
+  :defer t
+  :custom
+  (llm-warn-on-nonfree nil))
 
 (defvar my/proofread-endpoint-url nil "OpenAI-compatible base URL, ending in a slash.")
 (defvar my/proofread-auth-host nil "Host of the API key in auth-source.")

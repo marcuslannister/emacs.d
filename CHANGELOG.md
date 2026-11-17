@@ -40,6 +40,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - `./test-startup.sh` loads the config in batch Emacs and runs the checks in `tests/startup/checks.el`. CI runs it on macOS (GUI build) and Windows, and a second time on the installed state.
 
 ### Changed
+- Proofreading no longer shows the `llm` non-free API license warning.
 - Dired starts in Hel Emacs state, so Dired's own `m`, `u`, `d`, `C`, and `R` keys work without `Esc`. `h`, `j`, `k`, and `l` still move, and the leader `SPC` still works.
 - Dired sorts files and directories by modification date, newest first (`-Ahlt --time-style=long-iso`), as in the Earlier configuration. A newer file stays above an older directory. `-A` hides `.` and `..`. The GNU-only `--time-style` is dropped when `ls` rejects it, so a stock macOS `ls` still opens Dired.
 - Olivetti no longer starts by itself in Gnus article, EWW, Org, or Markdown buffers. Run `M-x olivetti-mode` when you want it.
