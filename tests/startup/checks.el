@@ -239,10 +239,17 @@
                  (string-match-p "upcase\\|downcase\\|invert-case" (symbol-name command)))
         (error "Hel key %s still changes case: %S" key command)))))
 
-;; Dired starts in normal state, so h j k l move.  dired-noselect returns nil
-;; when the ls program rejects dired-listing-switches (the BSD ls of a stock
-;; macOS rejects a GNU only option), so say that before anything else fails.
+;; Dired starts in normal state, so h j k l move.  The listing sorts files and
+;; directories by date, and does not group directories first.  dired-noselect
+;; returns nil when the ls program rejects dired-listing-switches (the BSD ls of
+;; a stock macOS rejects a GNU only option), so say that before anything else fails.
 (require 'dired)
+(unless (string-match-p dired-sort-by-date-regexp dired-listing-switches)
+  (error "Dired does not sort by date: %S" dired-listing-switches))
+(when (or ls-lisp-dirs-first
+          (string-search "--group-directories-first" dired-listing-switches))
+  (error "Dired still groups directories first: %S %S"
+         ls-lisp-dirs-first dired-listing-switches))
 (let ((buf (dired-noselect temporary-file-directory)))
   (unless (bufferp buf)
     (error "dired-noselect returned %S: does %S accept the switches %S?"

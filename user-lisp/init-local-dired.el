@@ -1,14 +1,17 @@
-;;; init-local-dired.el --- Dired listing that the ls program accepts -*- lexical-binding: t -*-
+;;; init-local-dired.el --- Dired listing sorted by date -*- lexical-binding: t -*-
 ;;; Commentary:
-;; The Base sets `dired-listing-switches' to "-alh --group-directories-first".
-;; The last option is GNU only.  The BSD ls of a stock macOS rejects it, and
-;; then `dired-noselect' returns nil: Dired shows nothing.  A machine with GNU
-;; coreutils first on PATH hides this.  Drop the option when the ls program
-;; rejects it.  Emacs sorts directories first by itself when it uses `ls-lisp'.
+;; Sort files and directories by modification date, as in the Earlier
+;; configuration: "-Ahlt --time-style=long-iso".  `--time-style' is GNU only.
+;; The BSD ls of a stock macOS rejects it, and then `dired-noselect' returns
+;; nil: Dired shows nothing.  Drop that option when the ls program rejects it.
+;; Do not group directories first.  A newer file stays above an older directory.
 ;;; Code:
 
-(defconst my/dired-gnu-only-switch "--group-directories-first"
-  "The GNU only ls option that the Base puts in `dired-listing-switches'.")
+(defconst my/dired-date-switches "-Ahlt --time-style=long-iso"
+  "Listing switches that sort files and directories by modification date.")
+
+(defconst my/dired-gnu-only-switch "--time-style=long-iso"
+  "The GNU only option in `my/dired-date-switches'.")
 
 (defun my/dired-usable-switches (switches)
   "Return SWITCHES without `my/dired-gnu-only-switch' if the ls program rejects it.
@@ -27,7 +30,9 @@ emulates ls (`insert-directory-program' is nil), or when the program accepts it.
 (use-package dired
   :ensure nil
   :config
-  (setq dired-listing-switches (my/dired-usable-switches dired-listing-switches)))
+  ;; The Base sets `ls-lisp-dirs-first', which pins directories above files.
+  (setq ls-lisp-dirs-first nil
+        dired-listing-switches (my/dired-usable-switches my/dired-date-switches)))
 
 (provide 'init-local-dired)
 ;;; init-local-dired.el ends here
