@@ -14,7 +14,7 @@
 (require 'init-local-case-guard)
 (require 'init-local-tui)
 
-;; A terminal-only session (`emacs -nw') gets Hel only: no server, no Anvil
+;; A terminal-only session (`emacs -nw') gets Hel and the theme only: no server, no Anvil
 ;; workers, and no async-installer.  See init-local-tui.el.
 (if (my/tui-session-p)
     (my/tui-setup)

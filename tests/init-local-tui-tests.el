@@ -34,5 +34,15 @@
       (my/tui-setup))
     (should (equal xterm-extra-capabilities '(setSelection)))))
 
+(ert-deftest init-local-tui-setup-loads-the-theme-after-hel ()
+  (let ((calls nil)
+        (load-path load-path))
+    (cl-letf (((symbol-function 'locate-user-emacs-file)
+               (lambda (&rest _) temporary-file-directory))
+              ((symbol-function 'require) (lambda (feature &rest _) (push feature calls)))
+              ((symbol-function 'my/hel-setup) (lambda () (push 'hel-setup calls))))
+      (my/tui-setup))
+    (should (equal (nreverse calls) '(init-local-hel hel-setup init-local-themes)))))
+
 (provide 'init-local-tui-tests)
 ;;; init-local-tui-tests.el ends here
