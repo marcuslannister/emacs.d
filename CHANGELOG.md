@@ -5,6 +5,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 ## Unreleased
 
 ### Added
+- Harper, an offline grammar checker, runs through Eglot in Org, Markdown, and text buffers (`init-local-harper.el`). `SPC e g g` (`C-c e g g`) turns it on or off in the current buffer, and `SPC e g a` (`C-c e g a`) shows the fixes for a mark. No mode hook starts it, because Harper marks Org syntax too. It uses the American dialect and the user dictionary `~/.config/harper-ls/dictionary.txt`. nix-config installs `harper-ls`; without it, Eglot shows a warning when it loads.
 - A terminal-only session (`emacs -nw`) loads only the Base, the case guard, and Hel (`init-local-tui.el`), as the Earlier configuration did. It starts no server, no Anvil workers, and no `async-installer`, so it can run next to Emacs.app.
 - Built-in Which-Key shows Hel leader menus after 1.5 seconds, matching the Earlier configuration. Menu labels describe this fork's commands, including VC, proofreading, Ghostel, and Org GTD.
 - `SPC n b r` (`C-c n b r`) posts the region to Blinko, a note server. `M-x my/blinko-post-buffer` and `M-x my/blinko-post-content` post the buffer or typed text. The server and token come from auth-source (`login apikey`); with several such entries, set `my/blinko-endpoint`. The client is the `blinko.el` of the Earlier configuration, rewritten in the Local layer.
