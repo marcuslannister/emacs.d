@@ -299,7 +299,7 @@ manual selection is searched as-is instead of being replaced."
         (hel-mark-inner-word 1)))
     (hel-construct-search-pattern)
     (hel-search-next count))
-  (hel-set-initial-state 'dired-mode 'normal)
+  (hel-set-initial-state 'dired-mode 'emacs)
   (hel-set-initial-state 'magit-mode 'emacs)
   (with-eval-after-load 'magit
     (hel-keymap-set magit-mode-map :state 'emacs
@@ -313,9 +313,10 @@ manual selection is searched as-is instead of being replaced."
       "j" #'hel-next-line
       "k" #'hel-previous-line
       "l" #'hel-forward-char))
-  ;; Esc in Dired (a special buffer) switches to Emacs state.  There Dired's own j opens
-  ;; "Goto file:" and k kills lines, instead of moving.  The goto prompt is on / in
-  ;; both states, in place of the buffer search, and kill lines is on K.
+  ;; Dired starts in Emacs state, so its own m, u, d, C, and R keys work, and the
+  ;; leader SPC still works.  Dired's own j opens "Goto file:" and k kills lines, so
+  ;; h j k l move here instead.  In both states, / goes to a file in place of the
+  ;; buffer search, and K kills lines.
   (with-eval-after-load 'dired
     (hel-keymap-set dired-mode-map :state 'emacs
       "h" #'hel-backward-char
