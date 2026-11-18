@@ -23,26 +23,44 @@
   (should-not (init-local-tui-tests--p nil nil t)))
 
 (defvar xterm-extra-capabilities)
+(defvar markdown-ts-mode-hook)
+
+(defmacro init-local-tui-tests--with-setup (grammar &rest body)
+  "Run `my/tui-setup' with GRAMMAR as the tree-sitter answer, then run BODY.
+In BODY, `calls' lists, in order, the Local modules it required and the Hel setup."
+  (declare (indent 1))
+  `(let ((calls nil)
+         (orig (symbol-function 'require))
+         (xterm-extra-capabilities 'check)
+         (load-path load-path)
+         (auto-mode-alist auto-mode-alist)
+         (markdown-ts-mode-hook nil))
+     (cl-letf (((symbol-function 'require)
+                (lambda (feature &rest args)
+                  (if (memq feature '(init-local-hel init-local-themes))
+                      (push feature calls)
+                    (apply orig feature args))))
+               ((symbol-function 'locate-user-emacs-file)
+                (lambda (&rest _) temporary-file-directory))
+               ((symbol-function 'my/hel-setup) (lambda () (push 'hel-setup calls)))
+               ((symbol-function 'treesit-language-available-p) (lambda (&rest _) ,grammar)))
+       (my/tui-setup))
+     (setq calls (nreverse calls))
+     ,@body))
 
 (ert-deftest init-local-tui-setup-turns-on-osc-52-copy ()
-  (let ((xterm-extra-capabilities 'check)
-        (load-path load-path))
-    (cl-letf (((symbol-function 'locate-user-emacs-file)
-               (lambda (&rest _) temporary-file-directory))
-              ((symbol-function 'require) #'ignore)
-              ((symbol-function 'my/hel-setup) #'ignore))
-      (my/tui-setup))
+  (init-local-tui-tests--with-setup t
     (should (equal xterm-extra-capabilities '(setSelection)))))
 
 (ert-deftest init-local-tui-setup-loads-the-theme-after-hel ()
-  (let ((calls nil)
-        (load-path load-path))
-    (cl-letf (((symbol-function 'locate-user-emacs-file)
-               (lambda (&rest _) temporary-file-directory))
-              ((symbol-function 'require) (lambda (feature &rest _) (push feature calls)))
-              ((symbol-function 'my/hel-setup) (lambda () (push 'hel-setup calls))))
-      (my/tui-setup))
-    (should (equal (nreverse calls) '(init-local-hel hel-setup init-local-themes)))))
+  (init-local-tui-tests--with-setup t
+    (should (equal calls '(init-local-hel hel-setup init-local-themes)))))
+
+(ert-deftest init-local-tui-setup-registers-markdown-only-with-its-grammar ()
+  (init-local-tui-tests--with-setup t
+    (should (eq (cdr (assoc "\\.md\\'" auto-mode-alist)) 'markdown-ts-mode)))
+  (init-local-tui-tests--with-setup nil
+    (should-not (eq (cdr (assoc "\\.md\\'" auto-mode-alist)) 'markdown-ts-mode))))
 
 (provide 'init-local-tui-tests)
 ;;; init-local-tui-tests.el ends here

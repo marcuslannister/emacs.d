@@ -11,13 +11,14 @@
 ;; keeps its own deferred `use-package' form.
 ;;; Code:
 
-(require 'init-local-case-guard)
 (require 'init-local-tui)
 
-;; A terminal-only session (`emacs -nw') gets Hel and the theme only: no server, no Anvil
-;; workers, and no async-installer.  See init-local-tui.el.
+;; A terminal-only session (`emacs -nw') gets Hel, the theme, and Markdown only: no
+;; case guard, no server, no Anvil workers, and no async-installer.  See
+;; init-local-tui.el.
 (if (my/tui-session-p)
     (my/tui-setup)
+  (require 'init-local-case-guard)
   (require 'init-local-exec-path)
   (require 'init-local-whitespace)
   ;; Loading it only registers a deferred `use-package' form for Dired.
