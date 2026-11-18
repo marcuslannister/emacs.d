@@ -12,7 +12,7 @@
 
 ;; emacs.d-nn: on Windows, use byte code only (no JIT, no .eln files).  This must
 ;; run before `package-activate-all', which loads packages.  See ADR 0001 and
-;; docs/windows-setup.md.  The only line the Local layer adds to this file.
+;; docs/windows-setup.md.  It is a named exception in AGENTS.md.
 (when _WIN32
   (load (expand-file-name "init-local-windows-native-comp" user-lisp-directory) nil t))
 
@@ -161,8 +161,17 @@
       (setenv "MSYSTEM" "UCRT64")
       (setenv "PATH" (concat (file-name-directory bash) ";" (getenv "PATH"))))))
 
+;; emacs.d-nn: a terminal-only session (`emacs -nw') installs nothing (see
+;; `use-package-ensure-function' below), and init.el skips modules there.  This tests
+;; `initial-window-system', because `display-graphic-p' is not reliable before the first frame.
+(defconst nn--tui (and (not noninteractive) (not (daemonp)) (not initial-window-system))
+  "Non-nil in a terminal-only session (`emacs -nw').")
+
 (use-package package
   :ensure nil
+  ;; emacs.d-nn: package.el loads only when a command needs it, about 75 ms.  The settings
+  ;; below apply when it loads.  `package-activate-all' reads the quickstart file without it.
+  :defer t
   :custom
   (package-quickstart t)
   (package-quickstart-file (expand-file-name "package-quickstart.el" package-user-dir))
@@ -185,5 +194,7 @@
   :ensure nil
   :custom
   (use-package-always-ensure t)
+  ;; emacs.d-nn: `ignore' checks no install, so no `use-package' form loads package.el.
+  (use-package-ensure-function (if nn--tui #'ignore #'use-package-ensure-elpa))
   (use-package-always-defer t)
   (use-package-expand-minimally t))

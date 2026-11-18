@@ -20,10 +20,28 @@
 (defvar nn-first-file-hook)
 (defvar auto-save-timer)
 (defvar hel-state)
+(defvar package-quickstart)
+(defvar package-archives)
+(defvar use-package-ensure-function)
 
 ;; The case guard must be on before any command runs.
 (unless (advice-member-p 'my/case-guard 'upcase-region)
   (error "The case guard is not active"))
+
+;; Only a terminal-only session skips the language, web, and start-screen modules
+;; (init.el), and then it skips the start-screen hook too.
+(unless (and (featurep 'init-lang) (featurep 'init-www) (featurep 'init-home))
+  (error "init-lang, init-www, or init-home is not loaded outside a terminal-only session"))
+(unless (memq 'nn-home-init after-init-hook)
+  (error "nn-home-init is not on after-init-hook"))
+
+;; early-init.el defers package.el, but its `package' settings must apply when it loads.
+;; Only a terminal-only session skips the install check of `use-package'.
+(require 'package)
+(unless (and package-quickstart (assoc "melpa" package-archives))
+  (error "The package settings of early-init.el do not apply when package.el loads"))
+(unless (eq use-package-ensure-function 'use-package-ensure-elpa)
+  (error "use-package checks no install outside a terminal-only session"))
 
 ;; Trailing whitespace is trimmed per mode, never on every save: that rewrites
 ;; files we only open.

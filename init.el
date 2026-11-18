@@ -12,15 +12,17 @@
 (use-package nn-init
   :ensure nil
   :init
+  ;; emacs.d-nn: a terminal-only session (`emacs -nw') skips the language, web, and
+  ;; start-screen modules, about 115 ms.  `nn--tui' comes from early-init.el.
   (let ((file-name-handler-alist nil))
     (require 'init-builtin)
     (require 'init-display)
-    (require 'init-lang)
+    (unless nn--tui (require 'init-lang))
     (require 'init-editor)
     (require 'init-tools)
-    (require 'init-www)
+    (unless nn--tui (require 'init-www))
     (require 'init-keybind)
-    (require 'init-home)
+    (unless nn--tui (require 'init-home))
     ;; emacs.d-nn: the one hook for the Local layer.  It loads last, so it wins
     ;; every overlap.  See docs/adr/0001-fork-b-as-base.md.
     (require 'init-local))
@@ -118,7 +120,9 @@
                   'server-after-make-frame-hook
                 'after-init-hook)))
     (add-hook hook #'nn-font-init -100)
-    (add-hook hook #'nn-home-init -90)
+    ;; emacs.d-nn: `nn-home-init' calls functions of `init-home', which a terminal-only
+    ;; session does not load.
+    (when (featurep 'init-home) (add-hook hook #'nn-home-init -90))
     ;; emacs.d-nn: the theme hook is removed.  user-lisp/init-local-themes.el loads
     ;; modus-operandi-tinted.  `nn-theme-init' stays above, unused, so a later
     ;; Upstream change to it does not conflict.
