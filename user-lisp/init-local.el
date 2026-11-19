@@ -47,6 +47,8 @@
   (require 'init-local-themes)
   (require 'init-local-completion)
   (require 'init-local-proofread)
+  (require 'init-local-translate)
+  (my/translate-setup)
   (require 'init-local-harper)
   (require 'init-local-tabs)
   (require 'init-local-undo)
