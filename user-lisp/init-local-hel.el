@@ -290,6 +290,13 @@ element (\"%e\") of the buffer-local format, and only once."
 
 ;;;; Activation
 
+(defun my/hel--dired-cursor (original state property)
+  "Use a block cursor in Dired's Hel Emacs state, keeping its color."
+  (let ((value (funcall original state property)))
+    (if (and (eq state 'emacs) (eq property :cursor) (derived-mode-p 'dired-mode))
+        (cons 'box (cdr value))
+      value)))
+
 (defun my/hel--configure ()
   "Configure Hel and hel-leader once both are loaded."
   (hel-define-command my/hel-search-word-at-point (count)
@@ -304,6 +311,7 @@ manual selection is searched as-is instead of being replaced."
     (hel-construct-search-pattern)
     (hel-search-next count))
   (hel-set-initial-state 'dired-mode 'emacs)
+  (advice-add 'hel-state-property :around #'my/hel--dired-cursor)
   (hel-set-initial-state 'magit-mode 'emacs)
   (with-eval-after-load 'magit
     (hel-keymap-set magit-mode-map :state 'emacs

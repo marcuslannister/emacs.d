@@ -286,7 +286,12 @@
                      (eq (key-binding (kbd "j")) 'hel-next-line)
                      (eq (key-binding (kbd "/")) 'my/dired-goto-file-or-folder))
           (error "Dired does not start in Hel Emacs state with j and /: %S %S %S"
-                 hel-state (key-binding (kbd "j")) (key-binding (kbd "/")))))
+                 hel-state (key-binding (kbd "j")) (key-binding (kbd "/"))))
+        (save-window-excursion
+          (set-window-buffer nil buf)
+          (hel-update-cursor)
+          (unless (eq cursor-type 'box)
+            (error "Dired cursor is not a block: %S" cursor-type))))
     (when (buffer-live-p buf) (kill-buffer buf))))
 
 ;; The Hel state shows in the mode line of B.
