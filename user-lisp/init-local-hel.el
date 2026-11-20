@@ -329,6 +329,7 @@ manual selection is searched as-is instead of being replaced."
       "l" #'hel-forward-char)
     (hel-keymap-set dired-mode-map :state '(normal emacs)
       "/" #'my/dired-goto-file-or-folder
+      "'" #'dired-up-directory
       "K" #'dired-do-kill-lines))
   (hel-keymap-global-set :state 'normal
     "d" #'hel-delete
