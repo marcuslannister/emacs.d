@@ -16,6 +16,7 @@
 
 (defvar nn-proxy-port)
 (declare-function telega--addProxy "telega-tdlib")
+(declare-function hel-set-initial-state "hel-core")
 
 (defun my/telega-proxy ()
   "Make telega use the local SOCKS5 proxy of the Base (`nn-proxy-port')."
@@ -32,6 +33,13 @@ Emacs shows a hex box.  Warn and go on when Symbola is not installed."
     (display-warning 'init-local-telega
                      "The Symbola font is not installed; some telega symbols show as hex boxes")))
 
+(defun my/telega-hel-setup ()
+  "Start the telega buffers in Hel Emacs state, as Dired and Magit do.
+Hel Normal state leaves `@' undefined and intercepts telega's message keys."
+  (when (fboundp 'hel-set-initial-state)
+    (dolist (mode '(telega-root-mode telega-chat-mode))
+      (hel-set-initial-state mode 'emacs))))
+
 (use-package telega
   :if (eq system-type 'darwin)
   :hook ((telega-before-auth . my/telega-proxy)
@@ -41,7 +49,8 @@ Emacs shows a hex box.  Warn and go on when Symbola is not installed."
   (telega-msg-save-dir "~/Downloads")
   (telega-translate-to-language-by-default "zh")
   :config
-  (my/telega-symbol-font-setup))
+  (my/telega-symbol-font-setup)
+  (my/telega-hel-setup))
 
 (provide 'init-local-telega)
 ;;; init-local-telega.el ends here

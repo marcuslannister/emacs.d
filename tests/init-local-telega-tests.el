@@ -66,5 +66,20 @@
     (should-not set)
     (should (eq 'init-local-telega (car warned)))))
 
+(ert-deftest init-local-telega-buffers-start-in-hel-emacs-state ()
+  (init-local-telega-tests--load 'darwin)
+  (let (calls)
+    (cl-letf (((symbol-function 'hel-set-initial-state)
+               (lambda (mode state) (push (cons mode state) calls))))
+      (my/telega-hel-setup))
+    (should (equal '((telega-chat-mode . emacs) (telega-root-mode . emacs))
+                   (sort calls (lambda (a b) (string< (car a) (car b))))))))
+
+(ert-deftest init-local-telega-hel-setup-skips-when-hel-is-missing ()
+  (init-local-telega-tests--load 'darwin)
+  (cl-letf (((symbol-function 'hel-set-initial-state) nil))
+    (fmakunbound 'hel-set-initial-state)
+    (should-not (my/telega-hel-setup))))
+
 (provide 'init-local-telega-tests)
 ;;; init-local-telega-tests.el ends here
