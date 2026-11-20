@@ -9,6 +9,9 @@
 ;; the Apple silicon Macs (nixpkgs-unstable; the Intel Mac has none).  With TDLib in place,
 ;; the first `M-x telega' offers to build the server; build it again after a TDLib update.
 ;; Telegram needs the proxy of the Base (`nn-proxy-port'), so the proxy is set before login.
+;;
+;; Telega's default symbols need the Symbola font, which nix-config installs.  It is the
+;; fallback for all Unicode, so it also covers odd characters inside messages.
 ;;; Code:
 
 (defvar nn-proxy-port)
@@ -20,6 +23,15 @@
    `(:server "localhost" :port ,nn-proxy-port :type (:@type "proxyTypeSocks5"))
    :enable-p 'enable))
 
+(defun my/telega-symbol-font-setup ()
+  "Use Symbola as the last fallback font, as the telega FAQ advises.
+Telega draws symbols (a boost mark, a keyboard, and others) that no font of macOS has, so
+Emacs shows a hex box.  Warn and go on when Symbola is not installed."
+  (if (member "Symbola" (font-family-list))
+      (set-fontset-font t 'unicode "Symbola" nil 'append)
+    (display-warning 'init-local-telega
+                     "The Symbola font is not installed; some telega symbols show as hex boxes")))
+
 (use-package telega
   :if (eq system-type 'darwin)
   :hook ((telega-before-auth . my/telega-proxy)
@@ -27,7 +39,9 @@
   :custom
   (telega-server-libs-prefix "~/.local/share/tdlib")
   (telega-msg-save-dir "~/Downloads")
-  (telega-translate-to-language-by-default "zh"))
+  (telega-translate-to-language-by-default "zh")
+  :config
+  (my/telega-symbol-font-setup))
 
 (provide 'init-local-telega)
 ;;; init-local-telega.el ends here

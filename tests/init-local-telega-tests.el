@@ -44,5 +44,27 @@
                    (car args)))
     (should (eq 'enable (plist-get (cdr args) :enable-p)))))
 
+(ert-deftest init-local-telega-font-falls-back-to-symbola-when-installed ()
+  (require 'warnings)
+  (init-local-telega-tests--load 'darwin)
+  (let (set warned)
+    (cl-letf (((symbol-function 'font-family-list) (lambda (&rest _) '("Symbola" "Menlo")))
+              ((symbol-function 'set-fontset-font) (lambda (&rest a) (setq set a)))
+              ((symbol-function 'display-warning) (lambda (&rest a) (setq warned a))))
+      (my/telega-symbol-font-setup))
+    (should (equal '(t unicode "Symbola" nil append) set))
+    (should-not warned)))
+
+(ert-deftest init-local-telega-font-warns-and-goes-on-without-symbola ()
+  (require 'warnings)
+  (init-local-telega-tests--load 'darwin)
+  (let (set warned)
+    (cl-letf (((symbol-function 'font-family-list) (lambda (&rest _) '("Menlo")))
+              ((symbol-function 'set-fontset-font) (lambda (&rest a) (setq set a)))
+              ((symbol-function 'display-warning) (lambda (&rest a) (setq warned a))))
+      (my/telega-symbol-font-setup))
+    (should-not set)
+    (should (eq 'init-local-telega (car warned)))))
+
 (provide 'init-local-telega-tests)
 ;;; init-local-telega-tests.el ends here
