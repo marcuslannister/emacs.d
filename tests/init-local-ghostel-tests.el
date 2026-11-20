@@ -179,15 +179,15 @@ Return the list of Hel arguments and the state of the vi copy mode."
         (my/ghostel-cursor-sync)))
     (should (equal '(1) calls))))
 
-(ert-deftest init-local-ghostel-speed-up-is-local-to-the-buffer ()
-  (with-temp-buffer
-    (ghostel-mode)
-    (cl-letf (((symbol-function 'electric-pair-local-mode) #'ignore)
-              ((symbol-function 'electric-indent-local-mode) #'ignore)
-              ((symbol-function 'show-paren-local-mode) #'ignore))
-      (my/ghostel-speed-up))
-    (should (eq 'left-to-right bidi-paragraph-direction))
-    (should (memq #'ghostel--adjust-size window-state-change-functions)))
+(ert-deftest init-local-ghostel-setup-is-local-to-the-buffer ()
+  (let ((mouse-drag-copy-region nil))
+    (with-temp-buffer
+      (ghostel-mode)
+      (should (local-variable-p 'mouse-drag-copy-region))
+      (should (eq 'non-empty mouse-drag-copy-region))
+      (should (eq 'left-to-right bidi-paragraph-direction))
+      (should (memq #'ghostel--adjust-size window-state-change-functions)))
+    (should-not mouse-drag-copy-region))
   (should-not (memq #'ghostel--adjust-size (default-value 'window-state-change-functions))))
 
 ;;;; Windows shell and keys

@@ -171,9 +171,10 @@ which drops the keys that `use-package' bound."
 
 ;;;; Look and speed
 
-(defun my/ghostel-speed-up ()
-  "Drop the editor work that fights the redraw of Ghostel in this buffer."
-  (setq-local scroll-conservatively most-positive-fixnum
+(defun my/ghostel-setup-buffer ()
+  "Copy mouse selections and reduce editor work during terminal redraws."
+  (setq-local mouse-drag-copy-region 'non-empty
+              scroll-conservatively most-positive-fixnum
               bidi-paragraph-direction 'left-to-right
               bidi-inhibit-bpa t)
   (electric-pair-local-mode -1)
@@ -219,7 +220,7 @@ paints does not flicker through."
   (when (and (eq system-type 'windows-nt) (file-exists-p my/ghostel-pwsh))
     (setq ghostel-shell (list my/ghostel-pwsh "-NoLogo")))
   :hook ((ghostel-mode . my/ghostel-sync-hel)
-         (ghostel-mode . my/ghostel-speed-up))
+         (ghostel-mode . my/ghostel-setup-buffer))
   :custom
   (ghostel-timer-delay 0.01)
   (ghostel-max-scrollback (* 1024 1024))
