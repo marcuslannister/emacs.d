@@ -10,6 +10,14 @@
 
 (defvar nn-proxy-port 7897)
 (defvar telega-before-auth-hook)
+(defvar telega-chat-mode-hook)
+(defvar corfu-auto)
+(defvar hel-state)
+(defvar telega-chat-button-map)
+(defvar telega-msg-button-map)
+(defvar telega-sticker-button-map)
+(defvar telega-story-button-map)
+(defvar telega-topic-button-map)
 
 (defconst init-local-telega-tests--module
   (expand-file-name "../user-lisp/init-local-telega.el"
@@ -34,6 +42,20 @@
   (makunbound 'telega-before-auth-hook)
   (init-local-telega-tests--load 'darwin)
   (should (memq 'my/telega-proxy telega-before-auth-hook)))
+
+(ert-deftest init-local-telega-chat-enables-corfu-for-manual-completion ()
+  (let ((telega-chat-mode-hook nil)
+        (corfu-auto t)
+        args)
+    (init-local-telega-tests--load 'darwin)
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'telega-completions-setup-capf) #'ignore)
+                ((symbol-function 'corfu-mode)
+                 (lambda (arg) (setq args (list arg corfu-auto)))))
+        (run-hooks 'telega-chat-mode-hook))
+      (should (equal args '(1 nil)))
+      (should (local-variable-p 'corfu-auto)))
+    (should corfu-auto)))
 
 (ert-deftest init-local-telega-proxy-is-socks5-on-the-base-port ()
   (init-local-telega-tests--load 'darwin)
@@ -66,14 +88,36 @@
     (should-not set)
     (should (eq 'init-local-telega (car warned)))))
 
-(ert-deftest init-local-telega-buffers-start-in-hel-emacs-state ()
+(ert-deftest init-local-telega-uses-hel-normal-state-for-navigation ()
   (init-local-telega-tests--load 'darwin)
-  (let (calls)
+  (let ((telega-chat-button-map (make-sparse-keymap))
+        (telega-msg-button-map (make-sparse-keymap))
+        (telega-sticker-button-map (make-sparse-keymap))
+        (telega-story-button-map (make-sparse-keymap))
+        (telega-topic-button-map (make-sparse-keymap))
+        calls)
+    (keymap-set telega-chat-button-map "h" #'telega-describe-chat)
+    (keymap-set telega-msg-button-map "l" #'telega-msg-copy-link)
     (cl-letf (((symbol-function 'hel-set-initial-state)
                (lambda (mode state) (push (cons mode state) calls))))
       (my/telega-hel-setup))
-    (should (equal '((telega-chat-mode . emacs) (telega-root-mode . emacs))
-                   (sort calls (lambda (a b) (string< (car a) (car b))))))))
+    (should (equal '((telega-chat-mode . normal) (telega-root-mode . normal))
+                   calls))
+    (dolist (entry `((telega-root-mode ,telega-chat-button-map "h"
+                       hel-backward-char telega-describe-chat)
+                     (telega-chat-mode ,telega-msg-button-map "l"
+                       hel-forward-char telega-msg-copy-link)))
+      (pcase-let ((`(,mode ,button-map ,key ,motion ,action) entry))
+        (with-temp-buffer
+          (setq major-mode mode)
+          (use-local-map (make-sparse-keymap))
+          (keymap-set (current-local-map) key motion)
+          (insert (propertize "x" 'keymap button-map))
+          (goto-char (point-min))
+          (let ((hel-state 'normal))
+            (should (eq (key-binding key) motion)))
+          (let ((hel-state 'emacs))
+            (should (eq (key-binding key) action))))))))
 
 (ert-deftest init-local-telega-hel-setup-skips-when-hel-is-missing ()
   (init-local-telega-tests--load 'darwin)
