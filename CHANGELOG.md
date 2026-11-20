@@ -42,6 +42,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - `./test-startup.sh` loads the config in batch Emacs and runs the checks in `tests/startup/checks.el`. CI runs it on macOS (GUI build) and Windows, and a second time on the installed state.
 
 ### Changed
+- Telega on macOS draws two-line avatars without gaps, uses Nerd Font glyphs for both checkmarks and the close button when the font is available, and redraws open chats and the root view when you enable a theme.
 - `early-init.el` no longer loads `package.el` at start, in any session (about 75 ms). `package.el` loads when a command needs it, and the `package` settings (archives, quickstart, signature check) apply then.
 - Proofreading no longer shows the `llm` non-free API license warning.
 - Dired starts in Hel Emacs state, so Dired's own `m`, `u`, `d`, `C`, and `R` keys work without `Esc`. `h`, `j`, `k`, and `l` still move, and the leader `SPC` still works.

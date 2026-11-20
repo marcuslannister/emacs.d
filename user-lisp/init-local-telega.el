@@ -16,9 +16,17 @@
 
 (defvar nn-proxy-port)
 (defvar corfu-auto)
+(defvar nerd-icons-font-family)
+(defvar telega-avatar-workaround-gaps-for)
+(defvar telega-symbol-button-close)
+(defvar telega-symbol-checkmark)
+(defvar telega-symbol-heavy-checkmark)
+(defvar telega-symbols-emojify)
 (declare-function corfu-mode "corfu" (&optional arg))
-(declare-function telega--addProxy "telega-tdlib")
 (declare-function hel-set-initial-state "hel-core")
+(declare-function nerd-icons-codicon "nerd-icons" (icon-name &rest args))
+(declare-function nerd-icons-mdicon "nerd-icons" (icon-name &rest args))
+(declare-function telega--addProxy "telega-tdlib")
 
 (defun my/telega-proxy ()
   "Make telega use the local SOCKS5 proxy of the Base (`nn-proxy-port')."
@@ -34,6 +42,22 @@ Emacs shows a hex box.  Warn and go on when Symbola is not installed."
       (set-fontset-font t 'unicode "Symbola" nil 'append)
     (display-warning 'init-local-telega
                      "The Symbola font is not installed; some telega symbols show as hex boxes")))
+
+(defun my/telega-display-setup ()
+  "Use continuous avatars and Nerd Font glyphs on a graphical display."
+  (when (display-graphic-p)
+    (setq telega-avatar-workaround-gaps-for '(return t))
+    (when (and (boundp 'nerd-icons-font-family)
+               (member nerd-icons-font-family (font-family-list)))
+      (setq telega-symbol-checkmark (nerd-icons-mdicon "nf-md-check")
+            telega-symbol-heavy-checkmark (nerd-icons-codicon "nf-cod-check_all")
+            telega-symbol-button-close (nerd-icons-mdicon "nf-md-close_box_outline"))
+      ;; Draw these glyphs as text so Telega does not replace them with images.
+      (setq telega-symbols-emojify
+            (seq-remove (lambda (entry)
+                          (memq (or (car-safe entry) entry)
+                                '(checkmark heavy-checkmark button-close)))
+                        telega-symbols-emojify)))))
 
 (defun my/telega-hel-button-binding (command)
   "Use the button's COMMAND outside Hel Normal navigation in Telega."
@@ -74,7 +98,20 @@ Emacs shows a hex box.  Warn and go on when Symbola is not installed."
   (telega-translate-to-language-by-default "zh")
   :config
   (my/telega-symbol-font-setup)
-  (my/telega-hel-setup))
+  (my/telega-display-setup)
+  (my/telega-hel-setup)
+  (defun my/telega-redraw-for-theme (_theme)
+    "Rebuild the root view and chat text that contains literal theme colors."
+    (telega-root-view--redisplay)
+    (dolist (chat (telega-chat-buffers))
+      (when (buffer-live-p chat)
+        (with-current-buffer chat
+          (when telega-chatbuf--ewoc
+            (with-telega-buffer-modify
+              (telega-save-cursor
+                (telega-chatbuf--footer-update)
+                (ewoc-refresh telega-chatbuf--ewoc))))))))
+  (add-hook 'enable-theme-functions #'my/telega-redraw-for-theme))
 
 (provide 'init-local-telega)
 ;;; init-local-telega.el ends here
