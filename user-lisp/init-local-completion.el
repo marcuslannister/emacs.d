@@ -33,12 +33,38 @@ popup shows two icons.  Call ORIG with METADATA and PROP when no minibuffer is c
   (advice-add 'nerd-icons-completion-completion-metadata-get :around
               #'my/completion-icons-in-minibuffer-only))
 
+(defun my/completion-sort-files-by-mtime (candidates)
+  "Sort local file CANDIDATES by modification time, newest first."
+  (let* ((input (buffer-substring-no-properties (minibuffer-prompt-end) (point)))
+         (prefix (file-name-directory input))
+         (dir (ignore-errors (expand-file-name (substitute-in-file-name (or prefix "./"))))))
+    ;; Do not request attributes for every candidate on a remote host.
+    (if (or (null dir) (file-remote-p dir))
+        candidates
+      (let ((dated (mapcar (lambda (candidate)
+                             (cons candidate
+                                   (ignore-errors
+                                     (file-attribute-modification-time
+                                      (file-attributes
+                                       (substitute-in-file-name (concat prefix candidate)))))))
+                           candidates)))
+        (mapcar #'car (sort dated :key #'cdr :lessp
+                            (lambda (a b) (and a (or (null b) (time-less-p b a))))))))))
+
+(defun my/completion-setup-file-sort ()
+  "Use modification time for file completion in Fido."
+  (when (and (bound-and-true-p fido-mode) minibuffer-completing-file-name)
+    (setq-local completion-category-overrides (copy-tree completion-category-overrides))
+    (setf (alist-get 'cycle-sort-function (alist-get 'file completion-category-overrides))
+          #'my/completion-sort-files-by-mtime)))
+
 ;; Fido does not bind TAB (its keys are C-M-i and C-j).  TAB then runs
 ;; `minibuffer-complete', which opens a *Completions* buffer under the fido list.  Make
 ;; TAB insert the selected candidate, as C-M-i does.  The map is active only while fido
 ;; runs, so other completion UIs keep their TAB.
 (with-eval-after-load 'icomplete
-  (keymap-set icomplete-fido-mode-map "TAB" #'icomplete-force-complete))
+  (keymap-set icomplete-fido-mode-map "TAB" #'icomplete-force-complete)
+  (add-hook 'minibuffer-setup-hook #'my/completion-setup-file-sort))
 
 (provide 'init-local-completion)
 ;;; init-local-completion.el ends here

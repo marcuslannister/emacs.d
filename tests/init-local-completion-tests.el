@@ -42,5 +42,26 @@
 (ert-deftest init-local-completion-tab-inserts-the-fido-selection ()
   (should (eq 'icomplete-force-complete (keymap-lookup icomplete-fido-mode-map "TAB"))))
 
+(ert-deftest init-local-completion-files-sort-newest-first ()
+  (let* ((dir (make-temp-file "fido-files-" t))
+         (older (expand-file-name "a-older.el" dir))
+         (newer (expand-file-name "z-newer.el" dir)))
+    (unwind-protect
+        (progn
+          (write-region "" nil older)
+          (write-region "" nil newer)
+          (set-file-times older (seconds-to-time 1000000000))
+          (set-file-times newer (seconds-to-time 1000000100))
+          (with-temp-buffer
+            (let ((fido-mode t)
+                  (minibuffer-completing-file-name t)
+                  (minibuffer-completion-table #'read-file-name-internal)
+                  (completion-styles '(flex)))
+              (insert (file-name-as-directory dir) ".el")
+              (run-hooks 'minibuffer-setup-hook)
+              (should (equal (seq-take (completion-all-sorted-completions (point-min) (point)) 2)
+                             '("z-newer.el" "a-older.el"))))))
+      (delete-directory dir t))))
+
 (provide 'init-local-completion-tests)
 ;;; init-local-completion-tests.el ends here
