@@ -147,15 +147,22 @@
   (when (memq 'my/auto-save-setup nn-first-file-hook)
     (error "auto-save is missing, but its hook is set")))
 
-;; The Base Telegram client is removed: its form installed it on every machine, and it fails
-;; to compile on Windows.  Nothing loads it, and the Leisure menu does not name it.
+;; The Telegram client is for macOS only (init-local-telega.el): the Base form installed it
+;; on every machine, and it fails to compile on Windows.  It loads on first use, so it is
+;; not loaded now.  Only macOS sets its hook, and only macOS shows its Leisure menu entry.
+(defvar telega-before-auth-hook)
 (when (featurep 'telega)
-  (error "telega is loaded"))
-(when (seq-some (lambda (item) (and (vectorp item) (eq (aref item 1) 'telega)))
-                (bound-and-true-p nn-leisure-menu-items))
-  (error "The Leisure menu still has a telega entry"))
+  (error "telega is loaded at startup"))
+(unless (eq (and (memq 'my/telega-proxy telega-before-auth-hook) t)
+            (eq system-type 'darwin))
+  (error "The telega hook must be set on macOS and on no other system"))
 (unless (bound-and-true-p nn-leisure-menu-items)
   (error "nn-leisure-menu-items is not bound, so the telega check proves nothing"))
+(let ((entry (seq-find (lambda (item) (and (vectorp item) (eq (aref item 1) 'telega)))
+                       nn-leisure-menu-items)))
+  (unless (and entry (equal (memq :visible (append entry nil))
+                            '(:visible (eq system-type 'darwin))))
+    (error "The Leisure menu telega entry must show on macOS only")))
 
 ;; Emacs 31.1 skips every JIT compile when it reads "battery power", and it reads "not
 ;; charging" as that: a desktop with no battery, or a laptop on AC with a full battery.

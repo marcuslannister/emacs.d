@@ -54,6 +54,8 @@
   (require 'init-local-undo)
   (require 'init-local-auto-save)
   (require 'init-local-ghostel)
+  ;; Registers a deferred `use-package' form that only macOS runs.
+  (require 'init-local-telega)
   (require 'init-local-herdr)
   (my/herdr-setup)
   (require 'init-local-zoxide)

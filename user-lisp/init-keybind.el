@@ -285,7 +285,8 @@ LEVELS, SPEC and PARENT are passed to ORIG."
 
   (defconst nn-leisure-menu-items
     '("NN Leisure Menu"
-      ;; emacs.d-nn: removed the telegram entry; telega is not installed.
+      ;; emacs.d-nn: the telegram entry shows on macOS only (init-local-telega.el).
+      ["telegram"  telega :visible (eq system-type 'darwin)]
       ["Read Mail" gnus]
       ["Read Rss"  my-newsticker-show-news]
       ["Send Mail" compose-mail]

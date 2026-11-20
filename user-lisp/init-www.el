@@ -343,7 +343,8 @@
 
   (erc-spelling-mode 1))
 
-;; emacs.d-nn: removed the `telega' form (a Telegram client).  It is not used, and it fails
-;; to compile on Windows.  `use-package-always-ensure' made this form install it everywhere.
+;; emacs.d-nn: moved the `telega' form (a Telegram client) to init-local-telega.el, for macOS
+;; only.  It fails to compile on Windows, and `use-package-always-ensure' made this form
+;; install it everywhere.
 
 (provide 'init-www)
