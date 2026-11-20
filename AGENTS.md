@@ -54,6 +54,6 @@ This repository is a fork of `zHaOdANiuu/.emacs.d` (the Base). The user's own mo
 - Merge Upstream about once a month. Review the full diff first.
 
 ## Agent skills
-- Issue tracker: Kanzo project `emacs-nn`. Do not use GitHub issues.
+- Issue tracker: Kanzo project `emacs`. Do not use GitHub issues.
 - Triage labels: none.
 - Domain docs: one context. `CONTEXT.md` and `docs/adr/` at the repository root.
