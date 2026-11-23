@@ -44,6 +44,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 - `./test-startup.sh` loads the config in batch Emacs and runs the checks in `tests/startup/checks.el`. CI runs it on macOS (GUI build) and Windows, and a second time on the installed state.
 
 ### Changed
+- Org agenda no longer adds agenda files to `recentf` when it only opens them in the background. A file goes into `recentf` the first time a window shows it.
 - Dired uses a block cursor in Hel Emacs state without changing its keybindings.
 - Fido file prompts, including `Load file:`, sort local files by modification time, newest first.
 - Telega on macOS draws two-line avatars without gaps, uses Nerd Font glyphs for both checkmarks and the close button when the font is available, and redraws open chats and the root view when you enable a theme.

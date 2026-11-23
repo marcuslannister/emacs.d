@@ -14,6 +14,18 @@
 (defvar org-directory)
 (defvar org-agenda-files)
 (declare-function my/hel-leader-bind "init-local-hel")
+(declare-function recentf-track-opened-file "recentf")
+
+(defun my/org-recentf-on-display (window)
+  "Record the current file when WINDOW first displays its buffer."
+  (when (eq (current-buffer) (window-buffer window))
+    (remove-hook 'window-buffer-change-functions #'my/org-recentf-on-display t)
+    (when (bound-and-true-p recentf-mode)
+      (recentf-track-opened-file))))
+
+(defun my/org-defer-recentf-until-display ()
+  "Wait for a window to display this agenda file before recording it."
+  (add-hook 'window-buffer-change-functions #'my/org-recentf-on-display nil t))
 
 (defun my/org-agenda-files ()
   "Return the Org files under `org-directory'.
@@ -58,7 +70,13 @@ does not exist."
   (org-pretty-entities t)
   ;; Require braces for scripts, so a plain identifier such as Test_1 does not show
   ;; as a subscript in a heading.
-  (org-use-sub-superscripts '{}))
+  (org-use-sub-superscripts '{})
+  :config
+  (define-advice org-get-agenda-file-buffer (:around (open file) my/skip-recentf)
+    "Do not record background visits to agenda files in recentf."
+    (let ((find-file-hook (cons #'my/org-defer-recentf-until-display
+                                (remq #'recentf-track-opened-file find-file-hook))))
+      (funcall open file))))
 
 (use-package org-agenda
   :ensure nil

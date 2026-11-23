@@ -59,5 +59,28 @@
   (dolist (binding init-local-org-tests--keys)
     (should (fboundp (cdr binding)))))
 
+(ert-deftest init-local-org-agenda-tracks-files-only-when-displayed ()
+  (require 'org)
+  (require 'recentf)
+  (let* ((file (make-temp-file "org-agenda-test" nil ".org"))
+         (recentf-mode t)
+         (recentf-list nil)
+         (recentf-exclude nil)
+         (find-file-hook '(recentf-track-opened-file))
+         (org-agenda-new-buffers nil)
+         (org-mode-hook nil)
+         (buf nil))
+    (unwind-protect
+        (save-window-excursion
+          (setq buf (org-get-agenda-file-buffer file))
+          (should (buffer-live-p buf))
+          (should-not recentf-list)
+          (switch-to-buffer buf)
+          ;; Batch Emacs does not run the redisplay hooks.
+          (run-hook-with-args 'window-buffer-change-functions (selected-window))
+          (should (equal recentf-list (list (recentf-expand-file-name file)))))
+      (when (buffer-live-p buf) (kill-buffer buf))
+      (delete-file file))))
+
 (provide 'init-local-org-tests)
 ;;; init-local-org-tests.el ends here
