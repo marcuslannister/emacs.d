@@ -5,6 +5,7 @@ Notable changes to this fork of `zHaOdANiuu/.emacs.d`, newest first inside each 
 ## Unreleased
 
 ### Added
+- `SPC o g a` (`C-c o g a`) moves the Task at point, with its children, into an existing Org GTD Project. If you cancel the Project prompt, the Clarify buffer closes, so the next run copies the current Task. The Agenda task menu moved to `SPC o g A`.
 - Ghostel copies non-empty mouse selections to the clipboard when you release the mouse button.
 - In Dired, press `'` once to go to the parent directory in either Hel state.
 - `telega`, the Telegram client, on macOS only (`init-local-telega.el`); no other system installs or loads it. It uses the SOCKS5 proxy of the Base (`nn-proxy-port`). It needs TDLib 1.8.66 or newer: nix-config links it to `~/.local/share/tdlib` on the Apple silicon Macs, and the first `M-x telega` offers to build `telega-server` there. The Intel Mac has no TDLib. It uses the Symbola font (installed by nix-config) as the last fallback, as the telega FAQ advises, so symbols that macOS fonts lack no longer show as hex boxes; without the font, the first `M-x telega` shows a warning. Telega buffers start in Hel Normal state for `h`, `j`, `k`, and `l` navigation. In chat input, press `i` to type and `TAB` to open the completion popup next to the input. The Leisure menu has its entry back on macOS.

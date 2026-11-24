@@ -33,7 +33,11 @@
 (defvar org-gtd-refile-to-any-target)
 (defvar org-gtd--organize-type)
 (defvar my/async-installer-after-install-hook)
+(declare-function org-at-heading-p "org")
+(declare-function org-get-todo-state "org")
+(declare-function org-gtd-clarify-stop "org-gtd-clarify")
 (declare-function org-gtd-engage "org-gtd-engage")
+(declare-function org-gtd-project-extend "org-gtd-projects")
 (declare-function org-gtd-mode "org-gtd-mode")
 (declare-function org-gtd-view-show "org-gtd-view-language")
 (declare-function my/org-agenda-files "init-local-org")
@@ -85,6 +89,29 @@ Set `my/gtd-unavailable-reason' when it cannot load.  Never signals."
   (interactive)
   (my/gtd--require)
   (call-interactively #'org-gtd-clarify-item))
+
+(defun my/gtd-add-to-project ()
+  "Move the Task at point to an existing org-gtd project.
+A quit or an error closes the clarify buffer, so a later run copies the Task again."
+  (interactive)
+  (unless (and (derived-mode-p 'org-mode)
+               (not (derived-mode-p 'org-gtd-clarify-mode))
+               (org-at-heading-p)
+               (org-get-todo-state))
+    (user-error "Put point on a Task heading in its Org file"))
+  (let ((current-prefix-arg nil))
+    (my/gtd-clarify-item))
+  ;; `org-gtd-project-extend' files the current buffer, so it must be the clarify buffer.
+  (unless (derived-mode-p 'org-gtd-clarify-mode)
+    (user-error "org-gtd could not open its clarify buffer"))
+  (let ((clarify (current-buffer)))
+    (condition-case err
+        (org-gtd-project-extend)
+      ((quit error)
+       ;; A leftover clarify buffer is reused as is, and would file a stale copy.
+       (when (buffer-live-p clarify)
+         (with-current-buffer clarify (org-gtd-clarify-stop)))
+       (signal (car err) (cdr err))))))
 
 (defun my/gtd-engage ()
   "Open `org-gtd-engage' in its own buffer.
@@ -235,7 +262,8 @@ Never signals."
  "C-c o g p" #'my/gtd-show-all-projects
  "C-c o g s" #'org-gtd-reflect-stuck-projects
  "C-c o g o" #'org-gtd-organize
- "C-c o g a" #'org-gtd-agenda-transient)
+ "C-c o g a" #'my/gtd-add-to-project
+ "C-c o g A" #'org-gtd-agenda-transient)
 
 (provide 'init-local-gtd)
 ;;; init-local-gtd.el ends here
