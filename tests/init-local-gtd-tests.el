@@ -122,7 +122,7 @@
       (setq major-mode 'org-gtd-clarify-mode)
       (with-temp-buffer
         (org-mode)
-        (insert "* Today\n** TODO Task\n")
+        (insert "not a heading\n** TODO Task\n")
         (goto-char (point-min))
         (cl-letf (((symbol-function 'my/gtd-clarify-item)
                    (lambda ()
@@ -138,6 +138,37 @@
           (let ((current-prefix-arg '(4)))
             (my/gtd-add-to-project))
           (should extended))))))
+
+(ert-deftest init-local-gtd-add-to-project-sets-todo-on-a-plain-heading ()
+  (require 'org)
+  (let ((org-todo-keywords '((sequence "TODO" "NEXT" "WAIT" "|" "DONE" "CNCL"))))
+    (with-temp-buffer
+      (org-mode)
+      (insert "** Plain\n")
+      (goto-char (point-min))
+      (cl-letf (((symbol-function 'org-gtd-keywords--todo) (lambda () "TODO")))
+        (my/gtd--ensure-todo))
+      (should (equal "** TODO Plain"
+                     (buffer-substring-no-properties
+                      (line-beginning-position) (line-end-position))))))
+  (with-temp-buffer
+    (let ((clarify (current-buffer))
+          ensured)
+      (setq major-mode 'org-gtd-clarify-mode)
+      (with-temp-buffer
+        (org-mode)
+        (insert "** Plain\n")
+        (goto-char (point-min))
+        (cl-letf (((symbol-function 'my/gtd-clarify-item)
+                   (lambda () (set-buffer clarify)))
+                  ((symbol-function 'my/gtd--ensure-todo)
+                   (lambda ()
+                     (should (eq (current-buffer) clarify))
+                     (setq ensured t)))
+                  ((symbol-function 'org-gtd-project-extend)
+                   (lambda () (should ensured))))
+          (my/gtd-add-to-project)
+          (should ensured))))))
 
 (ert-deftest init-local-gtd-add-to-project-needs-the-clarify-buffer ()
   (require 'org)

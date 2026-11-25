@@ -34,8 +34,12 @@
 (defvar org-gtd--organize-type)
 (defvar my/async-installer-after-install-hook)
 (declare-function org-at-heading-p "org")
+(declare-function org-before-first-heading-p "org")
 (declare-function org-get-todo-state "org")
+(declare-function org-next-visible-heading "org")
+(declare-function org-todo "org")
 (declare-function org-gtd-clarify-stop "org-gtd-clarify")
+(declare-function org-gtd-keywords--todo "org-gtd-core")
 (declare-function org-gtd-engage "org-gtd-engage")
 (declare-function org-gtd-project-extend "org-gtd-projects")
 (declare-function org-gtd-mode "org-gtd-mode")
@@ -90,20 +94,32 @@ Set `my/gtd-unavailable-reason' when it cannot load.  Never signals."
   (my/gtd--require)
   (call-interactively #'org-gtd-clarify-item))
 
+(defun my/gtd--ensure-todo ()
+  "Give the clarify heading TODO when it has no TODO keyword.
+A later quit kills this buffer, so the source heading stays unchanged."
+  (when (derived-mode-p 'org-mode)
+    (save-excursion
+      (goto-char (point-min))
+      (when (org-before-first-heading-p)
+        (org-next-visible-heading 1))
+      (when (and (org-at-heading-p) (not (org-get-todo-state)))
+        (org-todo (org-gtd-keywords--todo))))))
+
 (defun my/gtd-add-to-project ()
-  "Move the Task at point to an existing org-gtd project.
-A quit or an error closes the clarify buffer, so a later run copies the Task again."
+  "Move the heading at point into an existing org-gtd project.
+A heading with no TODO keyword gets TODO in the clarify buffer.  A quit or an
+error closes that buffer, so a later run copies the heading again."
   (interactive)
   (unless (and (derived-mode-p 'org-mode)
                (not (derived-mode-p 'org-gtd-clarify-mode))
-               (org-at-heading-p)
-               (org-get-todo-state))
-    (user-error "Put point on a Task heading in its Org file"))
+               (org-at-heading-p))
+    (user-error "Put point on a heading in its Org file"))
   (let ((current-prefix-arg nil))
     (my/gtd-clarify-item))
   ;; `org-gtd-project-extend' files the current buffer, so it must be the clarify buffer.
   (unless (derived-mode-p 'org-gtd-clarify-mode)
     (user-error "org-gtd could not open its clarify buffer"))
+  (my/gtd--ensure-todo)
   (let ((clarify (current-buffer)))
     (condition-case err
         (org-gtd-project-extend)
